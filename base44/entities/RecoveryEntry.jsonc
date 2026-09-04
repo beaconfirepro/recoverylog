@@ -1,0 +1,26 @@
+{
+  "name": "RecoveryEntry",
+  "type": "object",
+  "properties": {
+    "day_id": {
+      "type": "string"
+    },
+    "day_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "type": {
+      "type": "string"
+    },
+    "data": {
+      "type": "object"
+    },
+    "note": {
+      "type": "string"
+    }
+  }
+}
