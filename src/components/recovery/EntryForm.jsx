@@ -14,6 +14,7 @@ export default function EntryForm({ type, entry, spots, onSave, onCancel, onDele
     if (!entry) {
       if (type === "checkin") base.slot = base.slot || defaultSlot();
       if (type === "sleep") base.kind = base.kind || "sleep";
+      if (type === "movement") base.kind = base.kind || "walk";
       if (type === "garment") base.action = base.action || "on";
     }
     return base;

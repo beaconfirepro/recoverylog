@@ -70,7 +70,7 @@ export default function Export() {
       });
 
       line(
-        `TOTALS — Water ${totals.water}/100 oz · Protein ${totals.protein}/100 g · Garment ${(totals.garmentMin / 60).toFixed(1)}h · Walks ${totals.walks} · Sleep+naps ${(totals.sleepH + totals.napH).toFixed(1)}h · Temp PM ${totals.tempPm ?? "—"}`,
+        `TOTALS — Water ${totals.water}/100 oz · Protein ${totals.protein}/100 g · Garment ${(totals.garmentMin / 60).toFixed(1)}h · Movement ${totals.walks} · Sleep+naps ${(totals.sleepH + totals.napH).toFixed(1)}h · Temp PM ${totals.tempPm ?? "—"}`,
         { size: 9, bold: true }
       );
       if (totals.best)

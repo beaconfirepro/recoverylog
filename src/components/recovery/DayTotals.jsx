@@ -5,7 +5,7 @@ export default function DayTotals({ totals }) {
     { label: "Water", value: `${totals.water} / 100 oz`, frac: totals.water / 100, color: "#00B4D8" },
     { label: "Protein", value: `${totals.protein} / 100 g`, frac: totals.protein / 100, color: "#FF9E00" },
     { label: "In garment", value: `${(totals.garmentMin / 60).toFixed(1)} h`, frac: null, color: "#06D6A0" },
-    { label: "Walks", value: totals.walks, frac: null, color: "#4361EE" },
+    { label: "Movement", value: totals.walks, frac: null, color: "#4361EE" },
     { label: "Sleep + naps", value: `${(totals.sleepH + totals.napH).toFixed(1)} h`, frac: null, color: "#5A189A" },
     { label: "Temp PM", value: totals.tempPm ?? "—", frac: null, color: "#FF006E" },
     { label: "Best check-in", value: totals.best ? `${totals.best.slot} · ${totals.best.time}` : "—", frac: null, color: "#06D6A0" },

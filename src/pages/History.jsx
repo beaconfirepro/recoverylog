@@ -56,7 +56,7 @@ export default function History() {
             <div className="flex flex-wrap gap-1.5 mt-2">
               <span className="nb-chip h-7 px-2.5 text-xs bg-[#00B4D8] text-white">💧 {t.water} oz</span>
               <span className="nb-chip h-7 px-2.5 text-xs bg-[#FF9E00] text-[#1A1024]">🍗 {t.protein} g</span>
-              <span className="nb-chip h-7 px-2.5 text-xs bg-[#4361EE] text-white">🚶 {t.walks} walks</span>
+              <span className="nb-chip h-7 px-2.5 text-xs bg-[#4361EE] text-white">🏃 {t.walks} movement</span>
               <span className="nb-chip h-7 px-2.5 text-xs bg-[#5A189A] text-white">😴 {(t.sleepH + t.napH).toFixed(1)} h</span>
               <span
                 className="nb-chip h-7 px-2.5 text-xs"

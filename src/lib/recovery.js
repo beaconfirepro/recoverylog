@@ -1,6 +1,6 @@
 import {
   ClipboardList, Droplets, Utensils, Pill, Zap, Thermometer, Droplet, Bath,
-  Layers, Stethoscope, Shirt, Hand, Footprints, Moon, Waves, Camera, Ruler, Scale
+  Layers, Stethoscope, Shirt, Hand, Activity, Moon, Waves, Camera, Ruler, Scale
 } from "lucide-react";
 
 const S = (key, label, lowIs) => ({ key, label, kind: "scale", lowIs });
@@ -131,17 +131,18 @@ export const TYPES = {
     summary: (d) => join([d.marks, d.color, d.faded_min != null && `faded in ${d.faded_min} min${d.faded_min >= 20 ? " ⚠" : ""}`]),
     marker: () => "SKIN"
   },
-  walk: {
-    label: "Walk", icon: Footprints, color: "#4361EE",
+  movement: {
+    label: "Movement", icon: Activity, color: "#4361EE",
     fields: [
-      { key: "minutes", label: "Minutes", kind: "number", steps: [5, 10, 15, 20, 30] },
-      { key: "distance", label: "Distance", kind: "text", placeholder: "e.g. to mailbox" },
+      { key: "kind", label: "Type", kind: "chips", options: ["walk", "resistance", "yoga", "swimming"] },
+      { key: "minutes", label: "Minutes", kind: "number", steps: [5, 10, 15, 20, 30, 45, 60] },
+      { key: "distance", label: "Distance / route", kind: "text", placeholder: "e.g. to mailbox, 2 laps" },
       { key: "help", label: "Help", kind: "chips", options: ["none", "one person", "walker"] },
       { key: "during", label: "During", kind: "chipsMulti", options: ["steady", "dizzy", "breathless", "had to stop"] },
       { key: "calf", label: "Calf", kind: "chips", options: ["no pain", "pain", "swelling", "warm one side"] }
     ],
-    summary: (d) => join([d.minutes != null && `${d.minutes} min`, d.distance, d.help, (d.during || []).join(", "), d.calf]),
-    marker: () => "WALK"
+    summary: (d) => join([d.kind, d.minutes != null && `${d.minutes} min`, d.distance, d.help, (d.during || []).join(", "), d.calf]),
+    marker: (d) => `MOVE ${({ walk: "WALK", resistance: "RES", yoga: "YOGA", swimming: "SWIM" }[d.kind] || "WALK")}`
   },
   sleep: {
     label: "Sleep / nap", icon: Moon, color: "#5A189A",
@@ -193,8 +194,10 @@ export const TYPES = {
   }
 };
 
+TYPES.walk = { ...TYPES.movement }; // legacy entries logged as "walk"
+
 export const QUICK_ORDER = [
-  "checkin", "water", "food", "med", "pain", "temp", "sleep", "walk",
+  "checkin", "water", "food", "med", "pain", "temp", "sleep", "movement",
   "bm", "urine", "pads", "incisions", "garment", "skin", "mld", "photo", "measure", "weight"
 ];
 

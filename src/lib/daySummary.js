@@ -27,7 +27,7 @@ export function computeTotals(entries, dateStr) {
 
   const water = sum("water", "ounces");
   const protein = sum("food", "protein");
-  const walks = entries.filter((e) => e.type === "walk").length;
+  const walks = entries.filter((e) => e.type === "walk" || e.type === "movement").length;
 
   // Garment hours: on -> off pairs, open "on" counts until now (today) or midnight
   let onAt = null, gmin = 0;
