@@ -107,7 +107,7 @@ export default function Export() {
               value={from}
               max={to}
               onChange={(e) => setFrom(e.target.value)}
-              className="w-full h-12 border-2 rounded-xl bg-card px-3 font-semibold"
+              className="w-full min-w-0 h-12 border-2 rounded-xl bg-card px-3 font-semibold"
             />
           </div>
           <div className="space-y-1">
@@ -117,7 +117,7 @@ export default function Export() {
               value={to}
               min={from}
               onChange={(e) => setTo(e.target.value)}
-              className="w-full h-12 border-2 rounded-xl bg-card px-3 font-semibold"
+              className="w-full min-w-0 h-12 border-2 rounded-xl bg-card px-3 font-semibold"
             />
           </div>
         </div>

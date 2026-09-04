@@ -58,7 +58,7 @@ export default function RedFlagCheck({ day, onSaved }) {
           return (
             <div key={item.key}>
               <div className="flex items-center justify-between gap-2">
-                <span className={`text-sm font-semibold ${ans === "yes" ? "text-destructive" : ""}`}>{item.label}</span>
+                <span className={`text-sm font-semibold min-w-0 ${ans === "yes" ? "text-destructive" : ""}`}>{item.label}</span>
                 <div className="flex gap-1.5 shrink-0">
                   <button
                     className="nb-chip h-9 text-xs"

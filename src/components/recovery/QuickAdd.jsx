@@ -11,7 +11,7 @@ export default function QuickAdd({ onAdd }) {
           <button
             key={t}
             onClick={() => onAdd(t)}
-            className="nb-btn h-16 flex-col gap-0.5 text-[9px] leading-tight !rounded-xl"
+            className="nb-btn min-h-16 py-1.5 flex-col gap-0.5 text-[9px] leading-tight !rounded-xl"
             style={{ backgroundColor: c.color, color: c.darkText ? "#1A1024" : "#fff" }}
           >
             <Icon className="w-5 h-5" />

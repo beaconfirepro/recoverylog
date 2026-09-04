@@ -6,6 +6,9 @@
       "type": "string",
       "format": "date"
     },
+    "surgery_time": {
+      "type": "string"
+    },
     "procedure": {
       "type": "string"
     },
