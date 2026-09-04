@@ -22,22 +22,25 @@ export default function DayView({ date }) {
   const [entries, setEntries] = useState(null);
   const [spots, setSpots] = useState([]);
   const [lastBmEntry, setLastBmEntry] = useState(null);
+  const [surgeryDate, setSurgeryDate] = useState(null);
   const [dialog, setDialog] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
+    const info = await base44.entities.SurgeryInfo.list("created_date", 1);
+    const surgeryDate = info[0]?.surgery_date || null;
     const existing = await base44.entities.RecoveryDay.filter({ date }, "date", 1);
     let d = existing[0];
     if (!d) {
       const all = await base44.entities.RecoveryDay.list("date", 500);
       const first = all[0];
-      const info = await base44.entities.SurgeryInfo.list("created_date", 1);
-      const startDate = info[0]?.surgery_date || first?.date;
+      const startDate = surgeryDate || first?.date;
       d = await base44.entities.RecoveryDay.create({
         date,
-        day_number: startDate ? daysBetween(startDate, date) + 1 : 1
+        day_number: startDate ? daysBetween(startDate, date) : 0
       });
     }
+    setSurgeryDate(surgeryDate);
     setDay(d);
     setEntries(await base44.entities.RecoveryEntry.filter({ date }, "created_date", 500));
     const bm = await base44.entities.RecoveryEntry.filter({ type: "bm" }, "-created_date", 1);
@@ -51,6 +54,7 @@ export default function DayView({ date }) {
   useEffect(() => {
     setDay(null);
     setEntries(null);
+    setSurgeryDate(null);
     load();
   }, [load]);
 
@@ -83,7 +87,7 @@ export default function DayView({ date }) {
     <div className="space-y-4">
       <DayHeader
         day={day}
-        dayNumber={day.day_number || 1}
+        surgeryDate={surgeryDate}
         totals={totals}
         lastBm={lastBmInfo(lastBmEntry, date)}
         spots={spots}

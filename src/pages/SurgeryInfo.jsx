@@ -48,7 +48,7 @@ export default function SurgeryInfo() {
     setSaved(true);
   };
 
-  const dayCount = info.surgery_date ? daysBetween(info.surgery_date, todayStr()) + 1 : null;
+  const dayCount = info.surgery_date ? daysBetween(info.surgery_date, todayStr()) : null;
 
   return (
     <div className="space-y-4">
@@ -57,7 +57,7 @@ export default function SurgeryInfo() {
       {dayCount !== null && (
         <div className="nb-card p-4 bg-accent text-accent-foreground">
           <span className="font-display text-2xl uppercase">
-            Day {dayCount}
+            {dayCount === 0 ? "Surgery day" : `Post-op day ${dayCount}`}
           </span>
           <span className="text-sm font-semibold ml-2">
             since {parseDate(info.surgery_date).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}

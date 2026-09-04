@@ -24,7 +24,7 @@ export default function EntryCard({ entry, run, onEdit }) {
           <Image src={d.photo_url} alt="entry photo" className="h-20 w-20 mt-1 border-2 rounded-lg object-cover" />
         )}
       </div>
-      <div className="shrink-0 self-center max-w-[92px]">
+      <div className="shrink-0 self-center">
         <span
           className="inline-block border-2 rounded-full px-2 py-1 text-[10px] font-heading whitespace-nowrap"
           style={{

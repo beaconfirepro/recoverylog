@@ -1,19 +1,21 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Plus, X } from "lucide-react";
+import { ChevronDown, Pencil, Plus, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { parseDate } from "@/lib/dates";
+import { parseDate, daysBetween } from "@/lib/dates";
 
 const Stat = ({ label, value }) => (
-  <div className="border-2 rounded-xl px-2.5 py-1.5 bg-muted">
-    <div className="text-[9px] font-heading uppercase tracking-wider text-muted-foreground">{label}</div>
+  <div className="border-2 rounded-xl px-2.5 py-1.5 bg-muted min-w-0">
+    <div className="text-[9px] font-heading uppercase tracking-wider text-muted-foreground truncate">{label}</div>
     <div className="text-sm font-bold truncate">{value}</div>
   </div>
 );
 
-export default function DayHeader({ day, dayNumber, totals, lastBm, spots, onSaved, onSpotsChanged }) {
+export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onSaved, onSpotsChanged }) {
+  const [statsOpen, setStatsOpen] = useState(true);
   const [open, setOpen] = useState(false);
   const [wokeAt, setWokeAt] = useState(day.woke_at || "");
   const [sleptHours, setSleptHours] = useState(day.slept_hours ?? "");
@@ -46,45 +48,55 @@ export default function DayHeader({ day, dayNumber, totals, lastBm, spots, onSav
     onSpotsChanged();
   };
 
+  const dayNum = surgeryDate ? daysBetween(surgeryDate, day.date) : null;
+
   const measEntries = totals.measurements
     ? Object.entries(totals.measurements).filter(([k, v]) => v !== null && v !== "" && k !== "photo_url")
     : [];
 
   return (
-    <div className="nb-card p-4">
+    <div className="nb-card p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <h1 className="font-display text-3xl leading-none uppercase">
-            Day {dayNumber}
-          </h1>
+        <div className="min-w-0">
+          {dayNum !== null ? (
+            <h1 className="font-display text-3xl leading-none uppercase">Day {dayNum}</h1>
+          ) : (
+            <h1 className="font-display text-xl leading-tight uppercase text-destructive">Surgery date not set</h1>
+          )}
           <p className="text-sm font-semibold text-muted-foreground mt-1">
             {parseDate(day.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
           </p>
         </div>
-        <button className="nb-btn h-11 w-11 !rounded-xl bg-accent text-accent-foreground" onClick={() => setOpen(true)} aria-label="Edit day header">
+        <button className="nb-btn h-11 w-11 shrink-0 !rounded-xl bg-accent text-accent-foreground" onClick={() => setOpen(true)} aria-label="Edit day header">
           <Pencil className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mt-3">
-        <Stat label="Last BM" value={lastBm} />
-        <Stat label="Next med" value={totals.nextMed ? `${totals.nextMed.time}` : "—"} />
+      <Collapsible open={statsOpen} onOpenChange={setStatsOpen}>
+        <CollapsibleTrigger className="w-full flex items-center justify-between font-heading text-[11px] uppercase tracking-wider">
+          From your entries
+          <ChevronDown className={`w-4 h-4 transition-transform ${statsOpen ? "rotate-180" : ""}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="grid grid-cols-3 gap-2 mt-2">
+            <Stat label="Last BM" value={lastBm} />
+            <Stat label="Next med" value={totals.nextMed ? `${totals.nextMed.time}` : "—"} />
+            <Stat label="Photos" value={totals.photoTaken ? "Yes" : "No"} />
+            <Stat label="Temp AM" value={totals.tempAm ?? "—"} />
+            <Stat label="Temp PM" value={totals.tempPm ?? "—"} />
+            <Stat label="Weight" value={totals.weight ?? "—"} />
+            {measEntries.map(([k, v]) => (
+              <Stat key={k} label={k} value={v} />
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      <div className="grid grid-cols-3 gap-2">
         <Stat label="Woke at" value={day.woke_at || "—"} />
-        <Stat label="Temp AM" value={totals.tempAm ?? "—"} />
-        <Stat label="Temp PM" value={totals.tempPm ?? "—"} />
-        <Stat label="Weight" value={totals.weight ?? "—"} />
         <Stat label="Slept" value={day.slept_hours ? `${day.slept_hours}h` : "—"} />
         <Stat label="Position" value={day.slept_position || "—"} />
-        <Stat label="Photos" value={totals.photoTaken ? "Yes" : "No"} />
       </div>
-
-      {measEntries.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 mt-2">
-          {measEntries.map(([k, v]) => (
-            <Stat key={k} label={k} value={v} />
-          ))}
-        </div>
-      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">

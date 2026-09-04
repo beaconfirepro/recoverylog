@@ -1,11 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 48 100% 96%;
+    --background: 18 86% 96%;
     --foreground: 260 30% 11%;
     --card: 0 0% 100%;
     --card-foreground: 260 30% 11%;
@@ -15,7 +15,7 @@
     --primary-foreground: 0 0% 100%;
     --secondary: 265 90% 62%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 48 45% 92%;
+    --muted: 18 50% 93%;
     --muted-foreground: 260 12% 38%;
     --accent: 80 85% 56%;
     --accent-foreground: 260 30% 11%;
@@ -30,9 +30,9 @@
     --chart-4: 190 95% 45%;
     --chart-5: 30 100% 50%;
     --radius: 0.75rem;
-    --font-heading: 'Bungee', ui-sans-serif, sans-serif;
+    --font-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
     --font-body: 'Outfit', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Bungee', ui-sans-serif, sans-serif;
+    --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 260 5.3% 26.1%;
@@ -45,7 +45,7 @@
   }
 
   .dark {
-    --background: 260 30% 10%;
+    --background: 14 18% 10%;
     --foreground: 48 100% 96%;
     --card: 260 25% 14%;
     --card-foreground: 48 100% 96%;
@@ -55,7 +55,7 @@
     --primary-foreground: 0 0% 100%;
     --secondary: 265 90% 66%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 260 20% 20%;
+    --muted: 14 12% 19%;
     --muted-foreground: 48 30% 75%;
     --accent: 80 85% 56%;
     --accent-foreground: 260 30% 11%;
@@ -87,6 +87,11 @@
 
   body {
     @apply bg-background text-foreground font-body;
+  }
+
+  .font-heading,
+  .font-display {
+    font-weight: 800;
   }
 }
 
