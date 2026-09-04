@@ -2,32 +2,15 @@
   "name": "RecoveryDay",
   "type": "object",
   "properties": {
-    "day_number": {
-      "type": "number"
-    },
     "date": {
       "type": "string",
       "format": "date"
     },
-    "last_bm_date": {
-      "type": "string",
-      "format": "date"
-    },
-    "next_med_due": {
-      "type": "string",
-      "format": "date-time"
+    "day_number": {
+      "type": "number"
     },
     "woke_at": {
       "type": "string"
-    },
-    "temp_am": {
-      "type": "number"
-    },
-    "temp_pm": {
-      "type": "number"
-    },
-    "weight": {
-      "type": "number"
     },
     "slept_hours": {
       "type": "number"
@@ -35,61 +18,23 @@
     "slept_position": {
       "type": "string"
     },
-    "photos_taken": {
+    "red_flag_completed": {
       "type": "boolean"
     },
-    "measurement_spots": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "measurements": {
+    "red_flag_answers": {
       "type": "object"
     },
-    "water_total": {
-      "type": "number"
-    },
-    "protein_total": {
-      "type": "number"
-    },
-    "garment_hours": {
-      "type": "number"
-    },
-    "walk_count": {
-      "type": "number"
-    },
-    "sleep_total": {
-      "type": "number"
-    },
-    "best_checkin": {
+    "red_flag_details": {
       "type": "object"
-    },
-    "worst_checkin": {
-      "type": "object"
-    },
-    "red_flags": {
-      "type": "object"
-    },
-    "red_flag_office_called": {
-      "type": "boolean"
-    },
-    "red_flag_time": {
-      "type": "string"
     },
     "questions": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "text": {
-            "type": "string"
-          },
-          "answered": {
-            "type": "boolean"
-          }
-        }
+        "type": "string"
       }
     }
-  }
+  },
+  "required": [
+    "date"
+  ]
 }

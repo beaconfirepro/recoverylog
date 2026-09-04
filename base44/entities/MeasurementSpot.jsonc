@@ -1,0 +1,15 @@
+{
+  "name": "MeasurementSpot",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "sort_order": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

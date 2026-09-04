@@ -6,15 +6,17 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
-import ForgotPassword from '@/pages/ForgotPassword';
-import ResetPassword from '@/pages/ResetPassword';
-import DayView from '@/pages/DayView';
-import History from '@/pages/History';
-import Trends from '@/pages/Trends';
-import { Navigate } from 'react-router-dom';
+// Add page imports here
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import Layout from './components/Layout';
+import Home from './pages/Home';
+import Day from './pages/Day';
+import History from './pages/History';
+import Trends from './pages/Trends';
+import Export from './pages/Export';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -46,11 +48,12 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/" element={<DayView />} />
-        <Route path="/day/:date" element={<DayView />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/day/:date" element={<Day />} />
         <Route path="/history" element={<History />} />
         <Route path="/trends" element={<Trends />} />
+        <Route path="/export" element={<Export />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

@@ -1,50 +1,38 @@
-import React from 'react';
-import { computeTotals } from '@/lib/recoveryUtils';
-import { cn } from '@/lib/utils';
+import React from "react";
 
-// Auto-calculated bottom-of-day summary.
-export default function DayTotals({ entries, day }) {
-  const t = computeTotals(entries, day);
-  const waterPct = Math.min(100, Math.round((t.water_total / 100) * 100));
-  const proteinPct = Math.min(100, Math.round((t.protein_total / 100) * 100));
+export default function DayTotals({ totals }) {
+  const rows = [
+    { label: "Water", value: `${totals.water} / 100 oz`, frac: totals.water / 100, color: "#00B4D8" },
+    { label: "Protein", value: `${totals.protein} / 100 g`, frac: totals.protein / 100, color: "#FF9E00" },
+    { label: "In garment", value: `${(totals.garmentMin / 60).toFixed(1)} h`, frac: null, color: "#06D6A0" },
+    { label: "Walks", value: totals.walks, frac: null, color: "#4361EE" },
+    { label: "Sleep + naps", value: `${(totals.sleepH + totals.napH).toFixed(1)} h`, frac: null, color: "#5A189A" },
+    { label: "Temp PM", value: totals.tempPm ?? "—", frac: null, color: "#FF006E" },
+    { label: "Best check-in", value: totals.best ? `${totals.best.slot} · ${totals.best.time}` : "—", frac: null, color: "#06D6A0" },
+    { label: "Worst check-in", value: totals.worst ? `${totals.worst.slot} · ${totals.worst.time}` : "—", frac: null, color: "#FF2E88" }
+  ];
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-      <h3 className="text-base font-semibold">Day Totals</h3>
-      <div className="grid grid-cols-2 gap-3">
-        <Stat label="Water" value={`${t.water_total} / 100 oz`} pct={waterPct} />
-        <Stat label="Protein" value={`${t.protein_total} / 100 g`} pct={proteinPct} />
-        <Stat label="Garment" value={`${t.garment_hours ?? 0} h`} />
-        <Stat label="Walks" value={t.walk_count} />
-        <Stat label="Sleep + naps" value={`${t.sleep_total} h`} />
-        <Stat label="Temp PM" value={t.temp_pm ?? '—'} />
+    <div className="nb-card p-4">
+      <h2 className="font-heading text-sm uppercase tracking-wider mb-3">Day totals</h2>
+      <div className="space-y-2.5">
+        {rows.map((r) => (
+          <div key={r.label}>
+            <div className="flex justify-between items-baseline">
+              <span className="text-sm font-semibold">{r.label}</span>
+              <span className="font-heading text-sm">{r.value}</span>
+            </div>
+            {r.frac !== null && (
+              <div className="h-3 border-2 rounded-full mt-1 overflow-hidden bg-muted">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${Math.min(100, (r.frac || 0) * 100)}%`, backgroundColor: r.color }}
+                />
+              </div>
+            )}
+          </div>
+        ))}
       </div>
-      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
-        <div>
-          <div className="text-[11px] uppercase text-muted-foreground">Best check-in</div>
-          <div className="text-sm font-medium">{t.best_checkin ? `${t.best_checkin.time} · score ${t.best_checkin.score}` : '—'}</div>
-        </div>
-        <div>
-          <div className="text-[11px] uppercase text-muted-foreground">Worst check-in</div>
-          <div className="text-sm font-medium">{t.worst_checkin ? `${t.worst_checkin.time} · score ${t.worst_checkin.score}` : '—'}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, pct }) {
-  return (
-    <div className="space-y-1">
-      <div className="flex items-baseline justify-between">
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className="text-sm font-semibold tabular-nums">{value}</span>
-      </div>
-      {pct != null && (
-        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-          <div className={cn('h-full rounded-full', label === 'Water' ? 'bg-sky-500' : 'bg-emerald-500')} style={{ width: `${pct}%` }} />
-        </div>
-      )}
     </div>
   );
 }

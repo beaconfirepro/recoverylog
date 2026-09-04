@@ -1,72 +1,106 @@
-import React, { useState } from 'react';
-import { RED_FLAG_ITEMS } from '@/lib/recoveryConfig';
-import { fmtTime, nowISO } from '@/lib/recoveryUtils';
-import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import React, { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { AlertTriangle, Check } from "lucide-react";
+import { RED_FLAG_ITEMS } from "@/lib/recovery";
+import { nowTime } from "@/lib/dates";
+import { base44 } from "@/api/base44Client";
 
-export default function RedFlagCheck({ day, onChange }) {
-  const [open, setOpen] = useState(false);
-  const rf = day.red_flags || {};
-  const anyYes = Object.keys(rf).some((k) => rf[k]);
-  const set = (key, val) => onChange({ ...day, red_flags: { ...rf, [key]: val } });
+export default function RedFlagCheck({ day, onSaved }) {
+  const [answers, setAnswers] = useState(day.red_flag_answers || {});
+  const [details, setDetails] = useState(day.red_flag_details || {});
+  const [saving, setSaving] = useState(false);
+
+  const answered = Object.keys(answers).length;
+  const yesKeys = Object.keys(answers).filter((k) => answers[k] === "yes");
+
+  const setAns = (key, v) => {
+    setAnswers((a) => ({ ...a, [key]: v }));
+    if (v === "no") {
+      setDetails((d) => {
+        const n = { ...d };
+        delete n[key];
+        return n;
+      });
+    } else {
+      setDetails((d) => ({ ...d, [key]: { time: d[key]?.time || nowTime(), office_called: d[key]?.office_called || false } }));
+    }
+  };
+
+  const save = async () => {
+    setSaving(true);
+    await base44.entities.RecoveryDay.update(day.id, {
+      red_flag_answers: answers,
+      red_flag_details: details,
+      red_flag_completed: answered === RED_FLAG_ITEMS.length
+    });
+    setSaving(false);
+    onSaved();
+  };
 
   return (
-    <div className={cn('rounded-xl border overflow-hidden', anyYes ? 'border-red-300 bg-red-50' : 'border-border bg-card')}>
-      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center justify-between px-4 py-3.5">
-        <div className="flex items-center gap-2 text-left">
-          <AlertTriangle className={cn('w-5 h-5', anyYes ? 'text-red-600' : 'text-muted-foreground')} />
-          <div>
-            <div className="text-base font-semibold">Red Flag Check</div>
-            <div className="text-xs text-muted-foreground">
-              {anyYes ? '⚠ Flagged — review below' : 'Evening check · all clear'}
-            </div>
-          </div>
-        </div>
-        {open ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-      </button>
-
-      {open && (
-        <div className="px-4 pb-5 space-y-2 border-t border-border pt-4">
-          {RED_FLAG_ITEMS.map((item) => (
-            <div key={item.key} className="flex items-center justify-between gap-3 py-1">
-              <span className="text-sm flex-1">{item.label}</span>
-              <div className="flex gap-1.5 shrink-0">
-                <button
-                  onClick={() => set(item.key, false)}
-                  className={cn('px-3 py-1.5 rounded-full text-xs font-medium border', rf[item.key] === false ? 'bg-emerald-600 text-white border-emerald-600' : 'border-border')}
-                >No</button>
-                <button
-                  onClick={() => set(item.key, true)}
-                  className={cn('px-3 py-1.5 rounded-full text-xs font-medium border', rf[item.key] === true ? 'bg-red-600 text-white border-red-600' : 'border-border')}
-                >Yes</button>
-              </div>
-            </div>
-          ))}
-
-          {anyYes && (
-            <div className="mt-3 pt-3 border-t border-border space-y-2">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Office called?</label>
-                <button
-                  onClick={() => onChange({ ...day, red_flag_office_called: !day.red_flag_office_called })}
-                  className={cn('px-3 py-1.5 rounded-full text-xs font-medium border', day.red_flag_office_called ? 'bg-emerald-600 text-white border-emerald-600' : 'border-border')}
-                >
-                  {day.red_flag_office_called ? 'Yes' : 'No'}
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Time</label>
-                <input
-                  type="time"
-                  value={day.red_flag_time || ''}
-                  onChange={(e) => onChange({ ...day, red_flag_time: e.target.value })}
-                  className="px-3 py-2 text-sm rounded-lg border border-input bg-background"
-                />
-              </div>
-            </div>
+    <div className="nb-card p-4" style={yesKeys.length > 0 ? { borderColor: "hsl(var(--destructive))", borderWidth: 3 } : {}}>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="font-heading text-sm uppercase tracking-wider flex items-center gap-1.5">
+          <AlertTriangle className="w-4 h-4 text-destructive" /> Red flag check
+        </h2>
+        <span className="text-xs font-bold text-muted-foreground">
+          {answered}/{RED_FLAG_ITEMS.length} answered
+          {day.red_flag_completed && answered === RED_FLAG_ITEMS.length && (
+            <Check className="inline w-3.5 h-3.5 ml-1 text-green-600" />
           )}
-        </div>
-      )}
+        </span>
+      </div>
+
+      <div className="space-y-3 mt-2">
+        {RED_FLAG_ITEMS.map((item) => {
+          const ans = answers[item.key];
+          const det = details[item.key];
+          return (
+            <div key={item.key}>
+              <div className="flex items-center justify-between gap-2">
+                <span className={`text-sm font-semibold ${ans === "yes" ? "text-destructive" : ""}`}>{item.label}</span>
+                <div className="flex gap-1.5 shrink-0">
+                  <button
+                    className="nb-chip h-9 text-xs"
+                    style={ans === "no" ? { backgroundColor: "#06D6A0" } : {}}
+                    onClick={() => setAns(item.key, "no")}
+                  >
+                    No
+                  </button>
+                  <button
+                    className="nb-chip h-9 text-xs"
+                    style={ans === "yes" ? { backgroundColor: "hsl(var(--destructive))", color: "#fff" } : {}}
+                    onClick={() => setAns(item.key, "yes")}
+                  >
+                    Yes
+                  </button>
+                </div>
+              </div>
+              {ans === "yes" && (
+                <div className="flex items-center gap-2 mt-1.5 pl-2">
+                  <Input
+                    type="time"
+                    value={det?.time || ""}
+                    onChange={(e) => setDetails((d) => ({ ...d, [item.key]: { ...d[item.key], time: e.target.value } }))}
+                    className="w-28 h-9"
+                  />
+                  <button
+                    className="nb-chip h-9 text-xs"
+                    style={det?.office_called ? { backgroundColor: "hsl(var(--secondary))", color: "#fff" } : {}}
+                    onClick={() => setDetails((d) => ({ ...d, [item.key]: { ...d[item.key], office_called: !d[item.key]?.office_called } }))}
+                  >
+                    Office called
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <button className="nb-btn w-full h-14 bg-primary text-primary-foreground mt-4" onClick={save} disabled={saving}>
+        {saving ? "Saving…" : "Save red flag check"}
+      </button>
     </div>
   );
 }

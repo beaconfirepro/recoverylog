@@ -2,25 +2,46 @@
   "name": "RecoveryEntry",
   "type": "object",
   "properties": {
-    "day_id": {
-      "type": "string"
-    },
-    "day_date": {
+    "date": {
       "type": "string",
       "format": "date"
     },
-    "timestamp": {
-      "type": "string",
-      "format": "date-time"
-    },
     "type": {
+      "type": "string",
+      "enum": [
+        "checkin",
+        "water",
+        "food",
+        "med",
+        "pain",
+        "temp",
+        "urine",
+        "bm",
+        "pads",
+        "incisions",
+        "garment",
+        "skin",
+        "walk",
+        "sleep",
+        "mld",
+        "photo",
+        "measure",
+        "weight"
+      ]
+    },
+    "entry_time": {
+      "type": "string"
+    },
+    "note": {
       "type": "string"
     },
     "data": {
       "type": "object"
-    },
-    "note": {
-      "type": "string"
     }
-  }
+  },
+  "required": [
+    "date",
+    "type",
+    "entry_time"
+  ]
 }

@@ -1,112 +1,99 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
-import AppLayout from '@/components/recovery/AppLayout';
-import { fmtDate, scoreCheckin } from '@/lib/recoveryUtils';
-import { Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { computeTotals } from "@/lib/daySummary";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-} from 'recharts';
+  ResponsiveContainer, LineChart, Line, BarChart, Bar,
+  XAxis, YAxis, Tooltip, Legend, ReferenceLine
+} from "recharts";
 
-const METRICS = [
-  { key: 'pain', label: 'Pain', worst: true, color: '#ef4444' },
-  { key: 'energy', label: 'Energy', worst: false, color: '#10b981' },
-  { key: 'mood', label: 'Mood', worst: false, color: '#3b82f6' },
-  { key: 'mobility', label: 'Mobility', worst: false, color: '#8b5cf6' },
-];
+const Spinner = () => (
+  <div className="flex justify-center py-16">
+    <div className="w-8 h-8 border-4 border-foreground border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
+const avg = (list) => {
+  const nums = list.filter((n) => n != null);
+  return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
+};
+const round1 = (n) => (n == null ? null : Math.round(n * 10) / 10);
 
 export default function Trends() {
-  const [days, setDays] = useState([]);
-  const [allEntries, setAllEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState(null);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const ds = await base44.entities.RecoveryDay.list('date', 200);
-        setDays(ds);
-        const ents = await Promise.all(ds.map((d) => base44.entities.RecoveryEntry.filter({ day_id: d.id })));
-        setAllEntries(ents.flat());
-      } finally {
-        setLoading(false);
-      }
-    })();
+    const run = async () => {
+      const [days, entries] = await Promise.all([
+        base44.entities.RecoveryDay.list("date", 200),
+        base44.entities.RecoveryEntry.list("created_date", 3000)
+      ]);
+      const byDate = {};
+      entries.forEach((e) => {
+        (byDate[e.date] = byDate[e.date] || []).push(e);
+      });
+      const data = days.map((d) => {
+        const es = byDate[d.date] || [];
+        const checkins = es.filter((e) => e.type === "checkin");
+        const t = computeTotals(es, d.date);
+        return {
+          label: `D${d.day_number}`,
+          pain: round1(avg(checkins.map((e) => e.data?.pain))),
+          energy: round1(avg(checkins.map((e) => e.data?.energy))),
+          mood: round1(avg(checkins.map((e) => e.data?.mood))),
+          water: t.water,
+          protein: t.protein,
+          sleep: round1(t.sleepH + t.napH)
+        };
+      });
+      setRows(data);
+    };
+    run();
   }, []);
 
-  const chartData = useMemo(() => {
-    // For each day, average each check-in metric across that day's check-in entries.
-    return days.map((d) => {
-      const dayEntries = allEntries.filter((e) => e.day_id === d.id && e.type === 'checkin');
-      const avg = (key) => {
-        if (!dayEntries.length) return null;
-        const sum = dayEntries.reduce((s, e) => s + (Number(e.data?.[key]) || 0), 0);
-        return Math.round((sum / dayEntries.length) * 10) / 10;
-      };
-      return {
-        label: `D${d.day_number}`,
-        date: fmtDate(d.date),
-        pain: avg('pain'),
-        energy: avg('energy'),
-        mood: avg('mood'),
-        mobility: avg('mobility'),
-        water: d.water_total ?? 0,
-        protein: d.protein_total ?? 0,
-        sleep: d.sleep_total ?? 0,
-      };
-    });
-  }, [days, allEntries]);
-
-  if (loading) {
-    return <AppLayout><div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div></AppLayout>;
-  }
-
-  if (days.length === 0) {
-    return <AppLayout><p className="text-sm text-muted-foreground py-16 text-center">No data yet. Log a few days to see trends.</p></AppLayout>;
-  }
+  if (!rows) return <Spinner />;
 
   return (
-    <AppLayout>
-      <div className="space-y-5">
-        <h1 className="text-2xl font-bold tracking-tight">Trends</h1>
+    <div className="space-y-4">
+      <h1 className="font-display text-2xl uppercase">Trends</h1>
+      {rows.length === 0 && (
+        <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card">
+          Log a few check-ins and the charts will draw themselves.
+        </p>
+      )}
 
-        <ChartCard title="Check-in scores (daily average)">
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              {METRICS.map((m) => (
-                <Line key={m.key} type="monotone" dataKey={m.key} name={m.label} stroke={m.color} dot={{ r: 2 }} connectNulls />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
+      {rows.length > 0 && (
+        <>
+          <div className="nb-card p-3">
+            <h2 className="font-heading text-xs uppercase tracking-wider mb-2">Check-in scores (daily average)</h2>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={rows} margin={{ top: 5, right: 10, bottom: 5, left: -18 }}>
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Line type="monotone" dataKey="pain" name="Pain" stroke="#FF2E88" strokeWidth={3} dot={{ r: 4 }} connectNulls />
+                <Line type="monotone" dataKey="energy" name="Energy" stroke="#06D6A0" strokeWidth={3} dot={{ r: 4 }} connectNulls />
+                <Line type="monotone" dataKey="mood" name="Mood" stroke="#9B5DE5" strokeWidth={3} dot={{ r: 4 }} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
 
-        <ChartCard title="Daily totals vs targets">
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="water" name="Water (oz)" stroke="#0ea5e9" dot={{ r: 2 }} />
-              <Line type="monotone" dataKey="protein" name="Protein (g)" stroke="#10b981" dot={{ r: 2 }} />
-              <Line type="monotone" dataKey="sleep" name="Sleep (h)" stroke="#6366f1" dot={{ r: 2 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
-    </AppLayout>
-  );
-}
-
-function ChartCard({ title, children }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <h2 className="text-sm font-semibold mb-3">{title}</h2>
-      {children}
+          <div className="nb-card p-3">
+            <h2 className="font-heading text-xs uppercase tracking-wider mb-2">Daily totals vs 100 target</h2>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={rows} margin={{ top: 5, right: 10, bottom: 5, left: -18 }}>
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <ReferenceLine y={100} strokeDasharray="4 4" stroke="hsl(var(--foreground))" />
+                <Bar dataKey="water" name="Water (oz)" fill="#00B4D8" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="protein" name="Protein (g)" fill="#FF9E00" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </>
+      )}
     </div>
   );
 }
