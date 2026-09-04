@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -30,9 +30,9 @@
     --chart-4: 190 95% 45%;
     --chart-5: 30 100% 50%;
     --radius: 0.75rem;
-    --font-heading: 'Archivo Black', ui-sans-serif, sans-serif;
-    --font-body: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Archivo Black', ui-sans-serif, sans-serif;
+    --font-heading: 'Bungee', ui-sans-serif, sans-serif;
+    --font-body: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Bungee', ui-sans-serif, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 260 5.3% 26.1%;

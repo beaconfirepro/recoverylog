@@ -31,9 +31,11 @@ export default function DayView({ date }) {
     if (!d) {
       const all = await base44.entities.RecoveryDay.list("date", 500);
       const first = all[0];
+      const info = await base44.entities.SurgeryInfo.list("created_date", 1);
+      const startDate = info[0]?.surgery_date || first?.date;
       d = await base44.entities.RecoveryDay.create({
         date,
-        day_number: first ? daysBetween(first.date, date) + 1 : 1
+        day_number: startDate ? daysBetween(startDate, date) + 1 : 1
       });
     }
     setDay(d);

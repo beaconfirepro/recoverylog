@@ -1,11 +1,12 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { CalendarDays, History as HistoryIcon, TrendingUp, FileDown } from "lucide-react";
+import { CalendarDays, History as HistoryIcon, TrendingUp, FileDown, Scissors } from "lucide-react";
 
 const NAV = [
   { to: "/", label: "Today", icon: CalendarDays, match: (p) => p === "/" || p.startsWith("/day") },
   { to: "/history", label: "History", icon: HistoryIcon, match: (p) => p.startsWith("/history") },
   { to: "/trends", label: "Trends", icon: TrendingUp, match: (p) => p.startsWith("/trends") },
+  { to: "/surgery", label: "Surgery", icon: Scissors, match: (p) => p.startsWith("/surgery") },
   { to: "/export", label: "Export", icon: FileDown, match: (p) => p.startsWith("/export") }
 ];
 
@@ -23,7 +24,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <nav className="fixed bottom-0 inset-x-0 border-t-2 bg-foreground">
-        <div className="max-w-lg mx-auto grid grid-cols-4">
+        <div className="max-w-lg mx-auto grid grid-cols-5">
           {NAV.map((n) => {
             const Icon = n.icon;
             const active = n.match(pathname);

@@ -1,0 +1,25 @@
+{
+  "name": "SurgeryInfo",
+  "type": "object",
+  "properties": {
+    "surgery_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "procedure": {
+      "type": "string"
+    },
+    "surgeon": {
+      "type": "string"
+    },
+    "office_phone": {
+      "type": "string"
+    },
+    "fever_threshold": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

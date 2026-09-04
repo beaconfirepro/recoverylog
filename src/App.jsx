@@ -17,6 +17,7 @@ import Day from './pages/Day';
 import History from './pages/History';
 import Trends from './pages/Trends';
 import Export from './pages/Export';
+import SurgeryInfo from './pages/SurgeryInfo';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -53,6 +54,7 @@ const AuthenticatedApp = () => {
         <Route path="/day/:date" element={<Day />} />
         <Route path="/history" element={<History />} />
         <Route path="/trends" element={<Trends />} />
+        <Route path="/surgery" element={<SurgeryInfo />} />
         <Route path="/export" element={<Export />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
