@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronDown, Pencil, Plus, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { parseDate, daysBetween } from "@/lib/dates";
+import { parseDate, postOpLabel } from "@/lib/dates";
 
 const Stat = ({ label, value }) => (
   <div className="border-2 rounded-xl px-2.5 py-1.5 bg-muted min-w-0">
@@ -48,7 +48,7 @@ export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onS
     onSpotsChanged();
   };
 
-  const dayNum = surgeryDate ? daysBetween(surgeryDate, day.date) : null;
+  const dayLabel = postOpLabel(surgeryDate, day.date);
 
   const measEntries = totals.measurements
     ? Object.entries(totals.measurements).filter(([k, v]) => v !== null && v !== "" && k !== "photo_url")
@@ -58,8 +58,8 @@ export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onS
     <div className="nb-card p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          {dayNum !== null ? (
-            <h1 className="font-display text-3xl leading-none uppercase">Day {dayNum}</h1>
+          {dayLabel ? (
+            <h1 className="font-display text-3xl leading-none uppercase break-words">{dayLabel}</h1>
           ) : (
             <h1 className="font-display text-xl leading-tight uppercase text-destructive">Surgery date not set</h1>
           )}

@@ -16,7 +16,7 @@ export default function Layout() {
     <div className="min-h-screen">
       <header className="border-b-2 bg-foreground text-background">
         <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center justify-between">
-          <span className="font-display uppercase tracking-widest text-sm">Day Zero</span>
+          <span className="font-display uppercase tracking-widest text-sm">Recovery Log</span>
           <span className="text-[10px] font-body opacity-60">one day at a time</span>
         </div>
       </header>

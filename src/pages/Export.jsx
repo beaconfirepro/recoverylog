@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { jsPDF } from "jspdf";
-import { todayStr, dateRange, fullDate } from "@/lib/dates";
+import { todayStr, dateRange, fullDate, postOpLabel } from "@/lib/dates";
 import { TYPES, RED_FLAG_ITEMS } from "@/lib/recovery";
 import { computeTotals, sortEntries } from "@/lib/daySummary";
 
@@ -14,6 +14,8 @@ export default function Export() {
   const generate = async () => {
     setBusy(true);
     setDone(false);
+    const info = await base44.entities.SurgeryInfo.list("created_date", 1);
+    const surgeryDate = info[0]?.surgery_date || null;
     const days = await base44.entities.RecoveryDay.list("date", 500);
     const dayMap = {};
     days.forEach((d) => {
@@ -55,7 +57,7 @@ export default function Export() {
       if (!day && dayEntries.length === 0) return;
       const totals = computeTotals(dayEntries, date);
 
-      line(`DAY ${day?.day_number ?? "?"} — ${fullDate(date)}`, { bold: true, size: 13, gap: 2 });
+      line(`${(postOpLabel(surgeryDate, date) || "Surgery date not set").toUpperCase()} — ${fullDate(date)}`, { bold: true, size: 13, gap: 2 });
       line(
         `Woke ${day?.woke_at || "—"} · Temp AM ${totals.tempAm ?? "—"} / PM ${totals.tempPm ?? "—"} · Weight ${totals.weight ?? "—"} · Slept ${day?.slept_hours ?? "—"}h ${day?.slept_position || ""} · Photos ${totals.photoTaken ? "yes" : "no"}`,
         { size: 9 }

@@ -1,5 +1,5 @@
 {
-  "name": "Untitled",
+  "name": "Recovery Log",
   "site": {
     "installCommand": "npm install",
     "buildCommand": "npm run build",
