@@ -7,6 +7,10 @@
         "admin",
         "user"
       ]
+    },
+    "patient_id": {
+      "type": "string",
+      "description": "Patient whose log this user may read and write. Set when a care-team invite is claimed; blank until then."
     }
   },
   "required": [

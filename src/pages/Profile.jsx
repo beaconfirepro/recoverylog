@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { jsPDF } from "jspdf";
-import { LogOut } from "lucide-react";
+import { LogOut, Plus, X } from "lucide-react";
 import { todayStr, dateRange, fullDate, postOpLabel, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { TYPES, RED_FLAG_ITEMS } from "@/lib/recovery";
 import { computeTotals, sortEntries } from "@/lib/daySummary";
 import { useAuth } from "@/lib/AuthContext";
+import { usePatient } from "@/lib/PatientContext";
 import Field from "@/components/Field";
 
 const Row = ({ label, value }) => (
@@ -17,7 +18,14 @@ const Row = ({ label, value }) => (
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const { patient, patientId, isOwner, membership, refreshPatient } = usePatient();
   const [surgery, setSurgery] = useState(null);
+  const [team, setTeam] = useState([]);
+  const [name, setName] = useState("");
+  const [dob, setDob] = useState("");
+  const [savingPatient, setSavingPatient] = useState(false);
+  const [invite, setInvite] = useState({ email: "", full_name: "", dob: "" });
+  const [inviteError, setInviteError] = useState("");
   const [from, setFrom] = useState(todayStr());
   const [to, setTo] = useState(todayStr());
   const [busy, setBusy] = useState(false);
@@ -26,6 +34,54 @@ export default function Profile() {
   useEffect(() => {
     base44.entities.SurgeryInfo.list("created_date", 1).then((info) => setSurgery(info[0] || null));
   }, []);
+
+  useEffect(() => {
+    setName(patient?.full_name || "");
+    setDob(patient?.dob || "");
+  }, [patient]);
+
+  const loadTeam = useCallback(() => {
+    if (!patientId) return;
+    base44.entities.PatientGroup.filter({ patient_id: patientId }, "created_date", 50).then(setTeam);
+  }, [patientId]);
+
+  useEffect(() => {
+    loadTeam();
+  }, [loadTeam]);
+
+  const savePatient = async () => {
+    setSavingPatient(true);
+    await base44.entities.Patient.update(patient.id, { full_name: name, dob: dob || null });
+    await refreshPatient();
+    setSavingPatient(false);
+  };
+
+  const addMember = async () => {
+    const email = invite.email.trim().toLowerCase();
+    if (!email || !invite.full_name.trim() || !invite.dob) {
+      setInviteError("Email, name and date of birth are all needed.");
+      return;
+    }
+    if (team.some((m) => m.email === email)) {
+      setInviteError("That email is already on the care team.");
+      return;
+    }
+    setInviteError("");
+    await base44.entities.PatientGroup.create({
+      patient_id: patientId,
+      email,
+      full_name: invite.full_name.trim(),
+      dob: invite.dob,
+      can_write: true
+    });
+    setInvite({ email: "", full_name: "", dob: "" });
+    loadTeam();
+  };
+
+  const removeMember = async (id) => {
+    await base44.entities.PatientGroup.delete(id);
+    loadTeam();
+  };
 
   // dateRange() stops at MAX_RANGE_DAYS. Silently dropping days out of a record
   // meant for a surgeon is worse than refusing, so block the export instead.
@@ -137,8 +193,27 @@ export default function Profile() {
           <div className="text-sm font-semibold break-words">Who this log belongs to.</div>
         </div>
         <div className="p-4">
-          <Row label="Name" value={user?.full_name} />
-          <Row label="Email" value={user?.email} />
+          {isOwner ? (
+            <div className="grid grid-cols-2 gap-3 min-w-0 pb-2">
+              <Field label="Patient name" span>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="nb-input" />
+              </Field>
+              <Field label="Date of birth" span>
+                <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="nb-input" />
+              </Field>
+              <button
+                className="col-span-2 nb-btn w-full h-12 bg-primary text-primary-foreground"
+                onClick={savePatient}
+                disabled={savingPatient || !name.trim()}
+              >
+                {savingPatient ? "Saving…" : "Save patient"}
+              </button>
+            </div>
+          ) : (
+            <Row label="Patient" value={patient?.full_name} />
+          )}
+          <Row label="Signed in as" value={user?.email} />
+          <Row label="Your access" value={isOwner ? "Patient — full access" : membership?.can_write === false ? "Care team — read only" : "Care team — can edit"} />
           <Row label="Procedure" value={surgery?.procedure} />
           <Row label="Surgery date" value={surgery?.surgery_date ? fullDate(surgery.surgery_date) : null} />
           <Row label="Surgeon" value={surgery?.surgeon} />
@@ -150,6 +225,77 @@ export default function Profile() {
           </button>
         </div>
       </div>
+
+      {isOwner && (
+        <div className="nb-card overflow-hidden">
+          <div className="px-4 py-3 border-b-2 bg-muted">
+            <div className="font-display text-xl uppercase leading-tight break-words">Care team</div>
+            <div className="text-sm font-semibold break-words">
+              They sign in with the email you add here, then confirm their date of birth.
+            </div>
+          </div>
+
+          <div className="p-4 space-y-3">
+            {team.length === 0 && <p className="text-sm text-muted-foreground">No one else has access yet.</p>}
+            {team.map((m) => (
+              <div key={m.id} className="flex items-center gap-2 min-w-0 border-b-2 last:border-b-0 pb-2 last:pb-0">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold truncate">{m.full_name}</div>
+                  <div className="text-[11px] font-semibold text-muted-foreground truncate">
+                    {m.email} · {m.claimed_at ? "active" : "not signed in yet"}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeMember(m.id)}
+                  className="nb-btn h-11 w-11 shrink-0 bg-card"
+                  aria-label={`Remove ${m.full_name}`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+
+            <div className="grid grid-cols-2 gap-3 min-w-0 pt-1">
+              <Field label="Their email" span>
+                <input
+                  type="email"
+                  value={invite.email}
+                  onChange={(e) => setInvite({ ...invite, email: e.target.value })}
+                  placeholder="name@example.com"
+                  className="nb-input"
+                />
+              </Field>
+              <Field label="Their name">
+                <input
+                  type="text"
+                  value={invite.full_name}
+                  onChange={(e) => setInvite({ ...invite, full_name: e.target.value })}
+                  className="nb-input"
+                />
+              </Field>
+              <Field label="Their date of birth">
+                <input
+                  type="date"
+                  value={invite.dob}
+                  onChange={(e) => setInvite({ ...invite, dob: e.target.value })}
+                  className="nb-input"
+                />
+              </Field>
+              {inviteError && (
+                <p className="col-span-2 text-sm font-bold text-destructive break-words">{inviteError}</p>
+              )}
+              <button
+                className="col-span-2 nb-btn w-full h-12 bg-accent text-accent-foreground flex items-center justify-center gap-2"
+                onClick={addMember}
+              >
+                <Plus className="w-4 h-4" />
+                Add to care team
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">

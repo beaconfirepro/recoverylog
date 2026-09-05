@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
 import { sortEntries, runningTotals, computeTotals, lastBmInfo, timeToMin } from "@/lib/daySummary";
+import { usePatient } from "@/lib/PatientContext";
 import QuickAdd from "./QuickAdd";
 import EntryCard from "./EntryCard";
 import EntryForm from "./EntryForm";
@@ -17,6 +18,7 @@ const Spinner = () => (
 );
 
 export default function DayView({ date }) {
+  const { patientId } = usePatient();
   const [day, setDay] = useState(null);
   const [entries, setEntries] = useState(null);
   const [spots, setSpots] = useState([]);
@@ -29,7 +31,7 @@ export default function DayView({ date }) {
     const info = await base44.entities.SurgeryInfo.list("created_date", 1);
     const surgeryDate = info[0]?.surgery_date || null;
     const existing = await base44.entities.RecoveryDay.filter({ date }, "date", 1);
-    const d = existing[0] || (await base44.entities.RecoveryDay.create({ date }));
+    const d = existing[0] || (await base44.entities.RecoveryDay.create({ date, patient_id: patientId }));
     setSurgeryDate(surgeryDate);
     setDay(d);
     setEntries(await base44.entities.RecoveryEntry.filter({ date }, "created_date", 500));
@@ -41,7 +43,7 @@ export default function DayView({ date }) {
       .filter((e) => e.date <= date)
       .sort((a, b) => (a.date === b.date ? timeToMin(b.entry_time) - timeToMin(a.entry_time) : a.date < b.date ? 1 : -1));
     setLastBmEntry(prior[0] || null);
-  }, [date]);
+  }, [date, patientId]);
 
   const loadSpots = useCallback(async () => {
     setSpots(await base44.entities.MeasurementSpot.list("sort_order", 50));
@@ -67,7 +69,7 @@ export default function DayView({ date }) {
   const saveEntry = async (payload) => {
     setSaving(true);
     if (dialog.entry) await base44.entities.RecoveryEntry.update(dialog.entry.id, payload);
-    else await base44.entities.RecoveryEntry.create({ date, type: dialog.type, ...payload });
+    else await base44.entities.RecoveryEntry.create({ date, type: dialog.type, patient_id: patientId, ...payload });
     setSaving(false);
     setDialog(null);
     load();
@@ -80,7 +82,7 @@ export default function DayView({ date }) {
   };
 
   const addSpot = async (name) => {
-    await base44.entities.MeasurementSpot.create({ name, sort_order: spots.length });
+    await base44.entities.MeasurementSpot.create({ name, sort_order: spots.length, patient_id: patientId });
     loadSpots();
   };
 

@@ -1,0 +1,76 @@
+{
+  "name": "PatientGroup",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "description": "Patient this membership grants access to."
+    },
+    "email": {
+      "type": "string",
+      "description": "Login email of the invited person. Must match their Base44 account."
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Invited person's name. Shown masked on the claim screen."
+    },
+    "dob": {
+      "type": "string",
+      "format": "date",
+      "description": "Invited person's date of birth, entered to confirm which masked name is theirs."
+    },
+    "can_write": {
+      "type": "boolean",
+      "default": true,
+      "description": "False makes this a read-only member."
+    },
+    "claimed_at": {
+      "type": "string",
+      "description": "Set when the invite is claimed. Blank means still pending."
+    }
+  },
+  "required": [
+    "patient_id",
+    "email",
+    "full_name",
+    "dob"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.email": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "create": {
+      "data.patient_id": "{{user.data.patient_id}}"
+    }
+  }
+}

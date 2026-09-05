@@ -5,6 +5,8 @@ import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-d
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import { PatientProvider, usePatient } from '@/lib/PatientContext';
+import ClaimAccess from '@/components/ClaimAccess';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import Login from './pages/Login';
@@ -18,6 +20,21 @@ import History from './pages/History';
 import Trends from './pages/Trends';
 import Profile from './pages/Profile';
 import SurgeryInfo from './pages/SurgeryInfo';
+
+// A signed-in account still has to resolve to a patient before the log opens:
+// the owner's own record, or one an invite linked it to.
+const PatientGate = () => {
+  const { patient, loadingPatient } = usePatient();
+  if (loadingPatient) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+  if (!patient) return <ClaimAccess />;
+  return <Layout />;
+};
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -49,7 +66,7 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route element={<Layout />}>
+      <Route element={<PatientGate />}>
         <Route path="/" element={<Home />} />
         <Route path="/day/:date" element={<Day />} />
         <Route path="/history" element={<History />} />
@@ -68,13 +85,15 @@ function App() {
 
   return (
     <AuthProvider>
-      <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ScrollToTop />
-          <AuthenticatedApp />
-        </Router>
-        <Toaster />
-      </QueryClientProvider>
+      <PatientProvider>
+        <QueryClientProvider client={queryClientInstance}>
+          <Router>
+            <ScrollToTop />
+            <AuthenticatedApp />
+          </Router>
+          <Toaster />
+        </QueryClientProvider>
+      </PatientProvider>
     </AuthProvider>
   )
 }
