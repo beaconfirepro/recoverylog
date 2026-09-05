@@ -8,24 +8,25 @@ import Field from "@/components/Field";
 // already happened; this only settles which invited person is holding the phone.
 export default function ClaimAccess() {
   const { user, logout } = useAuth();
-  const { invites, refreshPatient } = usePatient();
-  const [picked, setPicked] = useState(null);
+  const { me, refreshPatient } = usePatient();
+  const [picked, setPicked] = useState(false);
   const [dob, setDob] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const pending = invites.filter((i) => i.patient_id);
+  // The patient wrote this row, not this account, so what it claims about them
+  // is the patient's word rather than their own.
+  const invited = me && me.kind === "team_member" && me.patient_id ? me : null;
 
   const claim = async () => {
     setBusy(true);
     setError("");
-    if (dob !== picked.dob) {
-      setError("That date of birth does not match this invite.");
+    if (!invited.dob || dob !== invited.dob) {
+      setError("That date of birth does not match your invitation.");
       setBusy(false);
       return;
     }
-    await base44.auth.updateMe({ patient_id: picked.patient_id });
-    await base44.entities.PatientGroup.update(picked.id, { claimed_at: new Date().toISOString() });
+    await base44.auth.updateMe({ patient_id: invited.patient_id });
     await refreshPatient();
     setBusy(false);
   };
@@ -41,34 +42,24 @@ export default function ClaimAccess() {
         </div>
 
         <div className="p-4 space-y-3">
-          {pending.length === 0 ? (
+          {!invited ? (
             <p className="text-sm font-semibold break-words">
-              This account has no invitation to a recovery log. Ask the patient to add {user?.email} to their care
+              This account has not been added to a recovery log. Ask the patient to add {user?.email} to their care
               team, then sign in again.
             </p>
           ) : (
             <>
-              <div className="space-y-1.5">
-                {pending.map((i) => (
-                  <button
-                    key={i.id}
-                    type="button"
-                    onClick={() => {
-                      setPicked(i);
-                      setDob("");
-                      setError("");
-                    }}
-                    className="nb-btn w-full h-12 justify-start px-3 font-heading tracking-widest"
-                    style={
-                      picked?.id === i.id
-                        ? { backgroundColor: "hsl(var(--foreground))", color: "hsl(var(--background))" }
-                        : {}
-                    }
-                  >
-                    {maskName(i.full_name)}
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPicked(true);
+                  setError("");
+                }}
+                className="nb-btn w-full h-12 justify-start px-3 font-heading tracking-widest"
+                style={picked ? { backgroundColor: "hsl(var(--foreground))", color: "hsl(var(--background))" } : {}}
+              >
+                {maskName(invited.full_name)}
+              </button>
 
               {picked && (
                 <>

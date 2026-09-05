@@ -18,7 +18,7 @@ const Row = ({ label, value }) => (
 
 export default function Profile() {
   const { user, logout } = useAuth();
-  const { patient, patientId, isOwner, membership, refreshPatient } = usePatient();
+  const { patient, patientId, isOwner, canWrite, refreshPatient } = usePatient();
   const [surgery, setSurgery] = useState(null);
   const [team, setTeam] = useState([]);
   const [name, setName] = useState("");
@@ -42,7 +42,7 @@ export default function Profile() {
 
   const loadTeam = useCallback(() => {
     if (!patientId) return;
-    base44.entities.PatientGroup.filter({ patient_id: patientId }, "created_date", 50).then(setTeam);
+    base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 50).then(setTeam);
   }, [patientId]);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function Profile() {
 
   const savePatient = async () => {
     setSavingPatient(true);
-    await base44.entities.Patient.update(patient.id, { full_name: name, dob: dob || null });
+    await base44.entities.AppUser.update(patient.id, { full_name: name, dob: dob || null });
     await refreshPatient();
     setSavingPatient(false);
   };
@@ -67,8 +67,9 @@ export default function Profile() {
       return;
     }
     setInviteError("");
-    await base44.entities.PatientGroup.create({
+    await base44.entities.AppUser.create({
       patient_id: patientId,
+      kind: "team_member",
       email,
       full_name: invite.full_name.trim(),
       dob: invite.dob,
@@ -79,7 +80,7 @@ export default function Profile() {
   };
 
   const removeMember = async (id) => {
-    await base44.entities.PatientGroup.delete(id);
+    await base44.entities.AppUser.delete(id);
     loadTeam();
   };
 
@@ -213,7 +214,7 @@ export default function Profile() {
             <Row label="Patient" value={patient?.full_name} />
           )}
           <Row label="Signed in as" value={user?.email} />
-          <Row label="Your access" value={isOwner ? "Patient — full access" : membership?.can_write === false ? "Care team — read only" : "Care team — can edit"} />
+          <Row label="Your access" value={isOwner ? "Patient — full access" : canWrite ? "Care team — can edit" : "Care team — read only"} />
           <Row label="Procedure" value={surgery?.procedure} />
           <Row label="Surgery date" value={surgery?.surgery_date ? fullDate(surgery.surgery_date) : null} />
           <Row label="Surgeon" value={surgery?.surgeon} />
@@ -242,7 +243,7 @@ export default function Profile() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-bold truncate">{m.full_name}</div>
                   <div className="text-[11px] font-semibold text-muted-foreground truncate">
-                    {m.email} · {m.claimed_at ? "active" : "not signed in yet"}
+                    {m.email}{m.can_write === false ? " · read only" : ""}
                   </div>
                 </div>
                 <button
