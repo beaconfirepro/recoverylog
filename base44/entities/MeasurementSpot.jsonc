@@ -1,12 +1,11 @@
 {
   "name": "MeasurementSpot",
-  "type": "object",
   "properties": {
-    "patient_id": {
-      "type": "string",
-      "description": "Patient this spot belongs to."
-    },
     "name": {
+      "type": "string"
+    },
+    "patient_id": {
+      "description": "Patient this spot belongs to.",
       "type": "string"
     },
     "sort_order": {
@@ -18,6 +17,16 @@
   ],
   "rls": {
     "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "delete": {
       "$or": [
         {
           "created_by_id": "{{user.id}}"
@@ -46,16 +55,7 @@
           "data.patient_id": "{{user.data.patient_id}}"
         }
       ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
     }
-  }
+  },
+  "type": "object"
 }

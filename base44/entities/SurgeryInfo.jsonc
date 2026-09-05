@@ -1,16 +1,17 @@
 {
   "name": "SurgeryInfo",
-  "type": "object",
   "properties": {
+    "fever_threshold": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "office_phone": {
+      "type": "string"
+    },
     "patient_id": {
-      "type": "string",
-      "description": "Patient this surgery record belongs to."
-    },
-    "surgery_date": {
-      "type": "string",
-      "format": "date"
-    },
-    "surgery_time": {
+      "description": "Patient this surgery record belongs to.",
       "type": "string"
     },
     "procedure": {
@@ -19,19 +20,27 @@
     "surgeon": {
       "type": "string"
     },
-    "office_phone": {
+    "surgery_date": {
+      "format": "date",
       "type": "string"
     },
-    "fever_threshold": {
-      "type": "number"
-    },
-    "notes": {
+    "surgery_time": {
       "type": "string"
     }
   },
   "required": [],
   "rls": {
     "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "delete": {
       "$or": [
         {
           "created_by_id": "{{user.id}}"
@@ -60,16 +69,7 @@
           "data.patient_id": "{{user.data.patient_id}}"
         }
       ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
     }
-  }
+  },
+  "type": "object"
 }

@@ -22,11 +22,19 @@
   "rls": {
     "read": {
       "$or": [
-        { "created_by_id": "{{user.id}}" },
-        { "id": "{{user.data.patient_id}}" }
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "id": "{{user.data.patient_id}}"
+        }
       ]
     },
-    "update": { "created_by_id": "{{user.id}}" },
-    "delete": { "created_by_id": "{{user.id}}" }
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
   }
 }
