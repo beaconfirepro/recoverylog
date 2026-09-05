@@ -1,13 +1,13 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { CalendarDays, History as HistoryIcon, TrendingUp, FileDown, Scissors } from "lucide-react";
+import { CalendarDays, History as HistoryIcon, TrendingUp, UserRound, Scissors } from "lucide-react";
 
 const NAV = [
   { to: "/", label: "Today", icon: CalendarDays, match: (p) => p === "/" || p.startsWith("/day") },
   { to: "/history", label: "History", icon: HistoryIcon, match: (p) => p.startsWith("/history") },
   { to: "/trends", label: "Trends", icon: TrendingUp, match: (p) => p.startsWith("/trends") },
   { to: "/surgery", label: "Surgery", icon: Scissors, match: (p) => p.startsWith("/surgery") },
-  { to: "/export", label: "Export", icon: FileDown, match: (p) => p.startsWith("/export") }
+  { to: "/profile", label: "Profile", icon: UserRound, match: (p) => p.startsWith("/profile") }
 ];
 
 export default function Layout() {

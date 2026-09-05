@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -16,7 +16,7 @@ import Home from './pages/Home';
 import Day from './pages/Day';
 import History from './pages/History';
 import Trends from './pages/Trends';
-import Export from './pages/Export';
+import Profile from './pages/Profile';
 import SurgeryInfo from './pages/SurgeryInfo';
 
 const AuthenticatedApp = () => {
@@ -55,7 +55,8 @@ const AuthenticatedApp = () => {
         <Route path="/history" element={<History />} />
         <Route path="/trends" element={<Trends />} />
         <Route path="/surgery" element={<SurgeryInfo />} />
-        <Route path="/export" element={<Export />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/export" element={<Navigate to="/profile" replace />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

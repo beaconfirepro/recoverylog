@@ -1,16 +1,31 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { jsPDF } from "jspdf";
+import { LogOut } from "lucide-react";
 import { todayStr, dateRange, fullDate, postOpLabel, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { TYPES, RED_FLAG_ITEMS } from "@/lib/recovery";
 import { computeTotals, sortEntries } from "@/lib/daySummary";
+import { useAuth } from "@/lib/AuthContext";
 import Field from "@/components/Field";
 
-export default function Export() {
+const Row = ({ label, value }) => (
+  <div className="flex items-baseline justify-between gap-3 py-1.5 border-b-2 last:border-b-0 min-w-0">
+    <span className="font-heading text-[11px] uppercase tracking-wider text-muted-foreground shrink-0">{label}</span>
+    <span className="text-sm font-bold text-right break-words min-w-0">{value || "—"}</span>
+  </div>
+);
+
+export default function Profile() {
+  const { user, logout } = useAuth();
+  const [surgery, setSurgery] = useState(null);
   const [from, setFrom] = useState(todayStr());
   const [to, setTo] = useState(todayStr());
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    base44.entities.SurgeryInfo.list("created_date", 1).then((info) => setSurgery(info[0] || null));
+  }, []);
 
   // dateRange() stops at MAX_RANGE_DAYS. Silently dropping days out of a record
   // meant for a surgeon is worse than refusing, so block the export instead.
@@ -114,7 +129,27 @@ export default function Export() {
 
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-2xl uppercase">Export</h1>
+      <h1 className="font-display text-2xl uppercase">Profile</h1>
+
+      <div className="nb-card overflow-hidden">
+        <div className="px-4 py-3 border-b-2 bg-muted">
+          <div className="font-display text-xl uppercase leading-tight break-words">Patient</div>
+          <div className="text-sm font-semibold break-words">Who this log belongs to.</div>
+        </div>
+        <div className="p-4">
+          <Row label="Name" value={user?.full_name} />
+          <Row label="Email" value={user?.email} />
+          <Row label="Procedure" value={surgery?.procedure} />
+          <Row label="Surgery date" value={surgery?.surgery_date ? fullDate(surgery.surgery_date) : null} />
+          <Row label="Surgeon" value={surgery?.surgeon} />
+        </div>
+        <div className="px-4 pb-4">
+          <button className="nb-btn w-full h-12 bg-card flex items-center justify-center gap-2" onClick={() => logout()}>
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </button>
+        </div>
+      </div>
 
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
