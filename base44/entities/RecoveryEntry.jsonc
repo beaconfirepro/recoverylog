@@ -18,6 +18,10 @@
       "description": "Patient this entry belongs to.",
       "type": "string"
     },
+    "surgery_id": {
+      "description": "Surgery this entry is being tracked against.",
+      "type": "string"
+    },
     "type": {
       "enum": [
         "checkin",
@@ -48,6 +52,7 @@
     "type",
     "entry_time"
   ],
+  "type": "object",
   "rls": {
     "create": {
       "$or": [
@@ -89,6 +94,5 @@
         }
       ]
     }
-  },
-  "type": "object"
+  }
 }
