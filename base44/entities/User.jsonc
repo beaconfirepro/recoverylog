@@ -1,17 +1,21 @@
 {
+  "name": "User",
   "properties": {
+    "patient_id": {
+      "description": "Patient whose log this user may read and write. Set when a care-team invite is claimed; blank until then.",
+      "type": "string"
+    },
     "role": {
-      "type": "string",
       "description": "The role of the user in the app",
       "enum": [
         "admin",
         "user"
-      ]
+      ],
+      "type": "string"
     }
   },
   "required": [
     "role"
   ],
-  "name": "User",
   "type": "object"
 }
