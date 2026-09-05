@@ -1,11 +1,20 @@
 import React from "react";
 import { TYPES, QUICK_ORDER } from "@/lib/recovery";
 
-export default function QuickAdd({ onAdd }) {
+export default function QuickAdd({ types, onAdd }) {
+  const list = types?.length ? types : QUICK_ORDER;
+  if (list.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card break-words">
+        Nothing is selected to track. Pick what to track in Profile.
+      </p>
+    );
+  }
   return (
     <div className="grid grid-cols-4 gap-2">
-      {QUICK_ORDER.map((t) => {
+      {list.map((t) => {
         const c = TYPES[t];
+        if (!c) return null;
         const Icon = c.icon;
         return (
           <button

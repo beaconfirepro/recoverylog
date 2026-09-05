@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { computeTotals } from "@/lib/daySummary";
 import { daysBetween, shortDate } from "@/lib/dates";
+import { usePatient } from "@/lib/PatientContext";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, Tooltip, Legend, ReferenceLine
@@ -20,16 +21,20 @@ const avg = (list) => {
 const round1 = (n) => (n == null ? null : Math.round(n * 10) / 10);
 
 export default function Trends() {
+  const { activeSurgery, activeSurgeryId } = usePatient();
   const [rows, setRows] = useState(null);
 
   useEffect(() => {
     const run = async () => {
-      const [info, days, entries] = await Promise.all([
-        base44.entities.SurgeryInfo.list("created_date", 1),
-        base44.entities.RecoveryDay.list("date", 200),
-        base44.entities.RecoveryEntry.list("created_date", 3000)
+      if (!activeSurgeryId) {
+        setRows([]);
+        return;
+      }
+      const [days, entries] = await Promise.all([
+        base44.entities.RecoveryDay.filter({ surgery_id: activeSurgeryId }, "date", 200),
+        base44.entities.RecoveryEntry.filter({ surgery_id: activeSurgeryId }, "created_date", 3000)
       ]);
-      const surgeryDate = info[0]?.surgery_date || null;
+      const surgeryDate = activeSurgery?.surgery_date || null;
       const byDate = {};
       entries.forEach((e) => {
         (byDate[e.date] = byDate[e.date] || []).push(e);

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
-import { sortEntries, runningTotals, computeTotals, lastBmInfo, timeToMin } from "@/lib/daySummary";
-import { usePatient } from "@/lib/PatientContext";
+import { sortEntries, runningTotals, computeTotals } from "@/lib/daySummary";
+import { usePatient, trackedTypes } from "@/lib/PatientContext";
 import QuickAdd from "./QuickAdd";
 import EntryCard from "./EntryCard";
 import EntryForm from "./EntryForm";
@@ -18,32 +18,26 @@ const Spinner = () => (
 );
 
 export default function DayView({ date }) {
-  const { patientId } = usePatient();
+  const { patientId, activeSurgery, activeSurgeryId } = usePatient();
   const [day, setDay] = useState(null);
   const [entries, setEntries] = useState(null);
   const [spots, setSpots] = useState([]);
-  const [lastBmEntry, setLastBmEntry] = useState(null);
-  const [surgeryDate, setSurgeryDate] = useState(null);
   const [dialog, setDialog] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    const info = await base44.entities.SurgeryInfo.list("created_date", 1);
-    const surgeryDate = info[0]?.surgery_date || null;
-    const existing = await base44.entities.RecoveryDay.filter({ date }, "date", 1);
-    const d = existing[0] || (await base44.entities.RecoveryDay.create({ date, patient_id: patientId }));
-    setSurgeryDate(surgeryDate);
+    if (!activeSurgeryId) {
+      setDay(null);
+      setEntries([]);
+      return;
+    }
+    const existing = await base44.entities.RecoveryDay.filter({ date, surgery_id: activeSurgeryId }, "date", 1);
+    const d =
+      existing[0] ||
+      (await base44.entities.RecoveryDay.create({ date, patient_id: patientId, surgery_id: activeSurgeryId }));
     setDay(d);
-    setEntries(await base44.entities.RecoveryEntry.filter({ date }, "created_date", 500));
-
-    // "Last BM" must be the latest one up to the day being viewed — not the
-    // latest overall, which would show a future BM when looking at a past day.
-    const bms = await base44.entities.RecoveryEntry.filter({ type: "bm" }, "-date", 50);
-    const prior = bms
-      .filter((e) => e.date <= date)
-      .sort((a, b) => (a.date === b.date ? timeToMin(b.entry_time) - timeToMin(a.entry_time) : a.date < b.date ? 1 : -1));
-    setLastBmEntry(prior[0] || null);
-  }, [date, patientId]);
+    setEntries(await base44.entities.RecoveryEntry.filter({ date, surgery_id: activeSurgeryId }, "created_date", 500));
+  }, [date, patientId, activeSurgeryId]);
 
   const loadSpots = useCallback(async () => {
     setSpots(await base44.entities.MeasurementSpot.list("sort_order", 50));
@@ -52,7 +46,6 @@ export default function DayView({ date }) {
   useEffect(() => {
     setDay(null);
     setEntries(null);
-    setSurgeryDate(null);
     load();
   }, [load]);
 
@@ -60,7 +53,22 @@ export default function DayView({ date }) {
     loadSpots();
   }, [loadSpots]);
 
+  if (!activeSurgeryId) {
+    return (
+      <div className="nb-card p-4">
+        <p className="text-sm font-semibold break-words">
+          No surgery is being tracked yet. Add one on the Surgery page.
+        </p>
+      </div>
+    );
+  }
   if (!day || entries === null) return <Spinner />;
+
+  const sd = activeSurgery?.surgery_date || null;
+  const beforeSurgery = !!sd && date < sd;
+  const loggable = beforeSurgery
+    ? activeSurgery?.track_before !== false
+    : activeSurgery?.track_after !== false;
 
   const sorted = sortEntries(entries);
   const run = runningTotals(sorted);
@@ -69,7 +77,14 @@ export default function DayView({ date }) {
   const saveEntry = async (payload) => {
     setSaving(true);
     if (dialog.entry) await base44.entities.RecoveryEntry.update(dialog.entry.id, payload);
-    else await base44.entities.RecoveryEntry.create({ date, type: dialog.type, patient_id: patientId, ...payload });
+    else
+      await base44.entities.RecoveryEntry.create({
+        date,
+        type: dialog.type,
+        patient_id: patientId,
+        surgery_id: activeSurgeryId,
+        ...payload
+      });
     setSaving(false);
     setDialog(null);
     load();
@@ -93,16 +108,19 @@ export default function DayView({ date }) {
 
   return (
     <div className="space-y-4">
-      <DayHeader
-        day={day}
-        surgeryDate={surgeryDate}
-        totals={totals}
-        lastBm={lastBmInfo(lastBmEntry, date)}
-      />
+      <DayHeader day={day} />
 
       <div>
         <h2 className="font-heading text-sm uppercase tracking-wider mb-2">Log an entry</h2>
-        <QuickAdd onAdd={(type) => setDialog({ type })} />
+        {loggable ? (
+          <QuickAdd types={trackedTypes(activeSurgery)} onAdd={(type) => setDialog({ type })} />
+        ) : (
+          <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card break-words">
+            {beforeSurgery
+              ? "This surgery is not tracking days before the surgery date. Turn that on in Profile to log here."
+              : "This surgery is not tracking days from the surgery date onwards. Turn that on in Profile to log here."}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
