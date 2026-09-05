@@ -50,13 +50,12 @@ export default function History() {
       {days.map((d) => {
         const t = totalsByDay[d.date] || computeTotals([], d.date);
         const flags = redFlagYesCount(d);
+        const label = postOpLabel(surgeryDate, d.date);
         return (
           <Link key={d.id} to={`/day/${d.date}`} className="nb-card block p-3">
             <div className="flex items-baseline justify-between gap-2 min-w-0">
-              <span className="font-display text-xl uppercase truncate">
-                {postOpLabel(surgeryDate, d.date) || `Day ${d.day_number}`}
-              </span>
-              <span className="text-sm font-semibold text-muted-foreground shrink-0">{niceDate(d.date)}</span>
+              <span className="font-display text-xl uppercase truncate">{label || niceDate(d.date)}</span>
+              {label && <span className="text-sm font-semibold text-muted-foreground shrink-0">{niceDate(d.date)}</span>}
             </div>
             <div className="flex flex-wrap gap-1.5 mt-2">
               <span className="nb-chip h-7 px-2.5 text-xs bg-[#00B4D8] text-white">💧 {t.water} oz</span>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { computeTotals } from "@/lib/daySummary";
-import { daysBetween } from "@/lib/dates";
+import { daysBetween, shortDate } from "@/lib/dates";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, Tooltip, Legend, ReferenceLine
@@ -39,7 +39,7 @@ export default function Trends() {
         const checkins = es.filter((e) => e.type === "checkin");
         const t = computeTotals(es, d.date);
         return {
-          label: surgeryDate ? `D${daysBetween(surgeryDate, d.date)}` : `D${d.day_number}`,
+          label: surgeryDate ? `D${daysBetween(surgeryDate, d.date)}` : shortDate(d.date),
           pain: round1(avg(checkins.map((e) => e.data?.pain))),
           energy: round1(avg(checkins.map((e) => e.data?.energy))),
           mood: round1(avg(checkins.map((e) => e.data?.mood))),
