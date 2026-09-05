@@ -1,16 +1,31 @@
 {
   "name": "RecoveryDay",
-  "type": "object",
   "properties": {
     "date": {
-      "type": "string",
-      "format": "date"
+      "format": "date",
+      "type": "string"
     },
     "day_number": {
       "type": "number"
     },
-    "woke_at": {
+    "patient_id": {
+      "description": "Patient this day belongs to.",
       "type": "string"
+    },
+    "questions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "red_flag_answers": {
+      "type": "object"
+    },
+    "red_flag_completed": {
+      "type": "boolean"
+    },
+    "red_flag_details": {
+      "type": "object"
     },
     "slept_hours": {
       "type": "number"
@@ -18,23 +33,12 @@
     "slept_position": {
       "type": "string"
     },
-    "red_flag_completed": {
-      "type": "boolean"
-    },
-    "red_flag_answers": {
-      "type": "object"
-    },
-    "red_flag_details": {
-      "type": "object"
-    },
-    "questions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "woke_at": {
+      "type": "string"
     }
   },
   "required": [
     "date"
-  ]
+  ],
+  "type": "object"
 }
