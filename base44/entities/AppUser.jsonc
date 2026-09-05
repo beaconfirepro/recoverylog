@@ -1,0 +1,75 @@
+{
+  "name": "AppUser",
+  "properties": {
+    "can_write": {
+      "default": true,
+      "description": "False makes a team member read-only.",
+      "type": "boolean"
+    },
+    "dob": {
+      "description": "Date of birth. On a patient row this is what a joining member confirms.",
+      "format": "date",
+      "type": "string"
+    },
+    "email": {
+      "description": "Base44 login email. This is what links the row to a real signed-in account.",
+      "type": "string"
+    },
+    "first_name": {
+      "description": "First name. On a patient row this is half of what a joining member has to type.",
+      "type": "string"
+    },
+    "full_name": {
+      "description": "Deprecated, replaced by first_name and last_name. Left for one release.",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Whether this person is the patient or on their care team.",
+      "enum": [
+        "patient",
+        "team_member"
+      ],
+      "type": "string"
+    },
+    "last_name": {
+      "description": "Last name. On a patient row this is half of what a joining member has to type.",
+      "type": "string"
+    },
+    "patient_id": {
+      "description": "Which patient's group this row belongs to. A patient row points at itself.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "email",
+    "kind"
+  ],
+  "type": "object",
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.email": "{{user.email}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        },
+        {
+          "id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "create": {
+      "data.patient_id": "{{user.data.patient_id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
