@@ -1,32 +1,31 @@
 {
   "name": "PatientGroup",
-  "type": "object",
   "properties": {
-    "patient_id": {
-      "type": "string",
-      "description": "Patient this membership grants access to."
-    },
-    "email": {
-      "type": "string",
-      "description": "Login email of the invited person. Must match their Base44 account."
-    },
-    "full_name": {
-      "type": "string",
-      "description": "Invited person's name. Shown masked on the claim screen."
-    },
-    "dob": {
-      "type": "string",
-      "format": "date",
-      "description": "Invited person's date of birth, entered to confirm which masked name is theirs."
-    },
     "can_write": {
-      "type": "boolean",
       "default": true,
-      "description": "False makes this a read-only member."
+      "description": "False makes this a read-only member.",
+      "type": "boolean"
     },
     "claimed_at": {
-      "type": "string",
-      "description": "Set when the invite is claimed. Blank means still pending."
+      "description": "Set when the invite is claimed. Blank means still pending.",
+      "type": "string"
+    },
+    "dob": {
+      "description": "Invited person's date of birth, entered to confirm which masked name is theirs.",
+      "format": "date",
+      "type": "string"
+    },
+    "email": {
+      "description": "Login email of the invited person. Must match their Base44 account.",
+      "type": "string"
+    },
+    "full_name": {
+      "description": "Invited person's name. Shown masked on the claim screen.",
+      "type": "string"
+    },
+    "patient_id": {
+      "description": "Patient this membership grants access to.",
+      "type": "string"
     }
   },
   "required": [
@@ -36,6 +35,19 @@
     "dob"
   ],
   "rls": {
+    "create": {
+      "data.patient_id": "{{user.data.patient_id}}"
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
     "read": {
       "$or": [
         {
@@ -58,9 +70,7 @@
           "data.email": "{{user.email}}"
         }
       ]
-    },
-    "delete": {
-      "created_by_id": "{{user.id}}"
     }
-  }
+  },
+  "type": "object"
 }
