@@ -4,14 +4,8 @@ import { useAuth } from "@/lib/AuthContext";
 
 const PatientContext = createContext();
 
-// Every name on the claim screen is shown as initial + asterisks, so the list
-// confirms which row is yours without printing anyone's name in full.
-export const maskName = (name) =>
-  (name || "")
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((w) => w[0] + "*".repeat(Math.max(w.length - 1, 1)))
-    .join(" ");
+export const displayName = (row) =>
+  [row?.first_name, row?.last_name].filter(Boolean).join(" ").trim();
 
 // AppUser mirrors the app's people — the patient and their care team in one
 // table. A person's row is written by the patient, never by themselves, so what
