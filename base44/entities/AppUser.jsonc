@@ -7,7 +7,7 @@
       "type": "boolean"
     },
     "dob": {
-      "description": "Date of birth. On a patient row this is what a joining member confirms.",
+      "description": "This person's date of birth. On a patient row this is the one a joining member types.",
       "format": "date",
       "type": "string"
     },
@@ -16,11 +16,7 @@
       "type": "string"
     },
     "first_name": {
-      "description": "First name. On a patient row this is half of what a joining member has to type.",
-      "type": "string"
-    },
-    "full_name": {
-      "description": "Deprecated, replaced by first_name and last_name. Left for one release.",
+      "description": "This person's first name.",
       "type": "string"
     },
     "kind": {
@@ -32,7 +28,20 @@
       "type": "string"
     },
     "last_name": {
-      "description": "Last name. On a patient row this is half of what a joining member has to type.",
+      "description": "This person's last name.",
+      "type": "string"
+    },
+    "match_dob": {
+      "description": "On a team_member row: a copy of the patient's date of birth.",
+      "format": "date",
+      "type": "string"
+    },
+    "match_first_name": {
+      "description": "On a team_member row: a copy of the patient's first name, written by the patient, matched when the member joins.",
+      "type": "string"
+    },
+    "match_last_name": {
+      "description": "On a team_member row: a copy of the patient's last name.",
       "type": "string"
     },
     "patient_id": {
