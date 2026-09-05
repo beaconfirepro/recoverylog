@@ -102,17 +102,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = (shouldRedirect = true) => {
+  const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    
-    if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
-    }
+    // logout() clears the token and then goes wherever it is pointed. Pointing
+    // it at the current page reloaded an app route with no token, which lands
+    // you signed out but still inside the app. Send it to the login screen.
+    base44.auth.logout(`${window.location.origin}/login`);
   };
 
   const navigateToLogin = () => {

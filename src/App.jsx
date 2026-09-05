@@ -24,7 +24,11 @@ import SurgeryInfo from './pages/SurgeryInfo';
 // A signed-in account still has to resolve to a patient before the log opens:
 // the owner's own record, or one an invite linked it to.
 const PatientGate = () => {
+  const { isAuthenticated, authChecked } = useAuth();
   const { linked, loadingPatient } = usePatient();
+  // No token is not an error the app raises, so without this a signed-out
+  // visitor fell through to an app route instead of the login screen.
+  if (authChecked && !isAuthenticated) return <Navigate to="/login" replace />;
   if (loadingPatient) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
