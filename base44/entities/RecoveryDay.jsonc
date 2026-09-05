@@ -33,6 +33,10 @@
     "slept_position": {
       "type": "string"
     },
+    "surgery_id": {
+      "description": "Surgery this day is being tracked against.",
+      "type": "string"
+    },
     "woke_at": {
       "type": "string"
     }
@@ -40,6 +44,7 @@
   "required": [
     "date"
   ],
+  "type": "object",
   "rls": {
     "create": {
       "$or": [
@@ -81,6 +86,5 @@
         }
       ]
     }
-  },
-  "type": "object"
+  }
 }

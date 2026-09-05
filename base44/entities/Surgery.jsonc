@@ -1,0 +1,98 @@
+{
+  "name": "Surgery",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "description": "Patient this surgery belongs to."
+    },
+    "label": {
+      "type": "string",
+      "description": "Short name shown in the day-header picker, e.g. 'Tummy tuck' or 'Left knee'."
+    },
+    "surgery_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Day zero. Every day label counts from here."
+    },
+    "surgery_time": {
+      "type": "string"
+    },
+    "procedure": {
+      "type": "string"
+    },
+    "surgeon": {
+      "type": "string"
+    },
+    "office_phone": {
+      "type": "string"
+    },
+    "fever_threshold": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "tracked_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Entry types offered for this surgery. Empty or absent means all of them."
+    },
+    "track_before": {
+      "type": "boolean",
+      "default": true,
+      "description": "Allow logging on days before the surgery date."
+    },
+    "track_after": {
+      "type": "boolean",
+      "default": true,
+      "description": "Allow logging on the surgery date and after."
+    },
+    "archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "Hidden from the picker but its days are kept."
+    }
+  },
+  "required": [
+    "patient_id",
+    "label"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "create": {
+      "data.patient_id": "{{user.data.patient_id}}"
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    }
+  }
+}
