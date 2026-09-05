@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
-import { daysBetween } from "@/lib/dates";
-import { sortEntries, runningTotals, computeTotals, lastBmInfo } from "@/lib/daySummary";
+import { sortEntries, runningTotals, computeTotals, lastBmInfo, timeToMin } from "@/lib/daySummary";
 import QuickAdd from "./QuickAdd";
 import EntryCard from "./EntryCard";
 import EntryForm from "./EntryForm";
@@ -30,21 +29,18 @@ export default function DayView({ date }) {
     const info = await base44.entities.SurgeryInfo.list("created_date", 1);
     const surgeryDate = info[0]?.surgery_date || null;
     const existing = await base44.entities.RecoveryDay.filter({ date }, "date", 1);
-    let d = existing[0];
-    if (!d) {
-      const all = await base44.entities.RecoveryDay.list("date", 500);
-      const first = all[0];
-      const startDate = surgeryDate || first?.date;
-      d = await base44.entities.RecoveryDay.create({
-        date,
-        day_number: startDate ? daysBetween(startDate, date) : 0
-      });
-    }
+    const d = existing[0] || (await base44.entities.RecoveryDay.create({ date }));
     setSurgeryDate(surgeryDate);
     setDay(d);
     setEntries(await base44.entities.RecoveryEntry.filter({ date }, "created_date", 500));
-    const bm = await base44.entities.RecoveryEntry.filter({ type: "bm" }, "-created_date", 1);
-    setLastBmEntry(bm[0] || null);
+
+    // "Last BM" must be the latest one up to the day being viewed — not the
+    // latest overall, which would show a future BM when looking at a past day.
+    const bms = await base44.entities.RecoveryEntry.filter({ type: "bm" }, "-date", 50);
+    const prior = bms
+      .filter((e) => e.date <= date)
+      .sort((a, b) => (a.date === b.date ? timeToMin(b.entry_time) - timeToMin(a.entry_time) : a.date < b.date ? 1 : -1));
+    setLastBmEntry(prior[0] || null);
   }, [date]);
 
   const loadSpots = useCallback(async () => {

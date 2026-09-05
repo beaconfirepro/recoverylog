@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { jsPDF } from "jspdf";
-import { todayStr, dateRange, fullDate, postOpLabel } from "@/lib/dates";
+import { todayStr, dateRange, fullDate, postOpLabel, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { TYPES, RED_FLAG_ITEMS } from "@/lib/recovery";
 import { computeTotals, sortEntries } from "@/lib/daySummary";
 import Field from "@/components/Field";
@@ -11,6 +11,11 @@ export default function Export() {
   const [to, setTo] = useState(todayStr());
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+
+  // dateRange() stops at MAX_RANGE_DAYS. Silently dropping days out of a record
+  // meant for a surgeon is worse than refusing, so block the export instead.
+  const spanDays = daysBetween(from, to) + 1;
+  const tooWide = spanDays > MAX_RANGE_DAYS;
 
   const generate = async () => {
     setBusy(true);
@@ -115,10 +120,20 @@ export default function Export() {
             <input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} className="nb-input" />
           </Field>
 
+          <p className="col-span-2 text-sm font-semibold text-center break-words">
+            {tooWide ? (
+              <span className="text-destructive">
+                {spanDays} days is over the {MAX_RANGE_DAYS}-day limit — narrow the range.
+              </span>
+            ) : (
+              `${spanDays} day${spanDays === 1 ? "" : "s"} in range`
+            )}
+          </p>
+
           <button
             className="col-span-2 nb-btn w-full h-14 bg-primary text-primary-foreground"
             onClick={generate}
-            disabled={busy || !from || !to}
+            disabled={busy || !from || !to || tooWide}
           >
             {busy ? "Building PDF…" : "Download PDF"}
           </button>

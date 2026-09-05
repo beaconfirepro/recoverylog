@@ -16,17 +16,24 @@ export const parseDate = (s) => {
 export const niceDate = (s) =>
   parseDate(s).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 
+export const shortDate = (s) => {
+  const d = parseDate(s);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+};
+
 export const fullDate = (s) =>
   parseDate(s).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 
 export const daysBetween = (a, b) =>
   Math.round((parseDate(b) - parseDate(a)) / 86400000);
 
+export const MAX_RANGE_DAYS = 120;
+
 export const dateRange = (from, to) => {
   const out = [];
   let d = parseDate(from);
   const end = parseDate(to);
-  while (d <= end && out.length < 120) {
+  while (d <= end && out.length < MAX_RANGE_DAYS) {
     out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
     d.setDate(d.getDate() + 1);
   }
