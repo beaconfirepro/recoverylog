@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ChevronDown, Pencil, Plus, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { parseDate, daysBetween } from "@/lib/dates";
+import { parseDate, postOpLabel } from "@/lib/dates";
+import Field from "@/components/Field";
 
 const Stat = ({ label, value }) => (
   <div className="border-2 rounded-xl px-2.5 py-1.5 bg-muted min-w-0">
@@ -48,7 +47,7 @@ export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onS
     onSpotsChanged();
   };
 
-  const dayNum = surgeryDate ? daysBetween(surgeryDate, day.date) : null;
+  const dayLabel = postOpLabel(surgeryDate, day.date);
 
   const measEntries = totals.measurements
     ? Object.entries(totals.measurements).filter(([k, v]) => v !== null && v !== "" && k !== "photo_url")
@@ -58,8 +57,8 @@ export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onS
     <div className="nb-card p-4 space-y-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          {dayNum !== null ? (
-            <h1 className="font-display text-3xl leading-none uppercase">Day {dayNum}</h1>
+          {dayLabel ? (
+            <h1 className="font-display text-3xl leading-none uppercase break-words">{dayLabel}</h1>
           ) : (
             <h1 className="font-display text-xl leading-tight uppercase text-destructive">Surgery date not set</h1>
           )}
@@ -103,17 +102,21 @@ export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onS
           <DialogHeader>
             <DialogTitle className="font-heading uppercase">Edit day header</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="font-heading text-xs uppercase">Woke at</Label>
-              <Input type="time" value={wokeAt} onChange={(e) => setWokeAt(e.target.value)} className="h-12" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-heading text-xs uppercase">Slept (hours)</Label>
-              <Input type="number" inputMode="decimal" min="0" value={sleptHours} onChange={(e) => setSleptHours(e.target.value)} className="h-12" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-heading text-xs uppercase">Slept position</Label>
+          <div className="grid grid-cols-2 gap-3 min-w-0">
+            <Field label="Woke at">
+              <input type="time" value={wokeAt} onChange={(e) => setWokeAt(e.target.value)} className="nb-input" />
+            </Field>
+            <Field label="Slept (hours)">
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                value={sleptHours}
+                onChange={(e) => setSleptHours(e.target.value)}
+                className="nb-input"
+              />
+            </Field>
+            <Field label="Slept position" span>
               <div className="flex flex-wrap gap-1.5">
                 {["recliner", "wedge", "propped", "flat", "side"].map((p) => (
                   <button
@@ -126,9 +129,8 @@ export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onS
                   </button>
                 ))}
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="font-heading text-xs uppercase">Measurement spots (name once, use daily)</Label>
+            </Field>
+            <Field label="Measurement spots (name once, use daily)" span>
               <div className="flex flex-wrap gap-1.5">
                 {spots.map((s) => (
                   <span key={s.id} className="nb-chip inline-flex items-center gap-1 bg-secondary text-secondary-foreground">
@@ -139,14 +141,24 @@ export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onS
                   </span>
                 ))}
               </div>
-              <div className="flex gap-2">
-                <Input value={newSpot} onChange={(e) => setNewSpot(e.target.value)} placeholder="e.g. waist, left thigh" className="h-12" />
-                <button className="nb-btn h-12 px-4 bg-accent text-accent-foreground" onClick={addSpot}>
+              <div className="flex gap-2 min-w-0 pt-1.5">
+                <input
+                  type="text"
+                  value={newSpot}
+                  onChange={(e) => setNewSpot(e.target.value)}
+                  placeholder="e.g. waist, left thigh"
+                  className="nb-input"
+                />
+                <button className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground" onClick={addSpot}>
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
-            </div>
-            <button className="nb-btn w-full h-14 bg-primary text-primary-foreground" onClick={save} disabled={saving}>
+            </Field>
+            <button
+              className="col-span-2 nb-btn w-full h-14 bg-primary text-primary-foreground"
+              onClick={save}
+              disabled={saving}
+            >
               {saving ? "Saving…" : "Save header"}
             </button>
           </div>

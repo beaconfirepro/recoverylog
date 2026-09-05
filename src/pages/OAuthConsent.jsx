@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { appParams } from "@/lib/app-params";
-import { Button } from "@/components/ui/button";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 
@@ -217,22 +216,21 @@ export default function OAuthConsent() {
       )}
 
       <div className="flex gap-3">
-        <Button
-          variant="outline"
-          className="flex-1 h-12 font-medium"
+        <button
+          className="nb-btn flex-1 min-w-0 h-14 bg-card"
           disabled={submitting}
           onClick={() => respond("deny")}
         >
           Deny
-        </Button>
-        <Button
-          className="flex-1 h-12 font-medium"
+        </button>
+        <button
+          className="nb-btn flex-1 min-w-0 h-14 bg-primary text-primary-foreground"
           disabled={submitting}
           onClick={() => respond("approve")}
         >
           {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
           Approve
-        </Button>
+        </button>
       </div>
     </AuthLayout>
   );

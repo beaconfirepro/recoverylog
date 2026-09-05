@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { AlertTriangle, Check } from "lucide-react";
 import { RED_FLAG_ITEMS } from "@/lib/recovery";
 import { nowTime } from "@/lib/dates";
@@ -58,7 +57,7 @@ export default function RedFlagCheck({ day, onSaved }) {
           return (
             <div key={item.key}>
               <div className="flex items-center justify-between gap-2">
-                <span className={`text-sm font-semibold min-w-0 ${ans === "yes" ? "text-destructive" : ""}`}>{item.label}</span>
+                <span className={`text-sm font-semibold min-w-0 break-words ${ans === "yes" ? "text-destructive" : ""}`}>{item.label}</span>
                 <div className="flex gap-1.5 shrink-0">
                   <button
                     className="nb-chip h-9 text-xs"
@@ -78,11 +77,11 @@ export default function RedFlagCheck({ day, onSaved }) {
               </div>
               {ans === "yes" && (
                 <div className="flex items-center gap-2 mt-1.5 pl-2">
-                  <Input
+                  <input
                     type="time"
                     value={det?.time || ""}
                     onChange={(e) => setDetails((d) => ({ ...d, [item.key]: { ...d[item.key], time: e.target.value } }))}
-                    className="w-28 h-9"
+                    className="nb-input w-32 h-9 shrink-0"
                   />
                   <button
                     className="nb-chip h-9 text-xs"

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { jsPDF } from "jspdf";
-import { todayStr, dateRange, fullDate } from "@/lib/dates";
+import { todayStr, dateRange, fullDate, postOpLabel } from "@/lib/dates";
 import { TYPES, RED_FLAG_ITEMS } from "@/lib/recovery";
 import { computeTotals, sortEntries } from "@/lib/daySummary";
+import Field from "@/components/Field";
 
 export default function Export() {
   const [from, setFrom] = useState(todayStr());
@@ -14,6 +15,8 @@ export default function Export() {
   const generate = async () => {
     setBusy(true);
     setDone(false);
+    const info = await base44.entities.SurgeryInfo.list("created_date", 1);
+    const surgeryDate = info[0]?.surgery_date || null;
     const days = await base44.entities.RecoveryDay.list("date", 500);
     const dayMap = {};
     days.forEach((d) => {
@@ -55,7 +58,7 @@ export default function Export() {
       if (!day && dayEntries.length === 0) return;
       const totals = computeTotals(dayEntries, date);
 
-      line(`DAY ${day?.day_number ?? "?"} — ${fullDate(date)}`, { bold: true, size: 13, gap: 2 });
+      line(`${(postOpLabel(surgeryDate, date) || "Surgery date not set").toUpperCase()} — ${fullDate(date)}`, { bold: true, size: 13, gap: 2 });
       line(
         `Woke ${day?.woke_at || "—"} · Temp AM ${totals.tempAm ?? "—"} / PM ${totals.tempPm ?? "—"} · Weight ${totals.weight ?? "—"} · Slept ${day?.slept_hours ?? "—"}h ${day?.slept_position || ""} · Photos ${totals.photoTaken ? "yes" : "no"}`,
         { size: 9 }
@@ -97,38 +100,30 @@ export default function Export() {
   return (
     <div className="space-y-4">
       <h1 className="font-display text-2xl uppercase">Export</h1>
-      <div className="nb-card p-4 space-y-4">
-        <p className="text-sm font-semibold">Save a day or a range as a PDF, paper-diary style.</p>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="font-heading text-xs uppercase">From</label>
-            <input
-              type="date"
-              value={from}
-              max={to}
-              onChange={(e) => setFrom(e.target.value)}
-              className="w-full min-w-0 h-12 border-2 rounded-xl bg-card px-3 font-semibold"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="font-heading text-xs uppercase">To</label>
-            <input
-              type="date"
-              value={to}
-              min={from}
-              onChange={(e) => setTo(e.target.value)}
-              className="w-full min-w-0 h-12 border-2 rounded-xl bg-card px-3 font-semibold"
-            />
-          </div>
+
+      <div className="nb-card overflow-hidden">
+        <div className="px-4 py-3 border-b-2 bg-muted">
+          <div className="font-display text-xl uppercase leading-tight break-words">Download a PDF</div>
+          <div className="text-sm font-semibold break-words">A day or a range, paper-diary style.</div>
         </div>
-        <button
-          className="nb-btn w-full h-14 bg-primary text-primary-foreground"
-          onClick={generate}
-          disabled={busy || !from || !to}
-        >
-          {busy ? "Building PDF…" : "Download PDF"}
-        </button>
-        {done && !busy && <p className="text-sm font-bold text-center">PDF downloaded ✔</p>}
+
+        <div className="p-4 grid grid-cols-2 gap-3 min-w-0">
+          <Field label="From">
+            <input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className="nb-input" />
+          </Field>
+          <Field label="To">
+            <input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} className="nb-input" />
+          </Field>
+
+          <button
+            className="col-span-2 nb-btn w-full h-14 bg-primary text-primary-foreground"
+            onClick={generate}
+            disabled={busy || !from || !to}
+          >
+            {busy ? "Building PDF…" : "Download PDF"}
+          </button>
+          {done && !busy && <p className="col-span-2 text-sm font-bold text-center">PDF downloaded ✔</p>}
+        </div>
       </div>
     </div>
   );

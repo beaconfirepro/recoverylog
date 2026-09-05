@@ -112,4 +112,18 @@
   .nb-chip {
     @apply border-2 rounded-full px-3 py-2 text-sm font-semibold;
   }
+  /* One input style for the whole app. block + min-w-0 + appearance-none keep
+     native date/time/number controls from forcing their intrinsic width on iOS,
+     and text-base stops iOS zooming the page on focus. */
+  .nb-input {
+    @apply block w-full min-w-0 h-12 appearance-none border-2 rounded-xl bg-card px-3 text-base font-semibold;
+    @apply placeholder:font-medium placeholder:text-muted-foreground;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+  .nb-textarea {
+    @apply nb-input h-auto py-2 font-medium resize-none;
+  }
+  .nb-label {
+    @apply block font-heading text-xs uppercase tracking-wide;
+  }
 }
