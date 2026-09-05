@@ -19,6 +19,19 @@ const hex = (h) => [
   parseInt(h.slice(5, 7), 16)
 ];
 
+// A PDF standard font is WinAnsi-encoded, so anything outside Latin-1 has no
+// glyph and renders as a substituted, mis-metered mess — the ⚠ that the skin
+// summary appends past 20 minutes did exactly that. Everything drawn goes
+// through here so one typeface behaves one way throughout.
+const safe = (v) =>
+  String(v ?? "")
+    .replace(/⚠/g, "(!)")
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[–—]/g, "-")
+    .replace(/…/g, "...")
+    .replace(/[^\x00-\xFF]/g, "");
+
 // Small radii: enough to soften a corner, not enough to look like a bubble.
 const R_CARD = 2.5;
 const R_CHIP = 1.5;
@@ -55,7 +68,7 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
   const chipWidth = (label) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
-    return doc.getTextWidth(label) + 14;
+    return doc.getTextWidth(safe(label)) + 14;
   };
 
   const chip = (x, cy, label, fillRgb, dark) => {
@@ -67,7 +80,7 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(...(dark ? INK : [255, 255, 255]));
-    doc.text(label, x + 7, cy);
+    doc.text(safe(label), x + 7, cy);
     return w + 4;
   };
 
@@ -110,7 +123,7 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
     doc.setFont("helvetica", opts.bold ? "bold" : "normal");
     doc.setFontSize(opts.size || 10);
     doc.setTextColor(...(opts.color || INK));
-    doc.text(String(s), x, y, opts.align ? { align: opts.align } : undefined);
+    doc.text(safe(s), x, y, opts.align ? { align: opts.align } : undefined);
   };
 
   startPage(true);
@@ -174,13 +187,13 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
       const cfg = TYPES[e.type];
       if (!cfg) return;
       const d = e.data || {};
-      const summary = `${cfg.summary(d, e, null)}${e.note ? ` — ${e.note}` : ""}`;
+      const summary = safe(`${cfg.summary(d, e, null)}${e.note ? ` - ${e.note}` : ""}`);
       const avail = R - L - 64;
 
       // The type's name leads in bold, the detail follows in regular.
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
-      const labelW = doc.getTextWidth(`${cfg.label}  `);
+      const labelW = doc.getTextWidth(safe(`${cfg.label}  `));
       doc.setFont("helvetica", "normal");
       const firstFit = doc.splitTextToSize(summary, Math.max(avail - labelW, 60));
       const line1 = firstFit[0] || "";
@@ -232,7 +245,7 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
           const line = `${label}${det.time ? ` at ${det.time}` : ""}${det.office_called ? " · office called" : ""}`;
           doc.setFont("helvetica", "bold");
           doc.setFontSize(9);
-          const lines = doc.splitTextToSize(line, R - L - 74);
+          const lines = doc.splitTextToSize(safe(line), R - L - 74);
           ensure(lines.length * 11 + 12);
           doc.setFillColor(...RED);
           doc.setDrawColor(...INK);
@@ -252,7 +265,7 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
     (day?.questions || []).forEach((q) => {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      const lines = doc.splitTextToSize(`Q for surgeon: ${q}`, R - L - 20);
+      const lines = doc.splitTextToSize(safe(`Q for surgeon: ${q}`), R - L - 20);
       ensure(lines.length * 11 + 4);
       lines.forEach((ln, i) => {
         text(ln, L + 6, { size: 9, color: PURPLE });
