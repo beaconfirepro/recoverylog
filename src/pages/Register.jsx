@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { UserPlus, Mail, Lock, Loader2 } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import AuthLayout from "@/components/AuthLayout";
@@ -101,8 +98,8 @@ export default function Register() {
             </InputOTPGroup>
           </InputOTP>
         </div>
-        <Button
-          className="w-full h-12 font-medium"
+        <button
+          className="nb-btn w-full h-14 bg-primary text-primary-foreground"
           onClick={handleVerify}
           disabled={loading || otpCode.length < 6}
         >
@@ -114,7 +111,7 @@ export default function Register() {
           ) : (
             "Verify"
           )}
-        </Button>
+        </button>
         <p className="text-center text-sm text-muted-foreground mt-4">
           Didn't receive the code?{" "}
           <button onClick={handleResend} className="text-primary font-medium hover:underline">
@@ -142,14 +139,13 @@ export default function Register() {
         </>
       }
     >
-      <Button
-        variant="outline"
-        className="w-full h-12 text-sm font-medium mb-6"
+      <button
+        className="nb-btn w-full h-14 bg-card mb-6"
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
         Continue with Google
-      </Button>
+      </button>
 
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
@@ -168,10 +164,10 @@ export default function Register() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <label htmlFor="email" className="nb-label">Email</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
+            <input
               id="email"
               type="email"
               autoComplete="email"
@@ -179,44 +175,44 @@ export default function Register() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 h-12"
+              className="nb-input pl-10"
               required
             />
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <label htmlFor="password" className="nb-label">Password</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
+            <input
               id="password"
               type="password"
               autoComplete="new-password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 h-12"
+              className="nb-input pl-10"
               required
             />
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
+          <label htmlFor="confirm" className="nb-label">Confirm Password</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-            <Input
+            <input
               id="confirm"
               type="password"
               autoComplete="new-password"
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="pl-10 h-12"
+              className="nb-input pl-10"
               required
             />
           </div>
         </div>
-        <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
+        <button type="submit" className="nb-btn w-full h-14 bg-primary text-primary-foreground" disabled={loading}>
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -225,7 +221,7 @@ export default function Register() {
           ) : (
             "Create account"
           )}
-        </Button>
+        </button>
       </form>
     </AuthLayout>
   );

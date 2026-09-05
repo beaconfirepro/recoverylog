@@ -1,18 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { todayStr, postOpLabel, fullDate } from "@/lib/dates";
-
-// One input style for every field. block + min-w-0 + appearance-none keep native
-// date/time/number inputs from forcing their own intrinsic width on iOS.
-const inputCls =
-  "block w-full min-w-0 h-12 appearance-none border-2 rounded-xl bg-card px-3 text-base font-semibold";
-
-const Field = ({ label, span, children }) => (
-  <div className={`min-w-0 space-y-1 ${span ? "col-span-2" : ""}`}>
-    <label className="block font-heading text-xs uppercase tracking-wide truncate">{label}</label>
-    {children}
-  </div>
-);
+import Field from "@/components/Field";
 
 export default function SurgeryInfo() {
   const [info, setInfo] = useState(null);
@@ -74,10 +63,10 @@ export default function SurgeryInfo() {
 
         <div className="p-4 grid grid-cols-2 gap-3 min-w-0">
           <Field label="Surgery date">
-            <input type="date" value={info.surgery_date ?? ""} onChange={text("surgery_date")} className={inputCls} />
+            <input type="date" value={info.surgery_date ?? ""} onChange={text("surgery_date")} className="nb-input" />
           </Field>
           <Field label="Surgery time">
-            <input type="time" value={info.surgery_time ?? ""} onChange={text("surgery_time")} className={inputCls} />
+            <input type="time" value={info.surgery_time ?? ""} onChange={text("surgery_time")} className="nb-input" />
           </Field>
 
           <Field label="Procedure" span>
@@ -86,12 +75,12 @@ export default function SurgeryInfo() {
               value={info.procedure ?? ""}
               placeholder="e.g. abdominal liposuction, lipedema"
               onChange={text("procedure")}
-              className={inputCls}
+              className="nb-input"
             />
           </Field>
 
           <Field label="Surgeon" span>
-            <input type="text" value={info.surgeon ?? ""} placeholder="e.g. Dr. Vega" onChange={text("surgeon")} className={inputCls} />
+            <input type="text" value={info.surgeon ?? ""} placeholder="e.g. Dr. Vega" onChange={text("surgeon")} className="nb-input" />
           </Field>
 
           <Field label="Office phone">
@@ -101,7 +90,7 @@ export default function SurgeryInfo() {
               value={info.office_phone ?? ""}
               placeholder="(555) 123-4567"
               onChange={text("office_phone")}
-              className={inputCls}
+              className="nb-input"
             />
           </Field>
           <Field label="Call if fever over °F">
@@ -112,7 +101,7 @@ export default function SurgeryInfo() {
               value={info.fever_threshold ?? ""}
               placeholder="101.5"
               onChange={num("fever_threshold")}
-              className={inputCls}
+              className="nb-input"
             />
           </Field>
 
@@ -122,7 +111,7 @@ export default function SurgeryInfo() {
               value={info.notes ?? ""}
               placeholder="restrictions, drains, garment schedule, follow-up date…"
               onChange={text("notes")}
-              className="block w-full min-w-0 border-2 rounded-xl bg-card px-3 py-2 text-base font-medium resize-none"
+              className="nb-textarea"
             />
           </Field>
 

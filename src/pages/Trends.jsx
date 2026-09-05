@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { computeTotals } from "@/lib/daySummary";
+import { daysBetween } from "@/lib/dates";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, Tooltip, Legend, ReferenceLine
@@ -23,10 +24,12 @@ export default function Trends() {
 
   useEffect(() => {
     const run = async () => {
-      const [days, entries] = await Promise.all([
+      const [info, days, entries] = await Promise.all([
+        base44.entities.SurgeryInfo.list("created_date", 1),
         base44.entities.RecoveryDay.list("date", 200),
         base44.entities.RecoveryEntry.list("created_date", 3000)
       ]);
+      const surgeryDate = info[0]?.surgery_date || null;
       const byDate = {};
       entries.forEach((e) => {
         (byDate[e.date] = byDate[e.date] || []).push(e);
@@ -36,7 +39,7 @@ export default function Trends() {
         const checkins = es.filter((e) => e.type === "checkin");
         const t = computeTotals(es, d.date);
         return {
-          label: `D${d.day_number}`,
+          label: surgeryDate ? `D${daysBetween(surgeryDate, d.date)}` : `D${d.day_number}`,
           pain: round1(avg(checkins.map((e) => e.data?.pain))),
           energy: round1(avg(checkins.map((e) => e.data?.energy))),
           mood: round1(avg(checkins.map((e) => e.data?.mood))),

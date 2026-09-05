@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { niceDate } from "@/lib/dates";
+import { niceDate, postOpLabel } from "@/lib/dates";
 import { computeTotals, redFlagYesCount } from "@/lib/daySummary";
 
 export default function History() {
   const [days, setDays] = useState(null);
   const [totalsByDay, setTotalsByDay] = useState(null);
+  const [surgeryDate, setSurgeryDate] = useState(null);
 
   useEffect(() => {
     const run = async () => {
-      const [ds, entries] = await Promise.all([
+      const [info, ds, entries] = await Promise.all([
+        base44.entities.SurgeryInfo.list("created_date", 1),
         base44.entities.RecoveryDay.list("-date", 200),
         base44.entities.RecoveryEntry.list("created_date", 3000)
       ]);
@@ -22,6 +24,7 @@ export default function History() {
       Object.keys(byDate).forEach((d) => {
         totals[d] = computeTotals(byDate[d], d);
       });
+      setSurgeryDate(info[0]?.surgery_date || null);
       setDays(ds);
       setTotalsByDay(totals);
     };
@@ -49,9 +52,11 @@ export default function History() {
         const flags = redFlagYesCount(d);
         return (
           <Link key={d.id} to={`/day/${d.date}`} className="nb-card block p-3">
-            <div className="flex items-center justify-between">
-              <span className="font-display text-xl uppercase">Day {d.day_number}</span>
-              <span className="text-sm font-semibold text-muted-foreground">{niceDate(d.date)}</span>
+            <div className="flex items-baseline justify-between gap-2 min-w-0">
+              <span className="font-display text-xl uppercase truncate">
+                {postOpLabel(surgeryDate, d.date) || `Day ${d.day_number}`}
+              </span>
+              <span className="text-sm font-semibold text-muted-foreground shrink-0">{niceDate(d.date)}</span>
             </div>
             <div className="flex flex-wrap gap-1.5 mt-2">
               <span className="nb-chip h-7 px-2.5 text-xs bg-[#00B4D8] text-white">💧 {t.water} oz</span>

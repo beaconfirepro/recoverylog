@@ -1,22 +1,15 @@
 import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Image } from "@/components/ui/image";
 import { Loader2, Upload } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import Field from "@/components/Field";
 
 const fillStyle = (active, color, darkText) =>
   active ? { backgroundColor: color, color: darkText ? "#1A1024" : "#fff" } : {};
 
 export function ScaleField({ field, value, onChange, color }) {
   return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between items-baseline">
-        <Label className="font-heading text-xs uppercase tracking-wide">{field.label}</Label>
-        <span className="text-[10px] font-semibold text-muted-foreground">
-          {field.lowIs === "bad" ? "10 = worst" : "10 = best"}
-        </span>
-      </div>
+    <Field label={field.label} hint={field.lowIs === "bad" ? "10 = worst" : "10 = best"} span>
       <div className="flex flex-wrap gap-1.5">
         {Array.from({ length: 11 }, (_, n) => (
           <button
@@ -30,14 +23,13 @@ export function ScaleField({ field, value, onChange, color }) {
           </button>
         ))}
       </div>
-    </div>
+    </Field>
   );
 }
 
 export function ChipsField({ field, value, onChange, color, darkText }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="font-heading text-xs uppercase tracking-wide">{field.label}</Label>
+    <Field label={field.label} span>
       <div className="flex flex-wrap gap-1.5">
         {field.options.map((opt) => (
           <button
@@ -51,7 +43,7 @@ export function ChipsField({ field, value, onChange, color, darkText }) {
           </button>
         ))}
       </div>
-    </div>
+    </Field>
   );
 }
 
@@ -59,8 +51,7 @@ export function ChipsMultiField({ field, value = [], onChange, color, darkText }
   const toggle = (opt) =>
     onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt]);
   return (
-    <div className="space-y-1.5">
-      <Label className="font-heading text-xs uppercase tracking-wide">{field.label}</Label>
+    <Field label={field.label} span>
       <div className="flex flex-wrap gap-1.5">
         {field.options.map((opt) => (
           <button
@@ -74,15 +65,14 @@ export function ChipsMultiField({ field, value = [], onChange, color, darkText }
           </button>
         ))}
       </div>
-    </div>
+    </Field>
   );
 }
 
 export function NumberField({ field, value, onChange }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="font-heading text-xs uppercase tracking-wide">{field.label}</Label>
-      <Input
+    <Field label={field.label} span>
+      <input
         type="number"
         inputMode={field.decimal ? "decimal" : "numeric"}
         step={field.decimal ? "0.1" : "1"}
@@ -90,10 +80,10 @@ export function NumberField({ field, value, onChange }) {
         placeholder={field.placeholder || ""}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value === "" ? "" : +e.target.value)}
-        className="h-12 text-lg font-semibold"
+        className="nb-input"
       />
       {field.steps && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 pt-1.5">
           {field.steps.map((s) => (
             <button key={s} type="button" onClick={() => onChange(s)} className="nb-chip h-9 px-3 text-xs bg-muted">
               +{s}
@@ -101,57 +91,57 @@ export function NumberField({ field, value, onChange }) {
           ))}
         </div>
       )}
-    </div>
+    </Field>
   );
 }
 
 export function TextField({ field, value, onChange }) {
   return (
-    <div className="space-y-1.5">
-      {field?.label && <Label className="font-heading text-xs uppercase tracking-wide">{field.label}</Label>}
-      <Input
+    <Field label={field?.label} span>
+      <input
+        type="text"
         placeholder={field?.placeholder || ""}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12"
+        className="nb-input"
       />
-    </div>
+    </Field>
   );
 }
 
 export function TimeField({ label, value, onChange }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="font-heading text-xs uppercase tracking-wide">{label}</Label>
-      <Input type="time" value={value} onChange={(e) => onChange(e.target.value)} className="h-12 text-lg font-semibold" />
-    </div>
+    <Field label={label}>
+      <input type="time" value={value} onChange={(e) => onChange(e.target.value)} className="nb-input" />
+    </Field>
   );
 }
 
 export function SpotsField({ field, value, onChange, spots }) {
   const vals = value || {};
   return (
-    <div className="space-y-1.5">
-      <Label className="font-heading text-xs uppercase tracking-wide">{field.label}</Label>
+    <Field label={field.label} span>
       {spots.length === 0 && (
         <p className="text-sm text-muted-foreground">No spots yet — tap the day header and name your spots first.</p>
       )}
-      {spots.map((s) => (
-        <div key={s.id} className="flex items-center gap-2">
-          <span className="flex-1 text-sm font-semibold">{s.name}</span>
-          <Input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            step="0.25"
-            placeholder="in"
-            value={vals[s.name] ?? ""}
-            onChange={(e) => onChange({ ...vals, [s.name]: e.target.value === "" ? "" : +e.target.value })}
-            className="w-24 h-11"
-          />
-        </div>
-      ))}
-    </div>
+      <div className="space-y-1.5">
+        {spots.map((s) => (
+          <div key={s.id} className="flex items-center gap-2 min-w-0">
+            <span className="flex-1 min-w-0 truncate text-sm font-semibold">{s.name}</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.25"
+              placeholder="in"
+              value={vals[s.name] ?? ""}
+              onChange={(e) => onChange({ ...vals, [s.name]: e.target.value === "" ? "" : +e.target.value })}
+              className="nb-input w-24 shrink-0"
+            />
+          </div>
+        ))}
+      </div>
+    </Field>
   );
 }
 
@@ -166,16 +156,15 @@ export function FileField({ field, value, onChange }) {
     setBusy(false);
   };
   return (
-    <div className="space-y-1.5">
-      <Label className="font-heading text-xs uppercase tracking-wide">{field.label}</Label>
+    <Field label={field.label} span>
       <label className="flex items-center justify-center gap-2 h-16 border-2 rounded-xl font-heading text-sm uppercase cursor-pointer bg-muted">
         {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
         {busy ? "Uploading…" : value ? "Change photo" : "Take / choose photo"}
         <input type="file" accept="image/*" className="hidden" onChange={handle} />
       </label>
       {value && (
-        <Image src={value} alt="photo preview" fittingType="fit" className="h-32 w-full border-2 rounded-xl" />
+        <Image src={value} alt="photo preview" fittingType="fit" className="h-32 w-full border-2 rounded-xl mt-1.5" />
       )}
-    </div>
+    </Field>
   );
 }
