@@ -24,7 +24,7 @@ import SurgeryInfo from './pages/SurgeryInfo';
 // A signed-in account still has to resolve to a patient before the log opens:
 // the owner's own record, or one an invite linked it to.
 const PatientGate = () => {
-  const { patient, loadingPatient } = usePatient();
+  const { linked, loadingPatient } = usePatient();
   if (loadingPatient) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
@@ -32,7 +32,7 @@ const PatientGate = () => {
       </div>
     );
   }
-  if (!patient) return <ClaimAccess />;
+  if (!linked) return <ClaimAccess />;
   return <Layout />;
 };
 

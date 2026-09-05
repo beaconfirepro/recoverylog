@@ -6,7 +6,7 @@ import { todayStr, dateRange, fullDate, postOpLabel, daysBetween, MAX_RANGE_DAYS
 import { TYPES, RED_FLAG_ITEMS } from "@/lib/recovery";
 import { computeTotals, sortEntries } from "@/lib/daySummary";
 import { useAuth } from "@/lib/AuthContext";
-import { usePatient } from "@/lib/PatientContext";
+import { usePatient, displayName } from "@/lib/PatientContext";
 import Field from "@/components/Field";
 
 const Row = ({ label, value }) => (
@@ -18,13 +18,14 @@ const Row = ({ label, value }) => (
 
 export default function Profile() {
   const { user, logout } = useAuth();
-  const { patient, patientId, isOwner, membership, refreshPatient } = usePatient();
+  const { patient, patientId, isOwner, canWrite, refreshPatient } = usePatient();
   const [surgery, setSurgery] = useState(null);
   const [team, setTeam] = useState([]);
-  const [name, setName] = useState("");
+  const [first, setFirst] = useState("");
+  const [last, setLast] = useState("");
   const [dob, setDob] = useState("");
   const [savingPatient, setSavingPatient] = useState(false);
-  const [invite, setInvite] = useState({ email: "", full_name: "", dob: "" });
+  const [invite, setInvite] = useState({ email: "", first_name: "", last_name: "" });
   const [inviteError, setInviteError] = useState("");
   const [from, setFrom] = useState(todayStr());
   const [to, setTo] = useState(todayStr());
@@ -36,13 +37,14 @@ export default function Profile() {
   }, []);
 
   useEffect(() => {
-    setName(patient?.full_name || "");
+    setFirst(patient?.first_name || "");
+    setLast(patient?.last_name || "");
     setDob(patient?.dob || "");
   }, [patient]);
 
   const loadTeam = useCallback(() => {
     if (!patientId) return;
-    base44.entities.PatientGroup.filter({ patient_id: patientId }, "created_date", 50).then(setTeam);
+    base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 50).then(setTeam);
   }, [patientId]);
 
   useEffect(() => {
@@ -51,15 +53,28 @@ export default function Profile() {
 
   const savePatient = async () => {
     setSavingPatient(true);
-    await base44.entities.Patient.update(patient.id, { full_name: name, dob: dob || null });
+    const next = { first_name: first.trim(), last_name: last.trim(), dob: dob || null };
+    await base44.entities.AppUser.update(patient.id, next);
+    // Every member row carries a copy of these to match against, so they move
+    // with it. Otherwise a name change would lock the care team out.
+    await Promise.all(
+      team.map((m) =>
+        base44.entities.AppUser.update(m.id, {
+          match_first_name: next.first_name,
+          match_last_name: next.last_name,
+          match_dob: next.dob
+        })
+      )
+    );
     await refreshPatient();
+    loadTeam();
     setSavingPatient(false);
   };
 
   const addMember = async () => {
     const email = invite.email.trim().toLowerCase();
-    if (!email || !invite.full_name.trim() || !invite.dob) {
-      setInviteError("Email, name and date of birth are all needed.");
+    if (!email || !invite.first_name.trim() || !invite.last_name.trim()) {
+      setInviteError("Email, first name and last name are all needed.");
       return;
     }
     if (team.some((m) => m.email === email)) {
@@ -67,19 +82,25 @@ export default function Profile() {
       return;
     }
     setInviteError("");
-    await base44.entities.PatientGroup.create({
+    await base44.entities.AppUser.create({
       patient_id: patientId,
+      kind: "team_member",
       email,
-      full_name: invite.full_name.trim(),
-      dob: invite.dob,
-      can_write: true
+      first_name: invite.first_name.trim(),
+      last_name: invite.last_name.trim(),
+      can_write: true,
+      // Copied onto their row so they can match against it. Row security does
+      // not let an unlinked account read the patient's own row.
+      match_first_name: patient.first_name || "",
+      match_last_name: patient.last_name || "",
+      match_dob: patient.dob || null
     });
-    setInvite({ email: "", full_name: "", dob: "" });
+    setInvite({ email: "", first_name: "", last_name: "" });
     loadTeam();
   };
 
   const removeMember = async (id) => {
-    await base44.entities.PatientGroup.delete(id);
+    await base44.entities.AppUser.delete(id);
     loadTeam();
   };
 
@@ -195,25 +216,28 @@ export default function Profile() {
         <div className="p-4">
           {isOwner ? (
             <div className="grid grid-cols-2 gap-3 min-w-0 pb-2">
-              <Field label="Patient name" span>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="nb-input" />
+              <Field label="Patient first name">
+                <input type="text" value={first} onChange={(e) => setFirst(e.target.value)} className="nb-input" />
               </Field>
-              <Field label="Date of birth" span>
+              <Field label="Patient last name">
+                <input type="text" value={last} onChange={(e) => setLast(e.target.value)} className="nb-input" />
+              </Field>
+              <Field label="Date of birth" span hint="care team enter this to join">
                 <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="nb-input" />
               </Field>
               <button
                 className="col-span-2 nb-btn w-full h-12 bg-primary text-primary-foreground"
                 onClick={savePatient}
-                disabled={savingPatient || !name.trim()}
+                disabled={savingPatient || !first.trim() || !last.trim()}
               >
                 {savingPatient ? "Saving…" : "Save patient"}
               </button>
             </div>
           ) : (
-            <Row label="Patient" value={patient?.full_name} />
+            <Row label="Patient" value={displayName(patient)} />
           )}
           <Row label="Signed in as" value={user?.email} />
-          <Row label="Your access" value={isOwner ? "Patient — full access" : membership?.can_write === false ? "Care team — read only" : "Care team — can edit"} />
+          <Row label="Your access" value={isOwner ? "Patient — full access" : canWrite ? "Care team — can edit" : "Care team — read only"} />
           <Row label="Procedure" value={surgery?.procedure} />
           <Row label="Surgery date" value={surgery?.surgery_date ? fullDate(surgery.surgery_date) : null} />
           <Row label="Surgeon" value={surgery?.surgeon} />
@@ -240,16 +264,16 @@ export default function Profile() {
             {team.map((m) => (
               <div key={m.id} className="flex items-center gap-2 min-w-0 border-b-2 last:border-b-0 pb-2 last:pb-0">
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold truncate">{m.full_name}</div>
+                  <div className="text-sm font-bold truncate">{displayName(m) || m.email}</div>
                   <div className="text-[11px] font-semibold text-muted-foreground truncate">
-                    {m.email} · {m.claimed_at ? "active" : "not signed in yet"}
+                    {m.email}{m.can_write === false ? " · read only" : ""}
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => removeMember(m.id)}
                   className="nb-btn h-11 w-11 shrink-0 bg-card"
-                  aria-label={`Remove ${m.full_name}`}
+                  aria-label={`Remove ${displayName(m) || m.email}`}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -266,19 +290,19 @@ export default function Profile() {
                   className="nb-input"
                 />
               </Field>
-              <Field label="Their name">
+              <Field label="Their first name">
                 <input
                   type="text"
-                  value={invite.full_name}
-                  onChange={(e) => setInvite({ ...invite, full_name: e.target.value })}
+                  value={invite.first_name}
+                  onChange={(e) => setInvite({ ...invite, first_name: e.target.value })}
                   className="nb-input"
                 />
               </Field>
-              <Field label="Their date of birth">
+              <Field label="Their last name">
                 <input
-                  type="date"
-                  value={invite.dob}
-                  onChange={(e) => setInvite({ ...invite, dob: e.target.value })}
+                  type="text"
+                  value={invite.last_name}
+                  onChange={(e) => setInvite({ ...invite, last_name: e.target.value })}
                   className="nb-input"
                 />
               </Field>

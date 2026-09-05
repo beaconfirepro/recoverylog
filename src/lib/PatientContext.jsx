@@ -4,20 +4,16 @@ import { useAuth } from "@/lib/AuthContext";
 
 const PatientContext = createContext();
 
-// Every name on the claim screen is shown as initial + asterisks, so the list
-// confirms which invite is yours without printing anyone's name in full.
-export const maskName = (name) =>
-  (name || "")
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((w) => w[0] + "*".repeat(Math.max(w.length - 1, 1)))
-    .join(" ");
+export const displayName = (row) =>
+  [row?.first_name, row?.last_name].filter(Boolean).join(" ").trim();
 
+// AppUser mirrors the app's people — the patient and their care team in one
+// table. A person's row is written by the patient, never by themselves, so what
+// it says about them (their group, whether they can write) is not self-assigned.
 export const PatientProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
+  const [me, setMe] = useState(null);
   const [patient, setPatient] = useState(null);
-  const [membership, setMembership] = useState(null);
-  const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -26,23 +22,22 @@ export const PatientProvider = ({ children }) => {
       return;
     }
     setLoading(true);
-    // Row-level security already limits these to the patient this account owns
-    // and the one its user record is linked to, so whatever comes back is ours.
-    const [visible, mine] = await Promise.all([
-      base44.entities.Patient.list("created_date", 10),
-      base44.entities.PatientGroup.filter({ email: user.email }, "created_date", 10)
-    ]);
-    const owned = visible.find((p) => p.owner_email === user.email);
-    const linked = visible.find((p) => p.id === user.patient_id);
-    // The patient needs the same link everyone else gets. Without it she matches
-    // row security only on rows she created herself, so anything a care-team
+    // Row security limits this to your own row, your group, and the patient's
+    // row, so everything that comes back is already yours to see.
+    const rows = await base44.entities.AppUser.list("created_date", 50);
+    const mine = rows.find((r) => r.email === user.email) || null;
+    const groupId = mine?.kind === "patient" ? mine.id : mine?.patient_id || null;
+    const p = rows.find((r) => r.id === groupId && r.kind === "patient") || null;
+
+    // The patient needs the same link a team member gets. Without it she would
+    // match row security only on rows she created herself, and anything a team
     // member logged would be invisible to her.
-    if (owned && user.patient_id !== owned.id) {
-      await base44.auth.updateMe({ patient_id: owned.id });
+    if (mine?.kind === "patient" && user.patient_id !== mine.id) {
+      await base44.auth.updateMe({ patient_id: mine.id });
     }
-    setPatient(owned || linked || null);
-    setMembership(owned ? null : mine.find((m) => m.patient_id === user.patient_id) || null);
-    setInvites(mine);
+
+    setMe(mine);
+    setPatient(p);
     setLoading(false);
   }, [isAuthenticated, user]);
 
@@ -50,17 +45,19 @@ export const PatientProvider = ({ children }) => {
     load();
   }, [load]);
 
-  const isOwner = !!patient && patient.owner_email === user?.email;
+  const isOwner = me?.kind === "patient";
+  // A team member is only in once their account is actually linked to the group.
+  const linked = isOwner || (!!me && !!me.patient_id && user?.patient_id === me.patient_id);
 
   return (
     <PatientContext.Provider
       value={{
+        me,
         patient,
         patientId: patient?.id || null,
         isOwner,
-        membership,
-        invites,
-        canWrite: isOwner || membership?.can_write !== false,
+        linked,
+        canWrite: me?.can_write !== false,
         loadingPatient: loading,
         refreshPatient: load
       }}
