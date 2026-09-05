@@ -1,13 +1,24 @@
 {
   "name": "RecoveryEntry",
-  "type": "object",
   "properties": {
+    "data": {
+      "type": "object"
+    },
     "date": {
-      "type": "string",
-      "format": "date"
+      "format": "date",
+      "type": "string"
+    },
+    "entry_time": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "patient_id": {
+      "description": "Patient this entry belongs to.",
+      "type": "string"
     },
     "type": {
-      "type": "string",
       "enum": [
         "checkin",
         "water",
@@ -28,21 +39,14 @@
         "photo",
         "measure",
         "weight"
-      ]
-    },
-    "entry_time": {
+      ],
       "type": "string"
-    },
-    "note": {
-      "type": "string"
-    },
-    "data": {
-      "type": "object"
     }
   },
   "required": [
     "date",
     "type",
     "entry_time"
-  ]
+  ],
+  "type": "object"
 }
