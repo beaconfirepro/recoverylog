@@ -1,6 +1,7 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { CalendarDays, History as HistoryIcon, TrendingUp, UserRound, Scissors } from "lucide-react";
+import { usePatient, displayName } from "@/lib/PatientContext";
 
 const NAV = [
   { to: "/", label: "Today", icon: CalendarDays, match: (p) => p === "/" || p.startsWith("/day") },
@@ -12,12 +13,28 @@ const NAV = [
 
 export default function Layout() {
   const { pathname } = useLocation();
+  const { patient, isOwner } = usePatient();
+  const who = displayName(patient);
   return (
     <div className="min-h-screen">
       <header className="border-b-2 bg-foreground text-background">
         <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center justify-between">
-          <span className="font-display uppercase tracking-widest text-sm">Recovery Log</span>
-          <span className="text-[10px] font-body opacity-60">one day at a time</span>
+          <span className="font-display uppercase tracking-widest text-sm shrink-0">Recovery Log</span>
+          {isOwner ? (
+            <span className="text-[10px] font-body opacity-60">one day at a time</span>
+          ) : (
+            // A care-team member can be in more than one person's log. Whose it
+            // is has to be on screen, not something they infer.
+            <span className="flex items-center gap-1.5 min-w-0">
+              <span className="text-[9px] font-heading uppercase tracking-wider opacity-60 shrink-0">Viewing</span>
+              <span
+                className="text-[10px] font-heading uppercase tracking-wide truncate px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}
+              >
+                {who || "unnamed patient"}
+              </span>
+            </span>
+          )}
         </div>
       </header>
       <main className="max-w-lg mx-auto px-3 py-4 pb-28">

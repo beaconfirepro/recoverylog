@@ -3,18 +3,24 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { niceDate, postOpLabel } from "@/lib/dates";
 import { computeTotals, redFlagYesCount } from "@/lib/daySummary";
+import { usePatient } from "@/lib/PatientContext";
 
 export default function History() {
+  const { activeSurgery, activeSurgeryId } = usePatient();
   const [days, setDays] = useState(null);
   const [totalsByDay, setTotalsByDay] = useState(null);
   const [surgeryDate, setSurgeryDate] = useState(null);
 
   useEffect(() => {
     const run = async () => {
-      const [info, ds, entries] = await Promise.all([
-        base44.entities.SurgeryInfo.list("created_date", 1),
-        base44.entities.RecoveryDay.list("-date", 200),
-        base44.entities.RecoveryEntry.list("created_date", 3000)
+      if (!activeSurgeryId) {
+        setDays([]);
+        setTotalsByDay({});
+        return;
+      }
+      const [ds, entries] = await Promise.all([
+        base44.entities.RecoveryDay.filter({ surgery_id: activeSurgeryId }, "-date", 200),
+        base44.entities.RecoveryEntry.filter({ surgery_id: activeSurgeryId }, "created_date", 3000)
       ]);
       const byDate = {};
       entries.forEach((e) => {
@@ -24,7 +30,7 @@ export default function History() {
       Object.keys(byDate).forEach((d) => {
         totals[d] = computeTotals(byDate[d], d);
       });
-      setSurgeryDate(info[0]?.surgery_date || null);
+      setSurgeryDate(activeSurgery?.surgery_date || null);
       setDays(ds);
       setTotalsByDay(totals);
     };
