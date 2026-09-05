@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { usePatient } from "@/lib/PatientContext";
 import { todayStr, postOpLabel, fullDate } from "@/lib/dates";
 import Field from "@/components/Field";
 
 export default function SurgeryInfo() {
+  const { patientId } = usePatient();
   const [info, setInfo] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -38,7 +40,7 @@ export default function SurgeryInfo() {
     if (info.id) {
       await base44.entities.SurgeryInfo.update(info.id, fields);
     } else {
-      setInfo(await base44.entities.SurgeryInfo.create(fields));
+      setInfo(await base44.entities.SurgeryInfo.create({ ...fields, patient_id: patientId }));
     }
     setSaving(false);
     setSaved(true);
