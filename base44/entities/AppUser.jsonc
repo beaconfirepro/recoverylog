@@ -7,7 +7,7 @@
       "type": "boolean"
     },
     "dob": {
-      "description": "This person's date of birth. On a patient row this is the one a joining member types.",
+      "description": "This person's date of birth. Only meaningful on a patient row, where it is what a joining member types.",
       "format": "date",
       "type": "string"
     },
@@ -20,7 +20,7 @@
       "type": "string"
     },
     "kind": {
-      "description": "Whether this person is the patient or on their care team.",
+      "description": "Whether this person is the patient or on their care team. Chosen once, when they first sign in.",
       "enum": [
         "patient",
         "team_member"
@@ -53,8 +53,27 @@
     "email",
     "kind"
   ],
-  "type": "object",
   "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        },
+        {
+          "$and": [
+            {
+              "data.email": "{{user.email}}"
+            },
+            {
+              "data.kind": "patient"
+            }
+          ]
+        }
+      ]
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    },
     "read": {
       "$or": [
         {
@@ -71,14 +90,9 @@
         }
       ]
     },
-    "create": {
-      "data.patient_id": "{{user.data.patient_id}}"
-    },
     "update": {
       "created_by_id": "{{user.id}}"
-    },
-    "delete": {
-      "created_by_id": "{{user.id}}"
     }
-  }
+  },
+  "type": "object"
 }
