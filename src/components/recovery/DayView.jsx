@@ -79,6 +79,16 @@ export default function DayView({ date }) {
     load();
   };
 
+  const addSpot = async (name) => {
+    await base44.entities.MeasurementSpot.create({ name, sort_order: spots.length });
+    loadSpots();
+  };
+
+  const removeSpot = async (id) => {
+    await base44.entities.MeasurementSpot.delete(id);
+    loadSpots();
+  };
+
   return (
     <div className="space-y-4">
       <DayHeader
@@ -86,9 +96,6 @@ export default function DayView({ date }) {
         surgeryDate={surgeryDate}
         totals={totals}
         lastBm={lastBmInfo(lastBmEntry, date)}
-        spots={spots}
-        onSaved={load}
-        onSpotsChanged={loadSpots}
       />
 
       <div>
@@ -125,6 +132,8 @@ export default function DayView({ date }) {
               type={dialog.entry ? dialog.entry.type : dialog.type}
               entry={dialog.entry}
               spots={spots}
+              onAddSpot={addSpot}
+              onRemoveSpot={removeSpot}
               saving={saving}
               onSave={saveEntry}
               onCancel={() => setDialog(null)}

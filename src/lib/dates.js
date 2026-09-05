@@ -45,6 +45,6 @@ export const postOpLabel = (surgeryDate, date) => {
   if (!surgeryDate) return null;
   const n = daysBetween(surgeryDate, date);
   if (n < 0) return `Pre-op · ${-n} day${-n === 1 ? "" : "s"} to go`;
-  if (n === 0) return "Surgery day";
+  if (n === 0) return "Day of Surgery";
   return `Post-op day ${n}`;
 };
