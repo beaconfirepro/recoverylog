@@ -1,12 +1,17 @@
 {
   "name": "SurgeryInfo",
-  "type": "object",
   "properties": {
-    "surgery_date": {
-      "type": "string",
-      "format": "date"
+    "fever_threshold": {
+      "type": "number"
     },
-    "surgery_time": {
+    "notes": {
+      "type": "string"
+    },
+    "office_phone": {
+      "type": "string"
+    },
+    "patient_id": {
+      "description": "Patient this surgery record belongs to.",
       "type": "string"
     },
     "procedure": {
@@ -15,14 +20,14 @@
     "surgeon": {
       "type": "string"
     },
-    "office_phone": {
+    "surgery_date": {
+      "format": "date",
       "type": "string"
     },
-    "fever_threshold": {
-      "type": "number"
-    },
-    "notes": {
+    "surgery_time": {
       "type": "string"
     }
-  }
+  },
+  "required": [],
+  "type": "object"
 }
