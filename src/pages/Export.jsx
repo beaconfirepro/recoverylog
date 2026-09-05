@@ -64,8 +64,18 @@ export default function Export() {
       const totals = computeTotals(dayEntries, date);
 
       line(`${(postOpLabel(surgeryDate, date) || "Surgery date not set").toUpperCase()} — ${fullDate(date)}`, { bold: true, size: 13, gap: 2 });
+      // Woke/Slept are only on older days — the app records sleep as an entry
+      // now — so print them when present rather than a row of dashes.
       line(
-        `Woke ${day?.woke_at || "—"} · Temp AM ${totals.tempAm ?? "—"} / PM ${totals.tempPm ?? "—"} · Weight ${totals.weight ?? "—"} · Slept ${day?.slept_hours ?? "—"}h ${day?.slept_position || ""} · Photos ${totals.photoTaken ? "yes" : "no"}`,
+        [
+          day?.woke_at && `Woke ${day.woke_at}`,
+          `Temp AM ${totals.tempAm ?? "—"} / PM ${totals.tempPm ?? "—"}`,
+          `Weight ${totals.weight ?? "—"}`,
+          day?.slept_hours != null && `Slept ${day.slept_hours}h${day.slept_position ? ` ${day.slept_position}` : ""}`,
+          `Photos ${totals.photoTaken ? "yes" : "no"}`
+        ]
+          .filter(Boolean)
+          .join(" · "),
         { size: 9 }
       );
       if (totals.nextMed) line(`Next med due: ${totals.nextMed.time}${totals.nextMed.drug ? ` (${totals.nextMed.drug})` : ""}`, { size: 9 });

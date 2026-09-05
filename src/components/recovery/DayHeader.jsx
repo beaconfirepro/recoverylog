@@ -1,10 +1,7 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Pencil, Plus, X } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { ChevronDown } from "lucide-react";
 import { parseDate, postOpLabel } from "@/lib/dates";
-import Field from "@/components/Field";
 
 const Stat = ({ label, value }) => (
   <div className="border-2 rounded-xl px-2.5 py-1.5 bg-muted min-w-0">
@@ -13,39 +10,10 @@ const Stat = ({ label, value }) => (
   </div>
 );
 
-export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onSaved, onSpotsChanged }) {
+// Read-only. Everything here is derived from the day's entries — nothing is
+// typed in twice.
+export default function DayHeader({ day, surgeryDate, totals, lastBm }) {
   const [statsOpen, setStatsOpen] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [wokeAt, setWokeAt] = useState(day.woke_at || "");
-  const [sleptHours, setSleptHours] = useState(day.slept_hours ?? "");
-  const [sleptPosition, setSleptPosition] = useState(day.slept_position || "");
-  const [newSpot, setNewSpot] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const save = async () => {
-    setSaving(true);
-    await base44.entities.RecoveryDay.update(day.id, {
-      woke_at: wokeAt,
-      slept_hours: sleptHours === "" ? null : +sleptHours,
-      slept_position: sleptPosition
-    });
-    setSaving(false);
-    setOpen(false);
-    onSaved();
-  };
-
-  const addSpot = async () => {
-    const name = newSpot.trim();
-    if (!name) return;
-    await base44.entities.MeasurementSpot.create({ name, sort_order: spots.length });
-    setNewSpot("");
-    onSpotsChanged();
-  };
-
-  const removeSpot = async (id) => {
-    await base44.entities.MeasurementSpot.delete(id);
-    onSpotsChanged();
-  };
 
   const dayLabel = postOpLabel(surgeryDate, day.date);
 
@@ -55,20 +23,15 @@ export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onS
 
   return (
     <div className="nb-card p-4 space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          {dayLabel ? (
-            <h1 className="font-display text-3xl leading-none uppercase break-words">{dayLabel}</h1>
-          ) : (
-            <h1 className="font-display text-xl leading-tight uppercase text-destructive">Surgery date not set</h1>
-          )}
-          <p className="text-sm font-semibold text-muted-foreground mt-1">
-            {parseDate(day.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
-          </p>
-        </div>
-        <button className="nb-btn h-11 w-11 shrink-0 !rounded-xl bg-accent text-accent-foreground" onClick={() => setOpen(true)} aria-label="Edit day header">
-          <Pencil className="w-5 h-5" />
-        </button>
+      <div className="min-w-0">
+        {dayLabel ? (
+          <h1 className="font-display text-3xl leading-none uppercase break-words">{dayLabel}</h1>
+        ) : (
+          <h1 className="font-display text-xl leading-tight uppercase text-destructive">Surgery date not set</h1>
+        )}
+        <p className="text-sm font-semibold text-muted-foreground mt-1">
+          {parseDate(day.date).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+        </p>
       </div>
 
       <Collapsible open={statsOpen} onOpenChange={setStatsOpen}>
@@ -90,80 +53,6 @@ export default function DayHeader({ day, surgeryDate, totals, lastBm, spots, onS
           </div>
         </CollapsibleContent>
       </Collapsible>
-
-      <div className="grid grid-cols-3 gap-2">
-        <Stat label="Woke at" value={day.woke_at || "—"} />
-        <Stat label="Slept" value={day.slept_hours ? `${day.slept_hours}h` : "—"} />
-        <Stat label="Position" value={day.slept_position || "—"} />
-      </div>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-heading uppercase">Edit day header</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 min-w-0">
-            <Field label="Woke at">
-              <input type="time" value={wokeAt} onChange={(e) => setWokeAt(e.target.value)} className="nb-input" />
-            </Field>
-            <Field label="Slept (hours)">
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                value={sleptHours}
-                onChange={(e) => setSleptHours(e.target.value)}
-                className="nb-input"
-              />
-            </Field>
-            <Field label="Slept position" span>
-              <div className="flex flex-wrap gap-1.5">
-                {["recliner", "wedge", "propped", "flat", "side"].map((p) => (
-                  <button
-                    key={p}
-                    className="nb-chip"
-                    style={sleptPosition === p ? { backgroundColor: "hsl(var(--foreground))", color: "hsl(var(--background))" } : {}}
-                    onClick={() => setSleptPosition(sleptPosition === p ? "" : p)}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </Field>
-            <Field label="Measurement spots (name once, use daily)" span>
-              <div className="flex flex-wrap gap-1.5">
-                {spots.map((s) => (
-                  <span key={s.id} className="nb-chip inline-flex items-center gap-1 bg-secondary text-secondary-foreground">
-                    {s.name}
-                    <button onClick={() => removeSpot(s.id)} aria-label={`Remove ${s.name}`}>
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2 min-w-0 pt-1.5">
-                <input
-                  type="text"
-                  value={newSpot}
-                  onChange={(e) => setNewSpot(e.target.value)}
-                  placeholder="e.g. waist, left thigh"
-                  className="nb-input"
-                />
-                <button className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground" onClick={addSpot}>
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
-            </Field>
-            <button
-              className="col-span-2 nb-btn w-full h-14 bg-primary text-primary-foreground"
-              onClick={save}
-              disabled={saving}
-            >
-              {saving ? "Saving…" : "Save header"}
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

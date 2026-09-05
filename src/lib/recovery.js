@@ -126,7 +126,8 @@ export const TYPES = {
     fields: [
       { key: "marks", label: "Marks", kind: "chips", options: ["none", "lines", "indents", "blister", "broken skin"] },
       { key: "color", label: "Color", kind: "chips", options: ["normal", "pink", "red", "purple", "white", "mottled"] },
-      { key: "faded_min", label: "Faded in minutes (flag if 20+)", kind: "number", steps: [5, 10, 20, 30, 60] }
+      // 5-minute steps, not 15: the 20-minute flag below has to be reachable.
+      { key: "faded_min", label: "Faded in (flag if 20+)", kind: "duration", step: 5 }
     ],
     summary: (d) => join([d.marks, d.color, d.faded_min != null && `faded in ${d.faded_min} min${d.faded_min >= 20 ? " ⚠" : ""}`]),
     marker: () => "SKIN"
@@ -135,7 +136,7 @@ export const TYPES = {
     label: "Movement", icon: Activity, color: "#4361EE",
     fields: [
       { key: "kind", label: "Type", kind: "chips", options: ["walk", "resistance", "yoga", "swimming"] },
-      { key: "minutes", label: "Minutes", kind: "number", steps: [5, 10, 15, 20, 30, 45, 60] },
+      { key: "minutes", label: "How long", kind: "duration" },
       { key: "distance", label: "Distance / route", kind: "text", placeholder: "e.g. to mailbox, 2 laps" },
       { key: "help", label: "Help", kind: "chips", options: ["none", "one person", "walker"] },
       { key: "during", label: "During", kind: "chipsMulti", options: ["steady", "dizzy", "breathless", "had to stop"] },
@@ -149,7 +150,7 @@ export const TYPES = {
     fields: [
       { key: "kind", label: "Sleep or nap", kind: "chips", options: ["sleep", "nap"] },
       { key: "hours", label: "Hours", kind: "number", steps: [1, 2, 3, 4, 5, 6, 7, 8] },
-      { key: "minutes", label: "Minutes", kind: "number", steps: [15, 30, 45] },
+      { key: "minutes", label: "Plus minutes", kind: "duration" },
       { key: "position", label: "Position", kind: "chips", options: ["recliner", "wedge", "propped", "flat", "side"] },
       { key: "quality", label: "Quality", kind: "chips", options: ["solid", "broken", "restless", "none"] },
       { key: "woke_for", label: "Woke for", kind: "chipsMulti", options: ["pain", "bathroom", "nausea", "garment", "alarm"] }
@@ -163,7 +164,7 @@ export const TYPES = {
   mld: {
     label: "MLD / massage", icon: Waves, color: "#B5179E",
     fields: [
-      { key: "minutes", label: "Minutes", kind: "number", steps: [10, 20, 30, 45, 60] },
+      { key: "minutes", label: "How long", kind: "duration" },
       { key: "who", label: "Who", kind: "chips", options: ["therapist", "self", "caregiver"] },
       { key: "areas", label: "Areas", kind: "text", placeholder: "e.g. abdomen, left thigh" },
       { key: "after", label: "After", kind: "chipsMulti", options: ["softer", "looser", "sore", "weeping fluid", "more swollen"] }

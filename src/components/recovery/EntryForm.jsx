@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { TYPES, defaultSlot } from "@/lib/recovery";
 import { nowTime } from "@/lib/dates";
 import {
-  ScaleField, ChipsField, ChipsMultiField, NumberField, TextField,
+  ScaleField, ChipsField, ChipsMultiField, NumberField, DurationField, TextField,
   TimeField, SpotsField, FileField
 } from "./Fields";
 
-export default function EntryForm({ type, entry, spots, onSave, onCancel, onDelete, saving }) {
+export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot, onSave, onCancel, onDelete, saving }) {
   const cfg = TYPES[type];
   const [time, setTime] = useState(entry?.entry_time || nowTime());
   const [data, setData] = useState(() => {
@@ -50,12 +50,24 @@ export default function EntryForm({ type, entry, spots, onSave, onCancel, onDele
             return <ChipsMultiField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
           case "number":
             return <NumberField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
+          case "duration":
+            return <DurationField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "text":
             return <TextField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "time":
             return <TimeField key={f.key} label={f.label} value={data[f.key] || ""} onChange={(v) => setField(f.key, v)} />;
           case "spots":
-            return <SpotsField key={f.key} field={f} value={data} onChange={(v) => setField(f.key, v, "spots")} spots={spots} />;
+            return (
+              <SpotsField
+                key={f.key}
+                field={f}
+                value={data}
+                onChange={(v) => setField(f.key, v, "spots")}
+                spots={spots}
+                onAddSpot={onAddSpot}
+                onRemoveSpot={onRemoveSpot}
+              />
+            );
           case "file":
             return <FileField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           default:

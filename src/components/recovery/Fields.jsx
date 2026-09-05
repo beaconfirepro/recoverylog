@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Image } from "@/components/ui/image";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Minus, Plus, Upload, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import Field from "@/components/Field";
 
@@ -85,12 +85,62 @@ export function NumberField({ field, value, onChange }) {
       {field.steps && (
         <div className="flex flex-wrap gap-1.5 pt-1.5">
           {field.steps.map((s) => (
-            <button key={s} type="button" onClick={() => onChange(s)} className="nb-chip h-9 px-3 text-xs bg-muted">
+            <button
+              key={s}
+              type="button"
+              onClick={() => onChange((value || 0) + s)}
+              className="nb-chip h-9 px-3 text-xs bg-muted"
+            >
               +{s}
             </button>
           ))}
         </div>
       )}
+    </Field>
+  );
+}
+
+const fmtDuration = (m) => {
+  if (m == null) return "—";
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  if (!h) return `${r}m`;
+  return r ? `${h}h ${r}m` : `${h}h`;
+};
+
+// Durations are entered by tapping, not typing: one tap = one step (15 min by
+// default). Nothing to select, no keypad, and it reads back as 1h 30m.
+export function DurationField({ field, value, onChange }) {
+  const step = field.step ?? 15;
+  const cur = value === "" || value == null ? null : +value;
+  const bump = (delta) => {
+    const next = Math.max(0, (cur ?? 0) + delta);
+    onChange(next === 0 ? "" : next);
+  };
+  return (
+    <Field label={field.label} hint={`${step} min steps`} span>
+      <div className="flex items-center gap-2 min-w-0">
+        <button
+          type="button"
+          onClick={() => bump(-step)}
+          disabled={cur == null}
+          className="nb-btn h-12 w-12 shrink-0 bg-card disabled:opacity-40"
+          aria-label={`Minus ${step} minutes`}
+        >
+          <Minus className="w-5 h-5" />
+        </button>
+        <div className="flex-1 min-w-0 h-12 border-2 rounded-xl bg-muted flex items-center justify-center font-heading text-lg">
+          {fmtDuration(cur)}
+        </div>
+        <button
+          type="button"
+          onClick={() => bump(step)}
+          className="nb-btn h-12 w-12 shrink-0 bg-accent text-accent-foreground"
+          aria-label={`Plus ${step} minutes`}
+        >
+          <Plus className="w-5 h-5" />
+        </button>
+      </div>
     </Field>
   );
 }
@@ -117,12 +167,23 @@ export function TimeField({ label, value, onChange }) {
   );
 }
 
-export function SpotsField({ field, value, onChange, spots }) {
+// Spots are named here, in the one place they are also measured, so naming a
+// spot and recording it are the same trip rather than two.
+export function SpotsField({ field, value, onChange, spots, onAddSpot, onRemoveSpot }) {
+  const [newSpot, setNewSpot] = useState("");
   const vals = value || {};
+
+  const add = async () => {
+    const name = newSpot.trim();
+    if (!name) return;
+    setNewSpot("");
+    await onAddSpot(name);
+  };
+
   return (
     <Field label={field.label} span>
       {spots.length === 0 && (
-        <p className="text-sm text-muted-foreground">No spots yet — tap the day header and name your spots first.</p>
+        <p className="text-sm text-muted-foreground">No spots yet — name one below and it will be here every day.</p>
       )}
       <div className="space-y-1.5">
         {spots.map((s) => (
@@ -138,8 +199,29 @@ export function SpotsField({ field, value, onChange, spots }) {
               onChange={(e) => onChange({ ...vals, [s.name]: e.target.value === "" ? "" : +e.target.value })}
               className="nb-input w-24 shrink-0"
             />
+            <button
+              type="button"
+              onClick={() => onRemoveSpot(s.id)}
+              className="nb-btn h-12 w-12 shrink-0 bg-card"
+              aria-label={`Remove ${s.name}`}
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         ))}
+      </div>
+      <div className="flex gap-2 min-w-0 pt-1.5">
+        <input
+          type="text"
+          value={newSpot}
+          onChange={(e) => setNewSpot(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())}
+          placeholder="add a spot — e.g. waist, left thigh"
+          className="nb-input"
+        />
+        <button type="button" className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground" onClick={add}>
+          <Plus className="w-5 h-5" />
+        </button>
       </div>
     </Field>
   );
