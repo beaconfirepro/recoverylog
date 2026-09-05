@@ -1,8 +1,11 @@
 {
   "name": "MeasurementSpot",
-  "type": "object",
   "properties": {
     "name": {
+      "type": "string"
+    },
+    "patient_id": {
+      "description": "Patient this spot belongs to.",
       "type": "string"
     },
     "sort_order": {
@@ -11,5 +14,6 @@
   },
   "required": [
     "name"
-  ]
+  ],
+  "type": "object"
 }
