@@ -53,8 +53,21 @@ export default function Profile() {
 
   const savePatient = async () => {
     setSavingPatient(true);
-    await base44.entities.AppUser.update(patient.id, { first_name: first.trim(), last_name: last.trim(), dob: dob || null });
+    const next = { first_name: first.trim(), last_name: last.trim(), dob: dob || null };
+    await base44.entities.AppUser.update(patient.id, next);
+    // Every member row carries a copy of these to match against, so they move
+    // with it. Otherwise a name change would lock the care team out.
+    await Promise.all(
+      team.map((m) =>
+        base44.entities.AppUser.update(m.id, {
+          match_first_name: next.first_name,
+          match_last_name: next.last_name,
+          match_dob: next.dob
+        })
+      )
+    );
     await refreshPatient();
+    loadTeam();
     setSavingPatient(false);
   };
 
@@ -75,7 +88,12 @@ export default function Profile() {
       email,
       first_name: invite.first_name.trim(),
       last_name: invite.last_name.trim(),
-      can_write: true
+      can_write: true,
+      // Copied onto their row so they can match against it. Row security does
+      // not let an unlinked account read the patient's own row.
+      match_first_name: patient.first_name || "",
+      match_last_name: patient.last_name || "",
+      match_dob: patient.dob || null
     });
     setInvite({ email: "", first_name: "", last_name: "" });
     loadTeam();

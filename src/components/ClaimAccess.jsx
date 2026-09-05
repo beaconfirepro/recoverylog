@@ -4,33 +4,38 @@ import { useAuth } from "@/lib/AuthContext";
 import { usePatient } from "@/lib/PatientContext";
 import Field from "@/components/Field";
 
-// Shown to a signed-in account not yet linked to a patient. Sign-in already
-// happened; this asks who the patient is. The check runs in the claimAccess
-// backend function — the browser cannot see the patient's row to compare.
+const norm = (v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+
+// Shown to a signed-in account not yet linked to a patient. The invitation is
+// the gate: without a row written by the patient there is nothing here to match
+// against. The patient's details then say which patient, which is the whole job
+// once there is more than one.
 export default function ClaimAccess() {
   const { user, logout } = useAuth();
-  const { refreshPatient } = usePatient();
+  const { me, refreshPatient } = usePatient();
   const [form, setForm] = useState({ first_name: "", last_name: "", dob: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const invite = me && me.kind === "team_member" && me.patient_id ? me : null;
   const ready = form.first_name.trim() && form.last_name.trim() && form.dob;
 
   const claim = async () => {
     setBusy(true);
     setError("");
-    try {
-      const res = await base44.functions.invoke("claimAccess", form);
-      if (res?.data?.ok || res?.ok) {
-        await refreshPatient();
-        return;
-      }
-      setError(res?.data?.error || res?.error || "Those patient details do not match.");
-    } catch (e) {
-      setError(e?.response?.data?.error || e?.message || "Could not check those details.");
-    } finally {
+    const matches =
+      norm(invite.match_first_name) === norm(form.first_name) &&
+      norm(invite.match_last_name) === norm(form.last_name) &&
+      String(invite.match_dob ?? "") === String(form.dob);
+
+    if (!matches) {
+      setError("Those patient details do not match your invitation.");
       setBusy(false);
+      return;
     }
+    await base44.auth.updateMe({ patient_id: invite.patient_id });
+    await refreshPatient();
+    setBusy(false);
   };
 
   const set = (k) => (e) => {
@@ -48,32 +53,37 @@ export default function ClaimAccess() {
           </div>
         </div>
 
-        <div className="p-4 grid grid-cols-2 gap-3 min-w-0">
-          <Field label="Patient first name">
-            <input type="text" value={form.first_name} onChange={set("first_name")} className="nb-input" />
-          </Field>
-          <Field label="Patient last name">
-            <input type="text" value={form.last_name} onChange={set("last_name")} className="nb-input" />
-          </Field>
-          <Field label="Patient date of birth" span>
-            <input type="date" value={form.dob} onChange={set("dob")} className="nb-input" />
-          </Field>
+        <div className="p-4 space-y-3">
+          {!invite ? (
+            <p className="text-sm font-semibold break-words">
+              This account has not been added to a recovery log. Ask the patient to add {user?.email} to their care
+              team, then sign in again.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 min-w-0">
+              <Field label="Patient first name">
+                <input type="text" value={form.first_name} onChange={set("first_name")} className="nb-input" />
+              </Field>
+              <Field label="Patient last name">
+                <input type="text" value={form.last_name} onChange={set("last_name")} className="nb-input" />
+              </Field>
+              <Field label="Patient date of birth" span>
+                <input type="date" value={form.dob} onChange={set("dob")} className="nb-input" />
+              </Field>
 
-          {error && <p className="col-span-2 text-sm font-bold text-destructive break-words">{error}</p>}
+              {error && <p className="col-span-2 text-sm font-bold text-destructive break-words">{error}</p>}
 
-          <button
-            className="col-span-2 nb-btn w-full h-14 bg-primary text-primary-foreground"
-            onClick={claim}
-            disabled={busy || !ready}
-          >
-            {busy ? "Checking…" : "Open the log"}
-          </button>
+              <button
+                className="col-span-2 nb-btn w-full h-14 bg-primary text-primary-foreground"
+                onClick={claim}
+                disabled={busy || !ready}
+              >
+                {busy ? "Checking…" : "Open the log"}
+              </button>
+            </div>
+          )}
 
-          <p className="col-span-2 text-[11px] font-semibold text-muted-foreground break-words">
-            This only works if the patient has already added {user?.email} to their care team.
-          </p>
-
-          <button className="col-span-2 nb-btn w-full h-12 bg-card" onClick={() => logout()}>
+          <button className="nb-btn w-full h-12 bg-card" onClick={() => logout()}>
             Sign out
           </button>
         </div>
