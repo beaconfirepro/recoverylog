@@ -4,7 +4,7 @@ import { LogOut, Plus, X } from "lucide-react";
 import { todayStr, fullDate, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
-import { TYPES, QUICK_ORDER } from "@/lib/recovery";
+import { TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, checkinSlots } from "@/lib/recovery";
 import { buildRecoveryPdf } from "@/lib/recoveryPdf";
 import Field from "@/components/Field";
 
@@ -111,6 +111,21 @@ export default function Profile() {
     setSavingTracking(false);
   };
 
+  // The check-in is not one of the buttons you turn off, so it is configured
+  // rather than toggled: how often it asks, and what it asks for.
+  const slots = checkinSlots(activeSurgery);
+  const measures = activeSurgery?.checkin_measures?.length
+    ? activeSurgery.checkin_measures
+    : CHECKIN_MEASURES.map((m) => m.key);
+
+  const setSlots = (next) => patchSurgery({ checkin_slots: next });
+
+  const toggleMeasure = (key) => {
+    const next = measures.includes(key) ? measures.filter((k) => k !== key) : [...measures, key];
+    // Stored in the order the check-in asks, so the form never reshuffles.
+    patchSurgery({ checkin_measures: CHECKIN_MEASURES.filter((m) => next.includes(m.key)).map((m) => m.key) });
+  };
+
   const toggleType = (t) => {
     const next = selected.includes(t) ? selected.filter((x) => x !== t) : [...selected, t];
     // Keep the arranged order: a newly ticked type joins the end rather than
@@ -191,6 +206,86 @@ export default function Profile() {
 
       {isOwner && activeSurgery && (
         <div className="nb-card overflow-hidden">
+          <div className="px-4 py-3 border-b-2" style={{ backgroundColor: TYPES[PINNED].color, color: "#fff" }}>
+            <div className="font-display text-xl uppercase leading-tight break-words">Check-in</div>
+            <div className="text-sm font-semibold break-words">
+              For {activeSurgery.label}. Pinned to the top of the day, so it is set up rather than switched off.
+            </div>
+          </div>
+
+          <div className="p-4 space-y-4">
+            <div className="space-y-2">
+              <div className="nb-label">How often, and when</div>
+              {slots.map((slot, i) => (
+                <div key={i} className="flex gap-2 min-w-0">
+                  <input
+                    type="text"
+                    value={slot.label}
+                    placeholder="e.g. Waking"
+                    onChange={(e) =>
+                      setSlots(slots.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))
+                    }
+                    className="nb-input flex-1 min-w-0"
+                  />
+                  <input
+                    type="time"
+                    value={slot.time || ""}
+                    onChange={(e) => setSlots(slots.map((x, j) => (j === i ? { ...x, time: e.target.value } : x)))}
+                    className="nb-input w-32 shrink-0"
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Remove ${slot.label || "this time"}`}
+                    onClick={() => setSlots(slots.filter((_, j) => j !== i))}
+                    disabled={savingTracking || slots.length === 1}
+                    className="nb-btn w-11 shrink-0 bg-card"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setSlots([...slots, { label: "", time: "" }])}
+                disabled={savingTracking}
+                className="nb-btn w-full h-11 bg-accent text-accent-foreground flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add a time
+              </button>
+              <p className="text-[11px] font-semibold text-muted-foreground break-words">
+                {slots.length} {slots.length === 1 ? "check-in" : "check-ins"} a day. The time picks the slot for you
+                when you open the form; it does not nag you.
+              </p>
+            </div>
+
+            <div className="border-t-2 pt-3 space-y-2">
+              <div className="nb-label">What it records</div>
+              <div className="flex flex-wrap gap-1.5">
+                {CHECKIN_MEASURES.map((m) => (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => toggleMeasure(m.key)}
+                    disabled={savingTracking || (measures.length === 1 && measures.includes(m.key))}
+                    className="nb-chip"
+                    style={measures.includes(m.key) ? { backgroundColor: TYPES[PINNED].color, color: "#fff" } : {}}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] font-semibold text-muted-foreground break-words">
+                {measures.length} of {CHECKIN_MEASURES.length}. Turning one off shortens the form; anything already
+                recorded stays.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOwner && activeSurgery && (
+        <div className="nb-card overflow-hidden">
           <div className="px-4 py-3 border-b-2 bg-muted">
             <div className="font-display text-xl uppercase leading-tight break-words">What to track</div>
             <div className="text-sm font-semibold break-words">
@@ -220,7 +315,7 @@ export default function Profile() {
             </div>
             <p className="text-[11px] font-semibold text-muted-foreground break-words">
               {selected.length} of {QUICK_ORDER.length} selected. Turning one off hides its button; anything already
-              logged stays.
+              logged stays. The check-in above is always on.
             </p>
 
             <div className="border-t-2 pt-3 space-y-2">

@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { TYPES, QUICK_ORDER } from "@/lib/recovery";
+import { TYPES, PINNED, QUICK_ORDER } from "@/lib/recovery";
 import { Check, Plus, X } from "lucide-react";
 
 const LONG_PRESS_MS = 450;
@@ -59,7 +59,7 @@ const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, ...handl
 // set. Hold one down, or right-click it, and the grid becomes arrangeable:
 // drag to reorder, X to take one off, and the tray adds the rest back.
 export default function QuickAdd({ types, onAdd, onReorder, canWrite = true }) {
-  const list = types?.length ? types : QUICK_ORDER;
+  const list = (types?.length ? types : QUICK_ORDER).filter((t) => t !== PINNED);
   const [arranging, setArranging] = useState(false);
   const [order, setOrder] = useState(list);
   const [dragIndex, setDragIndex] = useState(null);
@@ -211,18 +211,22 @@ export default function QuickAdd({ types, onAdd, onReorder, canWrite = true }) {
     setArranging(false);
   };
 
-  const available = QUICK_ORDER.filter((t) => !order.includes(t));
+  const available = QUICK_ORDER.filter((t) => t !== PINNED && !order.includes(t));
 
-  if (list.length === 0 && !arranging) {
-    return (
-      <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card break-words">
-        Nothing is selected to track. Pick what to track in Profile.
-      </p>
-    );
-  }
+  const pinned = TYPES[PINNED];
 
   return (
     <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => onAdd(PINNED)}
+        className="nb-btn w-full min-h-16 py-2 gap-2 !rounded-xl"
+        style={{ backgroundColor: pinned.color, color: pinned.darkText ? "#1A1024" : "#fff" }}
+      >
+        <pinned.icon className="w-5 h-5 shrink-0" />
+        <span className="font-heading text-sm uppercase tracking-wide">{pinned.label}</span>
+      </button>
+
       <div className="grid grid-cols-4 gap-2">
         {order.map((t, i) =>
           TYPES[t] ? (
