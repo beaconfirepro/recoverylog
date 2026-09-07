@@ -1,7 +1,7 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { PINNED, QUICK_ORDER, TYPES } from "@/lib/recovery";
+import { PINNED, QUICK_ORDER } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
 
 const PatientContext = createContext();
@@ -9,12 +9,13 @@ const PatientContext = createContext();
 export const displayName = (row) =>
   [row?.first_name, row?.last_name].filter(Boolean).join(" ").trim();
 
-// Which entry types a surgery offers, in the order it wants them. Empty means
-// the surgery has not been narrowed down, which is not the same as tracking
-// nothing. Unknown keys are dropped so a stale saved layout cannot blank the
-// screen.
+// The arrangeable buttons a surgery offers, in the order it wants them. Empty
+// means the surgery has not been narrowed down, which is not the same as
+// tracking nothing. Filtered against what is still offered, so a saved layout
+// naming a retired type — or the pinned check-in, which is not one of these —
+// cannot put its button back.
 export const trackedTypes = (surgery) => {
-  const saved = (surgery?.tracked_types || []).filter((t) => TYPES[t]);
+  const saved = asRows(surgery?.tracked_types).filter((t) => t !== PINNED && QUICK_ORDER.includes(t));
   return saved.length ? saved : QUICK_ORDER;
 };
 

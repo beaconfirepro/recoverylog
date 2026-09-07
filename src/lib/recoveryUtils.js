@@ -1,4 +1,4 @@
-import { format, parseISO, isToday as dfIsToday } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 // A list read that did not come back as a list is an empty screen, not a
 // crash: the caller can say "nothing here" but it cannot survive .find on an

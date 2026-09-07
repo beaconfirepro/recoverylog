@@ -55,6 +55,31 @@ export default [
         { ignore: ["cmdk-input-wrapper", "toast-close"] },
       ],
       "react-hooks/rules-of-hooks": "error",
+      // A name with nothing behind it builds and lints clean, then throws
+      // "Can't find variable" at whoever opens the app. That is the one thing
+      // a linter is for.
+      "no-undef": "error",
+    },
+  },
+  // src/lib holds the contexts and the entry-type tables — the code most of
+  // the app runs through — and was not being checked at all.
+  {
+    files: ["src/lib/**/*.{js,mjs,cjs,jsx}"],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.node },
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: "module",
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    plugins: { react: pluginReact, "react-hooks": pluginReactHooks, "unused-imports": pluginUnusedImports },
+    settings: { react: { version: "detect" } },
+    rules: {
+      "no-undef": "error",
+      "unused-imports/no-unused-imports": "error",
+      "react/jsx-uses-vars": "error",
+      "react-hooks/rules-of-hooks": "error",
     },
   },
 ];
