@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { asRows } from "@/lib/recoveryUtils";
 import { computeTotals } from "@/lib/daySummary";
 import { daysBetween, shortDate } from "@/lib/dates";
 import { usePatient } from "@/lib/PatientContext";
@@ -30,10 +31,11 @@ export default function Trends() {
         setRows([]);
         return;
       }
-      const [days, entries] = await Promise.all([
+      const [daysRaw, entriesRaw] = await Promise.all([
         base44.entities.RecoveryDay.filter({ surgery_id: activeSurgeryId }, "date", 200),
         base44.entities.RecoveryEntry.filter({ surgery_id: activeSurgeryId }, "created_date", 3000)
       ]);
+      const [days, entries] = [asRows(daysRaw), asRows(entriesRaw)];
       const surgeryDate = activeSurgery?.surgery_date || null;
       const byDate = {};
       entries.forEach((e) => {

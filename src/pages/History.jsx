@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { niceDate, postOpLabel } from "@/lib/dates";
 import { computeTotals, redFlagYesCount } from "@/lib/daySummary";
+import { asRows } from "@/lib/recoveryUtils";
 import { usePatient } from "@/lib/PatientContext";
 
 export default function History() {
@@ -18,10 +19,11 @@ export default function History() {
         setTotalsByDay({});
         return;
       }
-      const [ds, entries] = await Promise.all([
+      const [dsRaw, entriesRaw] = await Promise.all([
         base44.entities.RecoveryDay.filter({ surgery_id: activeSurgeryId }, "-date", 200),
         base44.entities.RecoveryEntry.filter({ surgery_id: activeSurgeryId }, "created_date", 3000)
       ]);
+      const [ds, entries] = [asRows(dsRaw), asRows(entriesRaw)];
       const byDate = {};
       entries.forEach((e) => {
         (byDate[e.date] = byDate[e.date] || []).push(e);

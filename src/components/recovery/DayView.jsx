@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
 import { sortEntries, runningTotals, computeTotals } from "@/lib/daySummary";
+import { asRows } from "@/lib/recoveryUtils";
 import { usePatient, trackedTypes } from "@/lib/PatientContext";
 import QuickAdd from "./QuickAdd";
 import EntryCard from "./EntryCard";
@@ -31,16 +32,16 @@ export default function DayView({ date }) {
       setEntries([]);
       return;
     }
-    const existing = await base44.entities.RecoveryDay.filter({ date, surgery_id: activeSurgeryId }, "date", 1);
+    const existing = asRows(await base44.entities.RecoveryDay.filter({ date, surgery_id: activeSurgeryId }, "date", 1));
     const d =
       existing[0] ||
       (await base44.entities.RecoveryDay.create({ date, patient_id: patientId, surgery_id: activeSurgeryId }));
     setDay(d);
-    setEntries(await base44.entities.RecoveryEntry.filter({ date, surgery_id: activeSurgeryId }, "created_date", 500));
+    setEntries(asRows(await base44.entities.RecoveryEntry.filter({ date, surgery_id: activeSurgeryId }, "created_date", 500)));
   }, [date, patientId, activeSurgeryId]);
 
   const loadSpots = useCallback(async () => {
-    setSpots(await base44.entities.MeasurementSpot.list("sort_order", 50));
+    setSpots(asRows(await base44.entities.MeasurementSpot.list("sort_order", 50)));
   }, []);
 
   useEffect(() => {

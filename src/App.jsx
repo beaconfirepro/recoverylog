@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { PatientProvider, usePatient } from '@/lib/PatientContext';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import ClaimAccess from '@/components/ClaimAccess';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
@@ -41,7 +42,7 @@ const PatientGate = () => {
 };
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -52,15 +53,14 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
-    }
+  // Only an account the app cannot serve at all stops the router. Being
+  // signed out is not that: auth_required used to redirect to the hosted
+  // login and return null, and because that early return skipped the routes
+  // below, it also skipped the /login screen that could have fixed it — so a
+  // rejected session bounced out, came back rejected, and left a blank page.
+  // Falling through lets PatientGate send her to the app's own login.
+  if (authError?.type === 'user_not_registered') {
+    return <UserNotRegisteredError />;
   }
 
   // Render the main app
@@ -88,17 +88,19 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
-    <AuthProvider>
-      <PatientProvider>
-        <QueryClientProvider client={queryClientInstance}>
-          <Router>
-            <ScrollToTop />
-            <AuthenticatedApp />
-          </Router>
-          <Toaster />
-        </QueryClientProvider>
-      </PatientProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <PatientProvider>
+          <QueryClientProvider client={queryClientInstance}>
+            <Router>
+              <ScrollToTop />
+              <AuthenticatedApp />
+            </Router>
+            <Toaster />
+          </QueryClientProvider>
+        </PatientProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
 

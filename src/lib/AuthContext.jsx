@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { appParams } from '@/lib/app-params';
+import { appParams, clearStoredAccessToken } from '@/lib/app-params';
 
 const AuthContext = createContext();
 
@@ -82,6 +82,18 @@ export const AuthProvider = ({ children }) => {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
+      // A rejected session does not always reject: me() can resolve with
+      // nothing at all. Taking that as "signed in" left the app believing in
+      // a user it did not have, which is how it ended up asking whose log it
+      // was while signed in as undefined.
+      if (!currentUser?.id) {
+        clearStoredAccessToken();
+        setUser(null);
+        setIsAuthenticated(false);
+        setIsLoadingAuth(false);
+        setAuthChecked(true);
+        return;
+      }
       setUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
@@ -94,6 +106,10 @@ export const AuthProvider = ({ children }) => {
       
       // If user auth fails, it might be an expired token
       if (error.status === 401 || error.status === 403) {
+        // The stored token is dead. Leaving it in place makes every reload
+        // fail the same way, which is how a rejected session turns into a
+        // loop rather than a login screen.
+        clearStoredAccessToken();
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'
