@@ -2,6 +2,7 @@
   "name": "RecoveryEntry",
   "properties": {
     "data": {
+      "description": "Everything the entry type records, keyed by field. A check-in also stores a per-measure note under \"<measure>_note\", e.g. pain_note.",
       "type": "object"
     },
     "date": {
@@ -12,6 +13,7 @@
       "type": "string"
     },
     "note": {
+      "description": "A note about the whole entry.",
       "type": "string"
     },
     "patient_id": {
@@ -40,6 +42,9 @@
         "movement",
         "sleep",
         "mld",
+        "tools",
+        "bodywork",
+        "vibration",
         "photo",
         "measure",
         "weight"
