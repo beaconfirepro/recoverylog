@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { PINNED, QUICK_ORDER } from "@/lib/recovery";
+import { asRows } from "@/lib/recoveryUtils";
 
 const PatientContext = createContext();
 
@@ -35,7 +36,7 @@ export const PatientProvider = ({ children }) => {
       setSurgeries([]);
       return [];
     }
-    const list = await base44.entities.Surgery.filter({ patient_id: patientId }, "-surgery_date", 50);
+    const list = asRows(await base44.entities.Surgery.filter({ patient_id: patientId }, "-surgery_date", 50));
     setSurgeries(list);
     return list;
   }, []);
@@ -46,10 +47,10 @@ export const PatientProvider = ({ children }) => {
       return;
     }
     setLoading(true);
-    const rows = await base44.entities.AppUser.list("created_date", 50);
-    const mine = rows.find((r) => r.email === user.email) || null;
+    const people = asRows(await base44.entities.AppUser.list("created_date", 50));
+    const mine = people.find((r) => r.email === user.email) || null;
     const groupId = mine?.kind === "patient" ? mine.id : mine?.patient_id || null;
-    const p = rows.find((r) => r.id === groupId && r.kind === "patient") || null;
+    const p = people.find((r) => r.id === groupId && r.kind === "patient") || null;
 
     // The patient needs the same link a team member gets. Without it she would
     // match row security only on rows she created herself, and anything a team

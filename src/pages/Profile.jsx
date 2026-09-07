@@ -5,6 +5,7 @@ import { todayStr, fullDate, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
 import { TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, checkinSlots } from "@/lib/recovery";
+import { asRows } from "@/lib/recoveryUtils";
 import { buildRecoveryPdf } from "@/lib/recoveryPdf";
 import Field from "@/components/Field";
 
@@ -38,7 +39,7 @@ export default function Profile() {
 
   const loadTeam = useCallback(() => {
     if (!patientId) return;
-    base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 50).then(setTeam);
+    base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 50).then((r) => setTeam(asRows(r)));
   }, [patientId]);
 
   useEffect(() => {
