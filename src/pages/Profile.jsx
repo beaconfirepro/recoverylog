@@ -113,8 +113,9 @@ export default function Profile() {
 
   const toggleType = (t) => {
     const next = selected.includes(t) ? selected.filter((x) => x !== t) : [...selected, t];
-    // Stored in the app's own order so the buttons never shuffle.
-    patchSurgery({ tracked_types: QUICK_ORDER.filter((x) => next.includes(x)) });
+    // Keep the arranged order: a newly ticked type joins the end rather than
+    // jumping to wherever the built-in list happens to put it.
+    patchSurgery({ tracked_types: next });
   };
 
   // dateRange() stops at MAX_RANGE_DAYS. Silently dropping days out of a record

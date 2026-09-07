@@ -18,7 +18,7 @@ const Spinner = () => (
 );
 
 export default function DayView({ date }) {
-  const { patientId, activeSurgery, activeSurgeryId } = usePatient();
+  const { patientId, activeSurgery, activeSurgeryId, canWrite, refreshSurgeries } = usePatient();
   const [day, setDay] = useState(null);
   const [entries, setEntries] = useState(null);
   const [spots, setSpots] = useState([]);
@@ -96,6 +96,12 @@ export default function DayView({ date }) {
     load();
   };
 
+  // The arranged order is the surgery's, so every screen reading it agrees.
+  const saveOrder = async (order) => {
+    await base44.entities.Surgery.update(activeSurgeryId, { tracked_types: order });
+    await refreshSurgeries();
+  };
+
   const addSpot = async (name) => {
     await base44.entities.MeasurementSpot.create({ name, sort_order: spots.length, patient_id: patientId });
     loadSpots();
@@ -113,7 +119,12 @@ export default function DayView({ date }) {
       <div>
         <h2 className="font-heading text-sm uppercase tracking-wider mb-2">Log an entry</h2>
         {loggable ? (
-          <QuickAdd types={trackedTypes(activeSurgery)} onAdd={(type) => setDialog({ type })} />
+          <QuickAdd
+            types={trackedTypes(activeSurgery)}
+            onAdd={(type) => setDialog({ type })}
+            onReorder={saveOrder}
+            canWrite={canWrite}
+          />
         ) : (
           <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card break-words">
             {beforeSurgery
