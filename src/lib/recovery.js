@@ -18,7 +18,14 @@ export const TYPES = {
       S("energy", "Energy", "good"), S("mood", "Mood", "good"), S("mobility", "Mobility", "good"),
       { key: "worst_spot", label: "Worst spot", kind: "text", placeholder: "e.g. left hip" }
     ],
-    summary: (d) => join([d.slot, `Pain ${d.pain ?? "–"}`, `Nausea ${d.nausea ?? "–"}`, `Swelling ${d.swelling ?? "–"}`, `Energy ${d.energy ?? "–"}`, `Mood ${d.mood ?? "–"}`, `Mobility ${d.mobility ?? "–"}`, d.worst_spot && `Worst: ${d.worst_spot}`]),
+    summary: (d) =>
+      join([
+        d.slot,
+        ...[["pain", "Pain"], ["nausea", "Nausea"], ["swelling", "Swelling"], ["energy", "Energy"], ["mood", "Mood"], ["mobility", "Mobility"]]
+          .filter(([k]) => d[k] != null)
+          .map(([k, label]) => `${label} ${d[k]}`),
+        d.worst_spot && `Worst: ${d.worst_spot}`
+      ]),
     marker: (d, e) => `CHK ${e.entry_time}`
   },
   water: {
@@ -235,11 +242,60 @@ export const TYPES = {
 
 TYPES.walk = { ...TYPES.movement }; // legacy entries logged as "walk"
 
+// Check-in is pinned above the grid, always on, and configured rather than
+// toggled, so it is not one of the buttons you can arrange.
+export const PINNED = "checkin";
+
+// Retired: the check-in already carries a pain scale. TYPES keeps its
+// definition so anything already logged under it still reads back.
 export const QUICK_ORDER = [
-  "checkin", "water", "food", "med", "pain", "temp", "sleep", "movement",
+  "water", "food", "med", "temp", "sleep", "movement",
   "bm", "urine", "pads", "incisions", "garment", "skin", "mld", "tools", "bodywork",
   "vibration", "photo", "measure", "weight"
 ];
+
+// Everything the check-in could ask, in the order it asks it. A surgery picks
+// a subset; this is the ceiling.
+export const CHECKIN_MEASURES = [
+  { key: "pain", label: "Pain" },
+  { key: "nausea", label: "Nausea" },
+  { key: "swelling", label: "Swelling" },
+  { key: "energy", label: "Energy" },
+  { key: "mood", label: "Mood" },
+  { key: "mobility", label: "Mobility" },
+  { key: "worst_spot", label: "Worst spot" }
+];
+
+export const DEFAULT_CHECKIN_SLOTS = [
+  { label: "Waking", time: "07:00" },
+  { label: "Midday", time: "12:00" },
+  { label: "Evening", time: "18:00" },
+  { label: "Bedtime", time: "22:00" }
+];
+
+const namedSlots = (slots) => (slots || []).filter((s) => s && s.label && String(s.label).trim());
+
+export const checkinSlots = (surgery) => {
+  const saved = namedSlots(surgery?.checkin_slots);
+  return saved.length ? saved : DEFAULT_CHECKIN_SLOTS;
+};
+
+// The check-in this surgery actually asks for. TYPES.checkin is the maximum;
+// a surgery can ask fewer times and record fewer things, never more.
+export const checkinConfig = (surgery) => {
+  const slots = checkinSlots(surgery);
+  const wanted = surgery?.checkin_measures?.length
+    ? CHECKIN_MEASURES.filter((m) => surgery.checkin_measures.includes(m.key))
+    : CHECKIN_MEASURES;
+  const byKey = Object.fromEntries(TYPES.checkin.fields.map((f) => [f.key, f]));
+  return {
+    ...TYPES.checkin,
+    fields: [
+      { key: "slot", label: "Slot", kind: "chips", options: slots.map((s) => s.label) },
+      ...wanted.map((m) => byKey[m.key]).filter(Boolean)
+    ]
+  };
+};
 
 export const RED_FLAG_ITEMS = [
   { key: "fever", label: "Fever over the surgeon's number" },
@@ -256,10 +312,12 @@ export const RED_FLAG_ITEMS = [
   { key: "confusion", label: "Confused or hard to wake" }
 ];
 
-export const defaultSlot = () => {
-  const h = new Date().getHours();
-  if (h < 11) return "Waking";
-  if (h < 16) return "Midday";
-  if (h < 21) return "Evening";
-  return "Bedtime";
+// The slot whose time has most recently passed, so the chip is already right
+// at the moment she opens the form. Before the first one, the first.
+export const defaultSlot = (slots) => {
+  const list = namedSlots(slots).length ? namedSlots(slots) : DEFAULT_CHECKIN_SLOTS;
+  const d = new Date();
+  const now = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const due = list.filter((s) => (s.time || "00:00") <= now);
+  return (due.length ? due[due.length - 1] : list[0]).label;
 };

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { TYPES, defaultSlot } from "@/lib/recovery";
+import { TYPES, PINNED, checkinConfig, checkinSlots, defaultSlot } from "@/lib/recovery";
+import { usePatient } from "@/lib/PatientContext";
 import { nowTime } from "@/lib/dates";
 import {
   ScaleField, ChipsField, ChipsMultiField, NumberField, DurationField, TextField,
@@ -7,12 +8,15 @@ import {
 } from "./Fields";
 
 export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot, onSave, onCancel, onDelete, saving }) {
-  const cfg = TYPES[type];
+  const { activeSurgery } = usePatient();
+  // The check-in is the one type a surgery reshapes: how often it asks and
+  // what it records. Every other type is the same for everyone.
+  const cfg = type === PINNED ? checkinConfig(activeSurgery) : TYPES[type];
   const [time, setTime] = useState(entry?.entry_time || nowTime());
   const [data, setData] = useState(() => {
     const base = { ...(entry?.data || {}) };
     if (!entry) {
-      if (type === "checkin") base.slot = base.slot || defaultSlot();
+      if (type === PINNED) base.slot = base.slot || defaultSlot(checkinSlots(activeSurgery));
       if (type === "sleep") base.kind = base.kind || "sleep";
       if (type === "movement") base.kind = base.kind || "walk";
       if (type === "garment") base.action = base.action || "on";

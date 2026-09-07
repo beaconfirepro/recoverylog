@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { TYPES, QUICK_ORDER } from "@/lib/recovery";
+import { PINNED, QUICK_ORDER } from "@/lib/recovery";
 
 const PatientContext = createContext();
 
