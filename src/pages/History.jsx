@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { niceDate, postOpLabel } from "@/lib/dates";
 import { computeTotals, redFlagYesCount } from "@/lib/daySummary";
-import { TYPES } from "@/lib/recovery";
+import { entryNotes } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
 import { usePatient } from "@/lib/PatientContext";
 
@@ -35,9 +35,9 @@ export default function History() {
       const notes = {};
       Object.keys(byDate).forEach((d) => {
         totals[d] = computeTotals(byDate[d], d);
-        notes[d] = byDate[d]
-          .filter((e) => e.note && e.note.trim())
-          .map((e) => ({ id: e.id, time: e.entry_time, label: TYPES[e.type]?.label || e.type, note: e.note.trim() }));
+        notes[d] = byDate[d].flatMap((e) =>
+          entryNotes(e).map((n, i) => ({ id: `${e.id}-${i}`, time: e.entry_time, label: n.label, note: n.text }))
+        );
       });
       setSurgeryDate(activeSurgery?.surgery_date || null);
       setDays(ds);

@@ -332,6 +332,18 @@ export const PINNED = "checkin";
 
 // Retired: the check-in already carries a pain scale. TYPES keeps its
 // definition so anything already logged under it still reads back.
+// Every note on an entry, the whole-entry one and any written against a single
+// measure, in the order the type asks for them.
+export const entryNotes = (entry) => {
+  const d = entry?.data || {};
+  const fields = TYPES[entry?.type]?.fields || [];
+  const perMeasure = fields
+    .map((f) => ({ label: f.label, text: d[`${f.key}_note`] }))
+    .filter((n) => n.text && String(n.text).trim());
+  const whole = entry?.note && entry.note.trim() ? [{ label: "Note", text: entry.note }] : [];
+  return [...perMeasure, ...whole].map((n) => ({ ...n, text: String(n.text).trim() }));
+};
+
 export const QUICK_ORDER = [
   "water", "food", "med", "temp", "sleep", "movement",
   "bm", "urine", "pads", "incisions", "garment", "skin", "mld", "tools", "bodywork",

@@ -1,5 +1,5 @@
 import React from "react";
-import { TYPES } from "@/lib/recovery";
+import { TYPES, entryNotes } from "@/lib/recovery";
 import { Image } from "@/components/ui/image";
 
 export default function EntryCard({ entry, run, onEdit }) {
@@ -7,6 +7,7 @@ export default function EntryCard({ entry, run, onEdit }) {
   const d = entry.data || {};
   const summary = cfg.summary(d, entry, run) || cfg.label;
   const marker = cfg.marker(d, entry, run);
+  const notes = entryNotes(entry);
 
   return (
     <button
@@ -19,7 +20,12 @@ export default function EntryCard({ entry, run, onEdit }) {
       <div className="flex-1 min-w-0">
         <div className="font-heading text-[10px] uppercase tracking-wider text-muted-foreground">{cfg.label}</div>
         <div className="text-sm font-medium break-words">{summary}</div>
-        {entry.note && <div className="text-xs italic text-muted-foreground break-words">{entry.note}</div>}
+        {notes.map((n) => (
+          <div key={n.label} className="text-xs italic text-muted-foreground break-words">
+            {n.label !== "Note" && <span className="not-italic font-heading uppercase">{n.label}: </span>}
+            {n.text}
+          </div>
+        ))}
         {d.photo_url && (
           <Image src={d.photo_url} alt="entry photo" className="h-20 w-20 mt-1 border-2 rounded-lg object-cover" />
         )}

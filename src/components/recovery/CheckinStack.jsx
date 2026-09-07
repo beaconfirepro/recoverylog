@@ -1,6 +1,11 @@
 import React, { useRef, useState } from "react";
+import { Plus } from "lucide-react";
 import Field from "@/components/Field";
 import { ChipsField, TextField, TimeField } from "./Fields";
+
+// Each measure carries its own note alongside its number, so "pain 8" can say
+// why. Kept on the entry data under the measure it belongs to.
+export const noteKey = (fieldKey) => `${fieldKey}_note`;
 
 // Wellbeing, not the raw number: 10 is bad for pain and good for mood, so the
 // face and the colour read off this instead of the value itself.
@@ -25,8 +30,9 @@ function Face({ w, color, size = 128 }) {
   );
 }
 
-function ScaleCard({ field, value, onChange }) {
+function ScaleCard({ field, value, onChange, note, onNoteChange }) {
   const dragging = useRef(false);
+  const [noteOpen, setNoteOpen] = useState(!!note);
   const set = (n) => {
     if (!Number.isNaN(n) && value !== n) onChange(n);
   };
@@ -87,6 +93,27 @@ function ScaleCard({ field, value, onChange }) {
           </button>
         ))}
       </div>
+
+      {noteOpen ? (
+        <div className="w-full mt-3">
+          <Field label={`${field.label} note`} span>
+            <textarea
+              className="nb-textarea min-h-[5rem]"
+              value={note || ""}
+              onChange={(e) => onNoteChange(e.target.value)}
+              placeholder={`what made ${field.label.toLowerCase()} this today?`}
+            />
+          </Field>
+        </div>
+      ) : (
+        <button
+          type="button"
+          className="nb-label flex items-center gap-1.5 text-muted-foreground mt-3 self-start"
+          onClick={() => setNoteOpen(true)}
+        >
+          <Plus className="w-3.5 h-3.5" /> Add a note about {field.label.toLowerCase()}
+        </button>
+      )}
     </div>
   );
 }
@@ -128,7 +155,16 @@ export default function CheckinStack({ cfg, data, setField, time, setTime, note,
         }}
       >
         {current.kind === "scale" && (
-          <ScaleCard field={current} value={data[current.key]} onChange={(v) => setField(current.key, v)} />
+          <ScaleCard
+            // Keyed by measure so the note panel's open state belongs to the
+            // measure, not to the slot on screen it happens to occupy.
+            key={current.key}
+            field={current}
+            value={data[current.key]}
+            onChange={(v) => setField(current.key, v)}
+            note={data[noteKey(current.key)]}
+            onNoteChange={(v) => setField(noteKey(current.key), v)}
+          />
         )}
 
         {current.kind === "chips" && (
