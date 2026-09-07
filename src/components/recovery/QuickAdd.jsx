@@ -9,7 +9,12 @@ const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, ...handl
   const c = TYPES[type];
   const Icon = c.icon;
   return (
-    <div ref={innerRef} className="relative" {...handlers}>
+    <div
+      ref={innerRef}
+      className="relative select-none"
+      style={{ touchAction: arranging ? "none" : undefined, WebkitTouchCallout: "none" }}
+      {...handlers}
+    >
       <button
         type="button"
         onClick={onClick}
@@ -17,11 +22,7 @@ const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, ...handl
         className={`nb-btn w-full min-h-16 py-1.5 flex-col gap-0.5 text-[9px] leading-tight !rounded-xl ${
           arranging ? "outline outline-2 outline-dashed outline-offset-2" : ""
         } ${dragging ? "opacity-40" : ""}`}
-        style={{
-          backgroundColor: c.color,
-          color: c.darkText ? "#1A1024" : "#fff",
-          touchAction: arranging ? "none" : undefined
-        }}
+        style={{ backgroundColor: c.color, color: c.darkText ? "#1A1024" : "#fff" }}
       >
         <Icon className="w-5 h-5" />
         <span className="px-0.5">{c.label}</span>
