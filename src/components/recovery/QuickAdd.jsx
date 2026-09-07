@@ -1,9 +1,14 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TYPES, QUICK_ORDER } from "@/lib/recovery";
 import { Check, Plus, X } from "lucide-react";
 
 const LONG_PRESS_MS = 450;
 const SLOP_PX = 8;
+const GLIDE_MS = 200;
+const GLIDE_EASE = "cubic-bezier(0.2, 0.9, 0.3, 1)";
+
+const stillMotion = () =>
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, ...handlers }) => {
   const c = TYPES[type];
@@ -21,8 +26,16 @@ const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, ...handl
         tabIndex={arranging ? -1 : 0}
         className={`nb-btn w-full min-h-16 py-1.5 flex-col gap-0.5 text-[9px] leading-tight !rounded-xl ${
           arranging ? "outline outline-2 outline-dashed outline-offset-2" : ""
-        } ${dragging ? "opacity-40" : ""}`}
-        style={{ backgroundColor: c.color, color: c.darkText ? "#1A1024" : "#fff" }}
+        }`}
+        style={{
+          backgroundColor: c.color,
+          color: c.darkText ? "#1A1024" : "#fff",
+          transform: dragging ? "scale(1.08)" : undefined,
+          boxShadow: dragging ? "0 8px 16px rgba(0,0,0,0.35)" : undefined,
+          transition: "transform 120ms ease-out, box-shadow 120ms ease-out",
+          zIndex: dragging ? 10 : undefined,
+          position: dragging ? "relative" : undefined
+        }}
       >
         <Icon className="w-5 h-5" />
         <span className="px-0.5">{c.label}</span>
@@ -54,11 +67,69 @@ export default function QuickAdd({ types, onAdd, onReorder, canWrite = true }) {
   const tiles = useRef([]);
   const press = useRef(null);
   const drag = useRef(null);
+  const rects = useRef(new Map());
 
-  // A saved layout arriving from elsewhere wins, but never mid-drag.
+  // Called immediately before anything that reorders, so the "before" is the
+  // position on screen — mid-glide included, which keeps an interrupted
+  // animation continuous instead of restarting it.
+  const snapshot = () => {
+    if (stillMotion()) return;
+    const m = new Map();
+    order.forEach((t, i) => {
+      const el = tiles.current[i];
+      if (el) m.set(t, el.getBoundingClientRect());
+    });
+    rects.current = m;
+  };
+
+  useLayoutEffect(() => {
+    const before = rects.current;
+    rects.current = new Map();
+    if (!before.size) return;
+
+    // Clear every transform first, then measure, so no tile is read while
+    // another still carries one.
+    const held = drag.current?.index;
+    const moving = order.map((t, i) => (i === held ? null : tiles.current[i]));
+    moving.forEach((el) => {
+      if (!el) return;
+      el.style.transition = "none";
+      el.style.transform = "";
+    });
+
+    const shifted = [];
+    order.forEach((t, i) => {
+      const el = moving[i];
+      const was = before.get(t);
+      if (!el || !was) return;
+      const now = el.getBoundingClientRect();
+      const dx = was.left - now.left;
+      const dy = was.top - now.top;
+      if (dx || dy) shifted.push([el, dx, dy]);
+    });
+    if (!shifted.length) return;
+
+    for (const [el, dx, dy] of shifted) el.style.transform = `translate(${dx}px, ${dy}px)`;
+    const id = requestAnimationFrame(() => {
+      for (const [el] of shifted) {
+        el.style.transition = `transform ${GLIDE_MS}ms ${GLIDE_EASE}`;
+        el.style.transform = "";
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [order]);
+
+  // A saved layout arriving from elsewhere wins, but never mid-arrange — and
+  // only when it has actually changed. Keying this on `arranging` meant
+  // leaving arrange mode re-ran it and overwrote the new order with the prop,
+  // which has not caught up yet because the save is still in flight.
+  const arrangingRef = useRef(arranging);
+  arrangingRef.current = arranging;
+  const signature = list.join(",");
   useEffect(() => {
-    if (!arranging) setOrder(list);
-  }, [list, arranging]);
+    if (!arrangingRef.current) setOrder(list);
+    // Read through its signature so an unchanged array cannot re-fire this.
+  }, [signature]);
 
   useEffect(() => () => clearTimeout(press.current?.timer), []);
 
@@ -108,6 +179,7 @@ export default function QuickAdd({ types, onAdd, onReorder, canWrite = true }) {
     if (over === -1 || over === from) return;
     // Pull it out and drop it back in at the slot under the finger, which
     // leaves it holding exactly that index.
+    snapshot();
     setOrder((prev) => {
       const next = [...prev];
       next.splice(over, 0, next.splice(from, 1)[0]);
@@ -123,13 +195,20 @@ export default function QuickAdd({ types, onAdd, onReorder, canWrite = true }) {
     setDragIndex(null);
   };
 
-  const remove = (type) => setOrder((prev) => prev.filter((t) => t !== type));
-  const add = (type) => setOrder((prev) => [...prev, type]);
+  const remove = (type) => {
+    snapshot();
+    setOrder((prev) => prev.filter((t) => t !== type));
+  };
 
-  const done = () => {
-    setArranging(false);
+  const add = (type) => {
+    snapshot();
+    setOrder((prev) => [...prev, type]);
+  };
+
+  const done = async () => {
     setDragIndex(null);
-    onReorder?.(order);
+    await onReorder?.(order);
+    setArranging(false);
   };
 
   const available = QUICK_ORDER.filter((t) => !order.includes(t));
@@ -196,6 +275,7 @@ export default function QuickAdd({ types, onAdd, onReorder, canWrite = true }) {
               type="button"
               className="nb-btn h-12 bg-card"
               onClick={() => {
+                snapshot();
                 setOrder(list);
                 setArranging(false);
                 setDragIndex(null);
