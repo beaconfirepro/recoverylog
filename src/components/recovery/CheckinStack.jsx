@@ -113,7 +113,10 @@ export default function CheckinStack({ cfg, data, setField, time, setTime, note,
         ))}
       </div>
 
+      {/* A fixed floor under the step so the nav row does not jump as the
+          screens change height inside the dialog. */}
       <div
+        className="min-h-[21rem]"
         onPointerDown={(e) => {
           swipeX.current = e.target.closest("[data-n], textarea, input, button") ? null : e.clientX;
         }}

@@ -4,7 +4,7 @@ import { usePatient } from "@/lib/PatientContext";
 import { nowTime } from "@/lib/dates";
 import {
   ScaleField, ChipsField, ChipsMultiField, NumberField, DurationField, TextField,
-  TimeField, SpotsField, FileField
+  TimeField, SpotsField, FileField, NoteField
 } from "./Fields";
 import CheckinStack from "./CheckinStack";
 
@@ -106,7 +106,7 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
         }
       })}
 
-      <TextField field={{ label: "Note", placeholder: "anything else?" }} value={note} onChange={setNote} />
+      <NoteField value={note} onChange={setNote} />
 
       <div className="col-span-2 flex gap-2 min-w-0">
         <button
