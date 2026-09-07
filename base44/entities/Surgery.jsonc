@@ -6,6 +6,30 @@
       "description": "Hidden from the picker but its days are kept.",
       "type": "boolean"
     },
+    "checkin_measures": {
+      "description": "Which measures the check-in records: pain, nausea, swelling, energy, mood, mobility, worst_spot. Empty or absent means all of them. A surgery can ask for fewer, never more.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "checkin_slots": {
+      "description": "How many times a day this surgery checks in, and when. Empty or absent means the built-in four.",
+      "items": {
+        "properties": {
+          "label": {
+            "description": "Chip shown on the check-in form, e.g. 'Waking'.",
+            "type": "string"
+          },
+          "time": {
+            "description": "When this check-in is due, HH:MM. Picks the slot for you when the form opens.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
     "fever_threshold": {
       "type": "number"
     },
@@ -48,7 +72,7 @@
       "type": "boolean"
     },
     "tracked_types": {
-      "description": "Entry types offered for this surgery, in the order their buttons appear. Order is meaningful and is set by dragging the buttons. Empty or absent means all of them in the built-in order.",
+      "description": "The arrangeable entry types offered for this surgery, in the order their buttons appear. Order is meaningful and is set by dragging the buttons. Does not include the pinned check-in. Empty or absent means all of them in the built-in order.",
       "items": {
         "type": "string"
       },
