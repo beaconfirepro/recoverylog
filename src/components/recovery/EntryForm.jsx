@@ -42,7 +42,7 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
         <h2 className="font-heading text-lg uppercase tracking-wide truncate">{cfg.label}</h2>
       </div>
 
-      <TimeField label="Time" value={time} onChange={setTime} />
+      <TimeField label="Time" value={time} onChange={setTime} span />
 
       {cfg.fields.map((f) => {
         switch (f.kind) {
@@ -59,7 +59,7 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
           case "text":
             return <TextField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "time":
-            return <TimeField key={f.key} label={f.label} value={data[f.key] || ""} onChange={(v) => setField(f.key, v)} />;
+            return <TimeField key={f.key} label={f.label} value={data[f.key] || ""} onChange={(v) => setField(f.key, v)} span />;
           case "spots":
             return (
               <SpotsField

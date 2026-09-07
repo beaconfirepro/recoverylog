@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Image } from "@/components/ui/image";
-import { Loader2, Minus, Plus, Upload, X } from "lucide-react";
+import { Clock, Loader2, Minus, Plus, Upload, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import Field from "@/components/Field";
+import { nowTime } from "@/lib/dates";
 
 const fillStyle = (active, color, darkText) =>
   active ? { backgroundColor: color, color: darkText ? "#1A1024" : "#fff" } : {};
@@ -159,10 +160,100 @@ export function TextField({ field, value, onChange }) {
   );
 }
 
-export function TimeField({ label, value, onChange }) {
+const HOURS = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+const pad = (n) => String(n).padStart(2, "0");
+
+const readTime = (v) => {
+  const [H, M] = String(v || "").split(":").map(Number);
+  if (!Number.isFinite(H) || !Number.isFinite(M)) return null;
+  return { h12: H % 12 === 0 ? 12 : H % 12, m: M, mer: H < 12 ? "AM" : "PM" };
+};
+
+const writeTime = ({ h12, m, mer }) =>
+  `${pad(mer === "AM" ? (h12 === 12 ? 0 : h12) : h12 === 12 ? 12 : h12 + 12)}:${pad(m)}`;
+
+export const showTime = (v) => {
+  const t = readTime(v);
+  return t ? `${t.h12}:${pad(t.m)} ${t.mer}` : "Not set";
+};
+
+// The system time wheel is the same grey drum in every app and it takes the
+// screen to use. This shows the time already set to now and stays shut until
+// it is asked for; opening it is a choice, not something that happens to you.
+export function TimeField({ label, value, onChange, span }) {
+  const [open, setOpen] = useState(false);
+  const t = readTime(value) || readTime(nowTime());
+  const minutes = MINUTES.includes(t.m) ? MINUTES : [...MINUTES, t.m].sort((a, b) => a - b);
+  const set = (patch) => onChange(writeTime({ ...t, ...patch }));
+
+  const toggle = () => {
+    // An empty field lands on now rather than on an empty grid, so adjusting
+    // from the right ballpark is the worst case.
+    if (!value) onChange(nowTime());
+    setOpen((o) => !o);
+  };
+
   return (
-    <Field label={label}>
-      <input type="time" value={value} onChange={(e) => onChange(e.target.value)} className="nb-input" />
+    <Field label={label} span={span}>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className="nb-input flex items-center justify-between gap-2 text-left"
+      >
+        <span className="font-heading text-base tracking-wide">{showTime(value)}</span>
+        <span className="flex items-center gap-1 text-[10px] font-semibold uppercase text-muted-foreground shrink-0">
+          <Clock className="w-3.5 h-3.5" />
+          {open ? "Done" : "Change"}
+        </span>
+      </button>
+
+      {open && (
+        <div className="border-2 rounded-xl bg-card p-2.5 space-y-2.5">
+          <div className="flex flex-wrap gap-1">
+            {HOURS.map((h) => (
+              <button
+                key={h}
+                type="button"
+                onClick={() => set({ h12: h })}
+                className={`nb-chip w-10 px-0 text-center tabular-nums ${t.h12 === h ? "bg-foreground text-background" : ""}`}
+              >
+                {h}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-1">
+            {minutes.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => set({ m })}
+                className={`nb-chip w-10 px-0 text-center tabular-nums ${t.m === m ? "bg-foreground text-background" : ""}`}
+              >
+                :{pad(m)}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {["AM", "PM"].map((mer) => (
+              <button
+                key={mer}
+                type="button"
+                onClick={() => set({ mer })}
+                className={`nb-btn h-11 ${t.mer === mer ? "bg-foreground text-background" : "bg-card"}`}
+              >
+                {mer}
+              </button>
+            ))}
+            <button type="button" onClick={() => onChange(nowTime())} className="nb-btn h-11 bg-accent text-accent-foreground">
+              Now
+            </button>
+          </div>
+        </div>
+      )}
     </Field>
   );
 }
