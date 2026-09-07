@@ -1,21 +1,26 @@
 {
   "name": "Surgery",
-  "type": "object",
   "properties": {
-    "patient_id": {
-      "type": "string",
-      "description": "Patient this surgery belongs to."
+    "archived": {
+      "default": false,
+      "description": "Hidden from the picker but its days are kept.",
+      "type": "boolean"
+    },
+    "fever_threshold": {
+      "type": "number"
     },
     "label": {
-      "type": "string",
-      "description": "Short name shown in the day-header picker, e.g. 'Tummy tuck' or 'Left knee'."
+      "description": "Short name shown in the day-header picker, e.g. 'Tummy tuck' or 'Left knee'.",
+      "type": "string"
     },
-    "surgery_date": {
-      "type": "string",
-      "format": "date",
-      "description": "Day zero. Every day label counts from here."
+    "notes": {
+      "type": "string"
     },
-    "surgery_time": {
+    "office_phone": {
+      "type": "string"
+    },
+    "patient_id": {
+      "description": "Patient this surgery belongs to.",
       "type": "string"
     },
     "procedure": {
@@ -24,42 +29,37 @@
     "surgeon": {
       "type": "string"
     },
-    "office_phone": {
+    "surgery_date": {
+      "description": "Day zero. Every day label counts from here.",
+      "format": "date",
       "type": "string"
     },
-    "fever_threshold": {
-      "type": "number"
-    },
-    "notes": {
+    "surgery_time": {
       "type": "string"
+    },
+    "track_after": {
+      "default": true,
+      "description": "Allow logging on the surgery date and after.",
+      "type": "boolean"
+    },
+    "track_before": {
+      "default": true,
+      "description": "Allow logging on days before the surgery date.",
+      "type": "boolean"
     },
     "tracked_types": {
-      "type": "array",
+      "description": "Entry types offered for this surgery, in the order their buttons appear. Order is meaningful and is set by dragging the buttons. Empty or absent means all of them in the built-in order.",
       "items": {
         "type": "string"
       },
-      "description": "Entry types offered for this surgery. Empty or absent means all of them."
-    },
-    "track_before": {
-      "type": "boolean",
-      "default": true,
-      "description": "Allow logging on days before the surgery date."
-    },
-    "track_after": {
-      "type": "boolean",
-      "default": true,
-      "description": "Allow logging on the surgery date and after."
-    },
-    "archived": {
-      "type": "boolean",
-      "default": false,
-      "description": "Hidden from the picker but its days are kept."
+      "type": "array"
     }
   },
   "required": [
     "patient_id",
     "label"
   ],
+  "type": "object",
   "rls": {
     "read": {
       "$or": [
