@@ -28,6 +28,35 @@ export function ScaleField({ field, value, onChange, color }) {
   );
 }
 
+// Every entry can carry a note, but on most of them it stays empty, so it costs
+// no height until it is asked for. An entry that already has one opens showing it.
+export function NoteField({ value, onChange }) {
+  const [open, setOpen] = useState(!!value);
+  if (!open) {
+    return (
+      <div className="col-span-2 min-w-0">
+        <button
+          type="button"
+          className="nb-label flex items-center gap-1.5 text-muted-foreground"
+          onClick={() => setOpen(true)}
+        >
+          <Plus className="w-3.5 h-3.5" /> Add a note
+        </button>
+      </div>
+    );
+  }
+  return (
+    <Field label="Note" span>
+      <textarea
+        className="nb-textarea min-h-[5rem]"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="anything else?"
+      />
+    </Field>
+  );
+}
+
 export function ChipsField({ field, value, onChange, color, darkText }) {
   return (
     <Field label={field.label} span>

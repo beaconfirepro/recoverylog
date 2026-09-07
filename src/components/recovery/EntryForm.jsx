@@ -4,8 +4,9 @@ import { usePatient } from "@/lib/PatientContext";
 import { nowTime } from "@/lib/dates";
 import {
   ScaleField, ChipsField, ChipsMultiField, NumberField, DurationField, TextField,
-  TimeField, SpotsField, FileField
+  TimeField, SpotsField, FileField, NoteField
 } from "./Fields";
+import CheckinStack from "./CheckinStack";
 
 export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot, onSave, onCancel, onDelete, saving }) {
   const { activeSurgery } = usePatient();
@@ -30,17 +31,43 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
 
   const props = { color: cfg.color, darkText: !!cfg.darkText };
 
+  const header = (
+    <div className="flex items-center gap-2 min-w-0">
+      <span
+        className="flex items-center justify-center w-10 h-10 shrink-0 border-2 rounded-xl"
+        style={{ backgroundColor: cfg.color, color: cfg.darkText ? "#1A1024" : "#fff" }}
+      >
+        <cfg.icon className="w-5 h-5" />
+      </span>
+      <h2 className="font-heading text-lg uppercase tracking-wide truncate">{cfg.label}</h2>
+    </div>
+  );
+
+  // The check-in asks one thing per screen; every other type is a single form.
+  if (type === PINNED) {
+    return (
+      <div className="min-w-0 space-y-3">
+        {header}
+        <CheckinStack
+          cfg={cfg}
+          data={data}
+          setField={setField}
+          time={time}
+          setTime={setTime}
+          note={note}
+          setNote={setNote}
+          onSave={onSave}
+          onCancel={onCancel}
+          onDelete={onDelete}
+          saving={saving}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-2 gap-3 min-w-0">
-      <div className="col-span-2 flex items-center gap-2 min-w-0">
-        <span
-          className="flex items-center justify-center w-10 h-10 shrink-0 border-2 rounded-xl"
-          style={{ backgroundColor: cfg.color, color: cfg.darkText ? "#1A1024" : "#fff" }}
-        >
-          <cfg.icon className="w-5 h-5" />
-        </span>
-        <h2 className="font-heading text-lg uppercase tracking-wide truncate">{cfg.label}</h2>
-      </div>
+      <div className="col-span-2">{header}</div>
 
       <TimeField label="Time" value={time} onChange={setTime} span />
 
@@ -79,7 +106,7 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
         }
       })}
 
-      <TextField field={{ label: "Note", placeholder: "anything else?" }} value={note} onChange={setNote} />
+      <NoteField value={note} onChange={setNote} />
 
       <div className="col-span-2 flex gap-2 min-w-0">
         <button
