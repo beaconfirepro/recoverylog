@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { niceDate, postOpLabel } from "@/lib/dates";
 import { computeTotals, redFlagYesCount } from "@/lib/daySummary";
+import { TYPES } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
 import { usePatient } from "@/lib/PatientContext";
 
@@ -10,6 +11,7 @@ export default function History() {
   const { activeSurgery, activeSurgeryId } = usePatient();
   const [days, setDays] = useState(null);
   const [totalsByDay, setTotalsByDay] = useState(null);
+  const [notesByDay, setNotesByDay] = useState({});
   const [surgeryDate, setSurgeryDate] = useState(null);
 
   useEffect(() => {
@@ -17,6 +19,7 @@ export default function History() {
       if (!activeSurgeryId) {
         setDays([]);
         setTotalsByDay({});
+        setNotesByDay({});
         return;
       }
       const [dsRaw, entriesRaw] = await Promise.all([
@@ -29,11 +32,16 @@ export default function History() {
         (byDate[e.date] = byDate[e.date] || []).push(e);
       });
       const totals = {};
+      const notes = {};
       Object.keys(byDate).forEach((d) => {
         totals[d] = computeTotals(byDate[d], d);
+        notes[d] = byDate[d]
+          .filter((e) => e.note && e.note.trim())
+          .map((e) => ({ id: e.id, time: e.entry_time, label: TYPES[e.type]?.label || e.type, note: e.note.trim() }));
       });
       setSurgeryDate(activeSurgery?.surgery_date || null);
       setDays(ds);
+      setNotesByDay(notes);
       setTotalsByDay(totals);
     };
     run();
@@ -59,6 +67,7 @@ export default function History() {
         const t = totalsByDay[d.date] || computeTotals([], d.date);
         const flags = redFlagYesCount(d);
         const label = postOpLabel(surgeryDate, d.date);
+        const notes = notesByDay[d.date] || [];
         return (
           <Link key={d.id} to={`/day/${d.date}`} className="nb-card block p-3">
             <div className="flex items-baseline justify-between gap-2 min-w-0">
@@ -76,7 +85,24 @@ export default function History() {
               >
                 ⚑ {flags} red flag{flags === 1 ? "" : "s"}
               </span>
+              {notes.length > 0 && (
+                <span className="nb-chip px-2.5 py-1 text-xs bg-card">📝 {notes.length} note{notes.length === 1 ? "" : "s"}</span>
+              )}
             </div>
+            {/* The notes are the part of a day you cannot reconstruct from totals,
+                so History shows them in full rather than making you open the day. */}
+            {notes.length > 0 && (
+              <div className="mt-2 pt-2 border-t-2 space-y-1">
+                {notes.map((n) => (
+                  <p key={n.id} className="text-xs break-words">
+                    <span className="font-heading uppercase tracking-wide text-muted-foreground">
+                      {n.time} {n.label}
+                    </span>{" "}
+                    <span className="italic">{n.note}</span>
+                  </p>
+                ))}
+              </div>
+            )}
           </Link>
         );
       })}
