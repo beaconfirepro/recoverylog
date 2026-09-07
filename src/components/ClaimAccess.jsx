@@ -10,7 +10,7 @@ const norm = (v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 // states: someone the patient has already invited, someone starting their own
 // log, or someone who has to be invited before there is anything to open.
 export default function ClaimAccess() {
-  const { user, logout } = useAuth();
+  const { user, logout, checkUserAuth } = useAuth();
   const { me, refreshPatient } = usePatient();
   const [role, setRole] = useState(null);
   const [form, setForm] = useState({ first_name: "", last_name: "", dob: "" });
@@ -34,7 +34,10 @@ export default function ClaimAccess() {
       return;
     }
     await base44.auth.updateMe({ patient_id: invite.patient_id });
-    await refreshPatient();
+    // The link lives on the account, not on the row, so re-read the account.
+    // Without this the write lands but the screen keeps its old copy of the
+    // user, reads patient_id as unset, and sits here as if nothing happened.
+    await checkUserAuth();
     setBusy(false);
   };
 
