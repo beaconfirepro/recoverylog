@@ -1,10 +1,13 @@
 import {
   ClipboardList, Droplets, Utensils, Pill, Zap, Thermometer, Droplet, Bath,
-  Layers, Stethoscope, Shirt, Hand, Activity, Moon, Waves, Camera, Ruler, Scale
+  Layers, Stethoscope, Shirt, Hand, Activity, Moon, Waves, Camera, Ruler, Scale,
+  Brush, HeartHandshake, Vibrate
 } from "lucide-react";
 
 const S = (key, label, lowIs) => ({ key, label, kind: "scale", lowIs });
-const join = (parts) => parts.filter((p) => p !== null && p !== undefined && p !== "").join(" · ");
+// `cond && text` yields false, not "", when the field is empty, so false has to
+// be dropped here or an entry with nothing filled in summarises as "false".
+const join = (parts) => parts.filter((p) => p !== null && p !== undefined && p !== "" && p !== false).join(" · ");
 
 export const TYPES = {
   checkin: {
@@ -172,6 +175,41 @@ export const TYPES = {
     summary: (d) => join([d.minutes != null && `${d.minutes} min`, d.who, d.areas, (d.after || []).join(", ")]),
     marker: () => "MLD"
   },
+  tools: {
+    label: "Tool work", icon: Brush, color: "#2EC4B6", darkText: true,
+    fields: [
+      { key: "tool", label: "Tool", kind: "chipsMulti", options: ["dry brush", "gua sha", "cupping", "fascia tool", "roller", "wooden tool", "other"] },
+      { key: "minutes", label: "How long", kind: "duration" },
+      { key: "areas", label: "Areas", kind: "text", placeholder: "e.g. abdomen, left thigh" },
+      { key: "pressure", label: "Pressure", kind: "chips", options: ["light", "medium", "firm"] },
+      { key: "after", label: "After", kind: "chipsMulti", options: ["softer", "looser", "sore", "redness", "bruising", "broken skin", "more swollen"] }
+    ],
+    summary: (d) => join([(d.tool || []).join(", "), d.minutes != null && `${d.minutes} min`, d.pressure, d.areas, (d.after || []).join(", ")]),
+    marker: () => "TOOL"
+  },
+  bodywork: {
+    label: "Other bodywork", icon: HeartHandshake, color: "#E76F51",
+    fields: [
+      { key: "kind", label: "Kind", kind: "chips", options: ["acupuncture", "somatic therapy", "physical therapy", "chiropractic", "craniosacral", "cupping therapy", "other"] },
+      { key: "minutes", label: "How long", kind: "duration" },
+      { key: "provider", label: "Who", kind: "text", placeholder: "e.g. Dr. Vega, self" },
+      { key: "areas", label: "Areas", kind: "text", placeholder: "e.g. lower back, abdomen" },
+      { key: "after", label: "After", kind: "chipsMulti", options: ["softer", "looser", "sore", "drained", "energised", "more swollen"] }
+    ],
+    summary: (d) => join([d.kind, d.minutes != null && `${d.minutes} min`, d.provider, d.areas, (d.after || []).join(", ")]),
+    marker: (d) => `BODY ${({ acupuncture: "ACU", "somatic therapy": "SOM", "physical therapy": "PT", chiropractic: "CHIRO", craniosacral: "CST", "cupping therapy": "CUP" }[d.kind] || "")}`.trim()
+  },
+  vibration: {
+    label: "Vibration plate", icon: Vibrate, color: "#FFBE0B", darkText: true,
+    fields: [
+      { key: "minutes", label: "How long", kind: "duration" },
+      { key: "intensity", label: "Intensity", kind: "chips", options: ["low", "medium", "high"] },
+      { key: "position", label: "Position", kind: "chips", options: ["standing", "seated", "feet only", "hands / arms", "lying"] },
+      { key: "after", label: "After", kind: "chipsMulti", options: ["looser", "tingly", "sore", "dizzy", "more swollen", "fine"] }
+    ],
+    summary: (d) => join([d.minutes != null && `${d.minutes} min`, d.intensity, d.position, (d.after || []).join(", ")]),
+    marker: (d) => `VIB ${d.minutes != null ? d.minutes + "m" : ""}`.trim()
+  },
   photo: {
     label: "Photo", icon: Camera, color: "#3A86FF",
     fields: [
@@ -199,7 +237,8 @@ TYPES.walk = { ...TYPES.movement }; // legacy entries logged as "walk"
 
 export const QUICK_ORDER = [
   "checkin", "water", "food", "med", "pain", "temp", "sleep", "movement",
-  "bm", "urine", "pads", "incisions", "garment", "skin", "mld", "photo", "measure", "weight"
+  "bm", "urine", "pads", "incisions", "garment", "skin", "mld", "tools", "bodywork",
+  "vibration", "photo", "measure", "weight"
 ];
 
 export const RED_FLAG_ITEMS = [

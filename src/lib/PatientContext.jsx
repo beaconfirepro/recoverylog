@@ -1,17 +1,21 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { QUICK_ORDER } from "@/lib/recovery";
+import { TYPES, QUICK_ORDER } from "@/lib/recovery";
 
 const PatientContext = createContext();
 
 export const displayName = (row) =>
   [row?.first_name, row?.last_name].filter(Boolean).join(" ").trim();
 
-// Which entry types a surgery offers. Empty means the surgery has not been
-// narrowed down, which is not the same as tracking nothing.
-export const trackedTypes = (surgery) =>
-  surgery?.tracked_types?.length ? QUICK_ORDER.filter((t) => surgery.tracked_types.includes(t)) : QUICK_ORDER;
+// Which entry types a surgery offers, in the order it wants them. Empty means
+// the surgery has not been narrowed down, which is not the same as tracking
+// nothing. Unknown keys are dropped so a stale saved layout cannot blank the
+// screen.
+export const trackedTypes = (surgery) => {
+  const saved = (surgery?.tracked_types || []).filter((t) => TYPES[t]);
+  return saved.length ? saved : QUICK_ORDER;
+};
 
 const activeKey = (patientId) => `recoverylog.activeSurgery.${patientId}`;
 
