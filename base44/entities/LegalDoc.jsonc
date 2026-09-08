@@ -1,48 +1,76 @@
 {
   "name": "LegalDoc",
-  "type": "object",
-  "required": ["kind", "version", "title", "body"],
   "properties": {
-    "kind": {
-      "description": "Which document this is. One row per kind is current at a time.",
-      "enum": ["privacy", "permissions", "pii_sharing"],
-      "type": "string"
-    },
-    "version": {
-      "description": "Version of this document, as a date, e.g. 2026-09-08. Accepting a document records this string, so a new version asks the user again.",
-      "type": "string"
-    },
-    "title": {
-      "description": "Heading shown on the consent gate and in Profile.",
-      "type": "string"
-    },
-    "summary": {
-      "description": "One line describing the document, shown next to its title before it is opened.",
-      "type": "string"
-    },
     "body": {
       "description": "The document itself. Plain text; a line ending in a colon and typed in capitals is rendered as a heading.",
-      "type": "string"
-    },
-    "effective_date": {
-      "description": "Date this version takes effect.",
-      "format": "date",
       "type": "string"
     },
     "current": {
       "default": false,
       "description": "True on the one row per kind the app serves. Older versions stay for the record.",
       "type": "boolean"
+    },
+    "effective_date": {
+      "description": "Date this version takes effect.",
+      "format": "date",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Which document this is. One row per kind is current at a time.",
+      "enum": [
+        "privacy",
+        "permissions",
+        "pii_sharing"
+      ],
+      "type": "string"
+    },
+    "summary": {
+      "description": "One line describing the document, shown next to its title before it is opened.",
+      "type": "string"
+    },
+    "title": {
+      "description": "Heading shown on the consent gate and in Profile.",
+      "type": "string"
+    },
+    "version": {
+      "description": "Version of this document, as a date, e.g. 2026-09-08. Accepting a document records this string, so a new version asks the user again.",
+      "type": "string"
     }
   },
-  // No read rule, which denies rather than opens: nothing in the browser reads
-  // this table. The documents are served by the legalDocs function instead, so
-  // there is one door to them and it is server side. Nobody can write them from
-  // the app either. A legal document that any account could rewrite, in a table
-  // every account reads, is not a legal document.
+  "required": [
+    "kind",
+    "version",
+    "title",
+    "body"
+  ],
   "rls": {
-    "create": { "user_condition": { "role": "admin" } },
-    "update": { "user_condition": { "role": "admin" } },
-    "delete": { "user_condition": { "role": "admin" } }
-  }
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "created_by_id": {
+            "$ne": "{{user.id}}"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  },
+  "type": "object"
 }
