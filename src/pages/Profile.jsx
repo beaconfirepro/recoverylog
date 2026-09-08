@@ -6,6 +6,9 @@ import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
 import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
 import DeleteAccount from "@/components/DeleteAccount";
+import LegalSection from "@/components/legal/LegalSection";
+import SignInMethod from "@/components/legal/SignInMethod";
+import MyLogs from "@/components/legal/MyLogs";
 import { THEMES, useTheme } from "@/lib/theme";
 import {
   TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, checkinSlots,
@@ -236,6 +239,8 @@ export default function Profile() {
           </button>
         </div>
       </div>
+
+      <MyLogs />
 
       {isOwner && activeSurgery && (
         <div className="nb-card overflow-hidden">
@@ -591,6 +596,10 @@ export default function Profile() {
           ))}
         </div>
       </div>
+
+      <SignInMethod />
+
+      <LegalSection />
 
       <DeleteAccount isOwner={isOwner} />
     </div>

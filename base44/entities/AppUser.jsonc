@@ -72,7 +72,14 @@
       ]
     },
     "delete": {
-      "created_by_id": "{{user.id}}"
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.email": "{{user.email}}"
+        }
+      ]
     },
     "read": {
       "$or": [

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { PINNED, QUICK_ORDER } from "@/lib/recovery";
@@ -25,12 +25,16 @@ const activeKey = (patientId) => `recoverylog.activeSurgery.${patientId}`;
 // table. A person's row is written by the patient, never by themselves, so what
 // it says about them (their group, whether they can write) is not self-assigned.
 export const PatientProvider = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, checkUserAuth } = useAuth();
   const [me, setMe] = useState(null);
+  const [memberships, setMemberships] = useState([]);
   const [patient, setPatient] = useState(null);
   const [surgeries, setSurgeries] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [loading, setLoading] = useState(true);
+  // The group we last asked the account to point at, so a link that does not
+  // take is tried once rather than every render.
+  const linking = useRef(null);
 
   const loadSurgeries = useCallback(async (patientId) => {
     if (!patientId) {
@@ -49,18 +53,35 @@ export const PatientProvider = ({ children }) => {
     }
     setLoading(true);
     const people = asRows(await base44.entities.AppUser.list("created_date", 50));
-    const mine = people.find((r) => r.email === user.email) || null;
-    const groupId = mine?.kind === "patient" ? mine.id : mine?.patient_id || null;
-    const p = people.find((r) => r.id === groupId && r.kind === "patient") || null;
+    // A person can hold several rows: their own patient row, and one for each
+    // care team they were invited to. Row security matches every row carrying
+    // their email, so all of them come back in this one read.
+    const ours = people.filter((r) => r.email === user.email);
+    const own = ours.find((r) => r.kind === "patient") || null;
+    const teams = ours.filter((r) => r.kind === "team_member" && r.patient_id);
 
-    // The patient needs the same link a team member gets. Without it she would
-    // match row security only on rows she created herself, and anything a team
-    // member logged would be invisible to her.
-    if (mine?.kind === "patient" && user.patient_id !== mine.id) {
-      await base44.auth.updateMe({ patient_id: mine.id });
+    // Which log is open. The account's patient_id is what row security scopes
+    // every other read to, so switching logs means changing it, not holding a
+    // preference next to it.
+    const mine = own || teams.find((t) => t.patient_id === user.patient_id) || teams[0] || null;
+    const groupId = own ? own.id : mine?.patient_id || null;
+
+    // Bring the account's link in line with the row, then read the group again.
+    // The link is what row security scopes to, so this group's patient row was
+    // not visible a moment ago. The guard stops a link that will not take from
+    // being retried on every pass.
+    let rows = people;
+    if (groupId && user.patient_id !== groupId && linking.current !== groupId) {
+      linking.current = groupId;
+      await base44.auth.updateMe({ patient_id: groupId });
+      await checkUserAuth();
+      rows = asRows(await base44.entities.AppUser.list("created_date", 50));
     }
 
+    const p = rows.find((r) => r.id === groupId && r.kind === "patient") || null;
+
     setMe(mine);
+    setMemberships(teams);
     setPatient(p);
     const list = await loadSurgeries(p?.id);
     if (p) {
@@ -74,7 +95,7 @@ export const PatientProvider = ({ children }) => {
       setActiveId(usable?.id || null);
     }
     setLoading(false);
-  }, [isAuthenticated, user, loadSurgeries]);
+  }, [isAuthenticated, user, loadSurgeries, checkUserAuth]);
 
   useEffect(() => {
     load();
@@ -97,6 +118,28 @@ export const PatientProvider = ({ children }) => {
     [surgeries, activeId]
   );
 
+  // Open a different patient's log. Only a care team member has more than one.
+  const switchPatient = useCallback(
+    async (pid) => {
+      linking.current = pid;
+      await base44.auth.updateMe({ patient_id: pid });
+      await checkUserAuth();
+    },
+    [checkUserAuth]
+  );
+
+  // Step off a care team. Removing your own row is the one deletion row
+  // security lets you make against a group you do not own, which is right:
+  // access someone gave you is always yours to hand back.
+  const leaveTeam = useCallback(
+    async (rowId) => {
+      await base44.entities.AppUser.delete(rowId);
+      linking.current = null;
+      await load();
+    },
+    [load]
+  );
+
   const isOwner = me?.kind === "patient";
   const linked = isOwner || (!!me && !!me.patient_id && user?.patient_id === me.patient_id);
 
@@ -108,6 +151,9 @@ export const PatientProvider = ({ children }) => {
         patientId: patient?.id || null,
         isOwner,
         linked,
+        memberships,
+        switchPatient,
+        leaveTeam,
         canWrite: me?.can_write !== false,
         loadingPatient: loading,
         refreshPatient: load,

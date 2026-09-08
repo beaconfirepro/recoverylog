@@ -1,0 +1,33 @@
+{
+  "name": "Consent",
+  "type": "object",
+  "required": ["email", "kind", "version"],
+  "properties": {
+    "email": {
+      "description": "Login email of the person who accepted. Written from the signed-in account, never typed.",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Which document was accepted.",
+      "enum": ["privacy", "permissions", "pii_sharing"],
+      "type": "string"
+    },
+    "version": {
+      "description": "Version string of the document that was accepted. A newer version is a separate row, so the whole history is kept.",
+      "type": "string"
+    },
+    "accepted_at": {
+      "description": "When it was accepted, as an ISO timestamp.",
+      "type": "string"
+    }
+  },
+  // Your consent record is yours. The patient does not see whether her care
+  // team accepted, and a care team member does not see hers: it is a record of
+  // what each account agreed to, not part of the shared log.
+  "rls": {
+    "create": { "created_by_id": "{{user.id}}" },
+    "read": { "created_by_id": "{{user.id}}" },
+    "update": { "created_by_id": "{{user.id}}" },
+    "delete": { "created_by_id": "{{user.id}}" }
+  }
+}
