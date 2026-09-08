@@ -1,11 +1,12 @@
 // RxNorm, the NIH's drug vocabulary. Free, no key, no registration.
 //
-// Everything below talks to RxNav directly from the browser. If RxNav does not
-// send CORS headers the fetch fails and searchDrugs throws, which the lookup
-// shows as "the drug lookup could not be reached" — it never falls back to a
-// half-answer, because a wrong medicine name in a surgical record is worse than
-// no lookup at all. Point RXNAV at a proxy on the app's own origin and the rest
-// of this file is unchanged.
+// Everything below talks to RxNav directly from the browser. Confirmed working
+// from the app's own origin, so no proxy is needed; should that ever change,
+// point RXNAV at one on this origin and the rest of this file is unchanged.
+//
+// A lookup that cannot be reached throws, and the search shows "the drug lookup
+// could not be reached" rather than offering a half-answer: a wrong medicine
+// name in a surgical record is worse than no lookup at all.
 const RXNAV = "https://rxnav.nlm.nih.gov/REST";
 
 const get = async (path) => {
