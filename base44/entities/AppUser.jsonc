@@ -6,6 +6,10 @@
       "description": "False makes a team member read-only.",
       "type": "boolean"
     },
+    "claimed_at": {
+      "description": "On a team_member row: when this person first confirmed the patient's name and date of birth and opened the log. Blank means the invite is still open.",
+      "type": "string"
+    },
     "dob": {
       "description": "This person's date of birth. Only meaningful on a patient row, where it is what a joining member types.",
       "format": "date",
@@ -98,7 +102,14 @@
       ]
     },
     "update": {
-      "created_by_id": "{{user.id}}"
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.email": "{{user.email}}"
+        }
+      ]
     }
   },
   "type": "object"
