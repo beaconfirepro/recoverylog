@@ -147,8 +147,8 @@ export default function DayView({ date, startCollapsed }) {
         ) : (
           <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card break-words">
             {beforeSurgery
-              ? "This surgery is not tracking days before the surgery date. Turn that on in Profile to log here."
-              : "This surgery is not tracking days from the surgery date onwards. Turn that on in Profile to log here."}
+              ? "Not tracking days before surgery. Turn that on in Profile."
+              : "Not tracking days from surgery onwards. Turn that on in Profile."}
           </p>
         )}
       </div>
@@ -157,7 +157,7 @@ export default function DayView({ date, startCollapsed }) {
         <h2 className="font-heading text-sm uppercase tracking-wider">The page</h2>
         {sorted.length === 0 && (
           <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card">
-            Nothing logged yet — tap a button above and it will land here in order.
+            Nothing logged yet.
           </p>
         )}
         {sorted.length > 0 && (

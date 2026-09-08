@@ -82,7 +82,7 @@ export default function History() {
       <h1 className="font-display text-2xl uppercase">Day by day</h1>
       {days.length === 0 && (
         <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card">
-          No days yet — your history builds as you log.
+          No days yet.
         </p>
       )}
       {days.map((d) => {

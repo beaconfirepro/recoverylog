@@ -39,8 +39,8 @@ export default function DeleteAccount({ isOwner }) {
       <div className="p-4 space-y-3">
         <p className="text-sm font-semibold break-words">
           {isOwner
-            ? "This deletes your login and the whole log with it: every entry, every day, every surgery, your measurements, garments and med groups, and your care team's access."
-            : "This deletes your login and removes you from the care teams you belong to. The patient's log is theirs and stays as it is."}
+            ? "Deletes your login and the whole log: every entry, every day, every surgery, your measurements, garments, med groups, and your care team's access."
+            : "Deletes your login and removes you from the care teams you belong to. The patient's log stays."}
         </p>
 
         {!open ? (

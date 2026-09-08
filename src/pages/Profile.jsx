@@ -199,7 +199,6 @@ export default function Profile() {
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
           <div className="font-display text-xl uppercase leading-tight break-words">Patient</div>
-          <div className="text-sm font-semibold break-words">Who this log belongs to.</div>
         </div>
         <div className="p-4">
           {isOwner ? (
@@ -210,7 +209,7 @@ export default function Profile() {
               <Field label="Patient last name">
                 <input type="text" value={last} onChange={(e) => setLast(e.target.value)} className="nb-input" />
               </Field>
-              <Field label="Date of birth" span hint="care team enter this to join">
+              <Field label="Date of birth" span hint="your care team confirm this">
                 <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="nb-input" />
               </Field>
               <button
@@ -242,9 +241,7 @@ export default function Profile() {
         <div className="nb-card overflow-hidden">
           <div className="px-4 py-3 border-b-2" style={{ backgroundColor: TYPES[PINNED].color, color: "#fff" }}>
             <div className="font-display text-xl uppercase leading-tight break-words">Check-in</div>
-            <div className="text-sm font-semibold break-words">
-              For {activeSurgery.label}. Pinned to the top of the day, so it is set up rather than switched off.
-            </div>
+            <div className="text-sm font-semibold break-words">For {activeSurgery.label}.</div>
           </div>
 
           <div className="p-4 space-y-4">
@@ -288,8 +285,7 @@ export default function Profile() {
                 Add a time
               </button>
               <p className="text-[11px] font-semibold text-muted-foreground break-words">
-                {slots.length} {slots.length === 1 ? "check-in" : "check-ins"} a day. The time picks the slot for you
-                when you open the form; it does not nag you.
+                The time picks the slot when you open the form.
               </p>
             </div>
 
@@ -310,8 +306,7 @@ export default function Profile() {
                 ))}
               </div>
               <p className="text-[11px] font-semibold text-muted-foreground break-words">
-                {measures.length} of {CHECKIN_MEASURES.length}. Turning one off shortens the form; anything already
-                recorded stays.
+                Turning one off keeps what is already recorded.
               </p>
             </div>
           </div>
@@ -346,8 +341,7 @@ export default function Profile() {
 
           <div className="p-4 space-y-3">
             <p className="text-[11px] font-semibold text-muted-foreground break-words">
-              Track puts a tracker's button on the day page. History adds it to the summary on each day's card in
-              History. Turning one off hides its button; anything already logged stays. The check-in is always on.
+              History shows a tracker on each day's card. Turning one off keeps what is already logged.
             </p>
             <div className="flex items-center gap-2 min-w-0 pb-1 border-b-2">
               <span className="flex-1 min-w-0" />
@@ -401,8 +395,7 @@ export default function Profile() {
             <div className="border-t-2 pt-3 space-y-2">
               <div className="nb-label">Goals</div>
               <p className="text-[11px] font-semibold text-muted-foreground break-words">
-                Water, Body Work and Nutrients can carry a daily target. Their pill on the day page fills as the day
-                goes, and Day totals reads out of it. Leave one blank for a plain pill.
+                Leave one blank for no target.
               </p>
               {[TYPES.water.goal, BODYWORK_GOAL].map((g) => (
                 <div key={g.key} className="flex items-center gap-2 min-w-0">
@@ -478,7 +471,7 @@ export default function Profile() {
           <div className="px-4 py-3 border-b-2 bg-muted">
             <div className="font-display text-xl uppercase leading-tight break-words">Care team</div>
             <div className="text-sm font-semibold break-words">
-              They sign in with the email you add here, then confirm their date of birth.
+              They sign in with this email, then confirm your name and date of birth.
             </div>
           </div>
 
@@ -547,7 +540,7 @@ export default function Profile() {
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
           <div className="font-display text-xl uppercase leading-tight break-words">Download a PDF</div>
-          <div className="text-sm font-semibold break-words">A day or a range, paper-diary style.</div>
+          <div className="text-sm font-semibold break-words">A day or a range.</div>
         </div>
 
         <div className="p-4 grid grid-cols-2 gap-3 min-w-0">
@@ -582,8 +575,7 @@ export default function Profile() {
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
           <div className="font-display text-xl uppercase leading-tight break-words">Appearance</div>
-          <div className="text-sm font-semibold break-words">Follows your phone unless you say otherwise.</div>
-        </div>
+                  </div>
         <div className="p-4 flex gap-1.5">
           {THEMES.map((t) => (
             <button
