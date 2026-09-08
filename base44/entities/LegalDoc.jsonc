@@ -1,0 +1,64 @@
+{
+  "name": "LegalDoc",
+  "type": "object",
+  "required": [
+    "kind",
+    "version",
+    "title",
+    "body"
+  ],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "description": "Which document this is. One row per kind is current at a time.",
+      "enum": [
+        "privacy",
+        "permissions",
+        "pii_sharing"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of this document, as a date, e.g. 2026-09-08. Accepting a document records this string, so a new version asks the user again."
+    },
+    "title": {
+      "type": "string",
+      "description": "Heading shown on the consent gate and in Profile."
+    },
+    "summary": {
+      "type": "string",
+      "description": "One line describing the document, shown next to its title before it is opened."
+    },
+    "body": {
+      "type": "string",
+      "description": "The document itself. Plain text; a line ending in a colon and typed in capitals is rendered as a heading."
+    },
+    "effective_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date this version takes effect."
+    },
+    "current": {
+      "type": "boolean",
+      "default": false,
+      "description": "True on the one row per kind the app serves. Older versions stay for the record."
+    }
+  },
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
