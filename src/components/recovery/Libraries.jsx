@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { ChevronRight, Plus, X } from "lucide-react";
 import { useLibrary } from "@/lib/library";
 import DrugLookup from "./DrugLookup";
 
@@ -108,49 +108,66 @@ function MedRow({ med, onChange, onRemove }) {
   );
 }
 
+// Collapsed to its name until you open it. A group is set up once and then
+// left alone, so the list should read as a list of groups rather than as every
+// medicine in all of them at once.
 function Group({ group, update, remove }) {
+  const [open, setOpen] = useState(false);
   const [looking, setLooking] = useState(false);
   const meds = group.medicines || [];
   const setMeds = (next) => update(group.id, { medicines: next });
 
   return (
-    <div className="border-2 rounded-xl bg-card p-3 space-y-2">
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="flex-1 min-w-0 nb-label">{group.name}</span>
-        <button
-          type="button"
-          onClick={() => remove(group.id)}
-          className="nb-btn h-10 px-3 shrink-0 bg-card"
-        >
-          Delete group
-        </button>
-      </div>
+    <div className="border-2 rounded-xl bg-card">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center gap-2 min-w-0 p-3 text-left"
+      >
+        <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${open ? "rotate-90" : ""}`} />
+        <span className="flex-1 min-w-0 truncate nb-label">{group.name}</span>
+        <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+          {meds.length} {meds.length === 1 ? "medicine" : "medicines"}
+        </span>
+      </button>
 
-      {meds.length === 0 && !looking && <p className="text-sm text-muted-foreground">No medicines in this group yet.</p>}
+      {open && (
+        <div className="px-3 pb-3 space-y-2">
+          {meds.length === 0 && !looking && (
+            <p className="text-sm text-muted-foreground">No medicines in this group yet.</p>
+          )}
 
-      <div className="space-y-1.5">
-        {meds.map((m, i) => (
-          <MedRow
-            key={`${m.name}-${i}`}
-            med={m}
-            onChange={(next) => setMeds(meds.map((x, j) => (j === i ? next : x)))}
-            onRemove={() => setMeds(meds.filter((_, j) => j !== i))}
-          />
-        ))}
-      </div>
+          <div className="space-y-1.5">
+            {meds.map((m, i) => (
+              <MedRow
+                key={`${m.name}-${i}`}
+                med={m}
+                onChange={(next) => setMeds(meds.map((x, j) => (j === i ? next : x)))}
+                onRemove={() => setMeds(meds.filter((_, j) => j !== i))}
+              />
+            ))}
+          </div>
 
-      {looking ? (
-        <DrugLookup
-          onPick={(drug) => {
-            setMeds([...meds, { name: drug.name, rxcui: drug.rxcui }]);
-            setLooking(false);
-          }}
-          onCancel={() => setLooking(false)}
-        />
-      ) : (
-        <button type="button" onClick={() => setLooking(true)} className="nb-chip gap-1.5 bg-muted">
-          <Plus className="w-3.5 h-3.5" /> Add a medicine
-        </button>
+          {looking ? (
+            <DrugLookup
+              onPick={(drug) => {
+                setMeds([...meds, { name: drug.name, rxcui: drug.rxcui }]);
+                setLooking(false);
+              }}
+              onCancel={() => setLooking(false)}
+            />
+          ) : (
+            <div className="flex items-center gap-2 min-w-0">
+              <button type="button" onClick={() => setLooking(true)} className="nb-chip gap-1.5 bg-muted">
+                <Plus className="w-3.5 h-3.5" /> Add a medicine
+              </button>
+              <button type="button" onClick={() => remove(group.id)} className="nb-chip ml-auto shrink-0 bg-muted">
+                Delete group
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
