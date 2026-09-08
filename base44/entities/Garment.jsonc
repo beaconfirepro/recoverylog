@@ -1,0 +1,66 @@
+{
+  "name": "Garment",
+  "type": "object",
+  "required": [
+    "name"
+  ],
+  "properties": {
+    "name": {
+      "description": "What she calls it, e.g. 'Marena stage 1' or 'Faja'.",
+      "type": "string"
+    },
+    "size": {
+      "description": "The size as printed on the garment, e.g. '2XL'.",
+      "type": "string"
+    },
+    "patient_id": {
+      "description": "Patient this garment belongs to.",
+      "type": "string"
+    },
+    "sort_order": {
+      "type": "number"
+    }
+  },
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    }
+  }
+}
