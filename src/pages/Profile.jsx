@@ -4,6 +4,7 @@ import { LogOut, Plus, X } from "lucide-react";
 import { todayStr, fullDate, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
+import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
 import {
   TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, checkinSlots,
   NUTRIENTS, BODYWORK_GOAL, nutrientUnit
@@ -406,6 +407,10 @@ export default function Profile() {
           </div>
         </div>
       )}
+
+      {isOwner && <GarmentLibrary />}
+
+      {isOwner && <MedGroupLibrary />}
 
       {isOwner && (
         <div className="nb-card overflow-hidden">

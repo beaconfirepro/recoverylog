@@ -4,6 +4,7 @@ import { Clock, Loader2, Minus, Plus, Upload, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import Field from "@/components/Field";
 import { nowTime } from "@/lib/dates";
+import DrugLookup from "./DrugLookup";
 import { BRISTOL, HUNGER_COLORS, HUNGER_LEVELS, NUTRIENTS, gradeColor, nutrientUnit } from "@/lib/recovery";
 
 const fillStyle = (active, color, darkText) =>
@@ -583,6 +584,152 @@ export function NutrientsField({ field, value, onChange }) {
           </div>
         ))}
       </div>
+    </Field>
+  );
+}
+
+// Her garments, set up once in the profile and picked here. The add button
+// saves straight into that library without leaving the entry half-filled.
+export function GarmentField({ field, value, onChange, garments, onAddGarment, color, darkText }) {
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState("");
+  const [size, setSize] = useState("");
+
+  const save = async () => {
+    const n = name.trim();
+    if (!n) return;
+    setName("");
+    setSize("");
+    setAdding(false);
+    await onAddGarment({ name: n, size: size.trim() });
+    onChange(n);
+  };
+
+  return (
+    <Field label={field.label} span>
+      {garments.length === 0 && !adding && (
+        <p className="text-sm text-muted-foreground">No garments yet — add one and it will be here every day.</p>
+      )}
+      <div className="flex flex-wrap gap-1.5">
+        {garments.map((g) => (
+          <button
+            key={g.id}
+            type="button"
+            onClick={() => onChange(value === g.name ? undefined : g.name)}
+            className="nb-chip"
+            style={fillStyle(value === g.name, color, darkText)}
+          >
+            {g.name}
+            {g.size && <span className="opacity-70">{"\u00a0· "}{g.size}</span>}
+          </button>
+        ))}
+        {!adding && (
+          <button type="button" onClick={() => setAdding(true)} className="nb-chip gap-1.5 bg-muted">
+            <Plus className="w-3.5 h-3.5" /> Add a garment
+          </button>
+        )}
+      </div>
+      {adding && (
+        <div className="flex gap-2 min-w-0 pt-1.5">
+          <input
+            autoFocus
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Marena stage 1"
+            className="nb-input"
+          />
+          <input
+            type="text"
+            value={size}
+            onChange={(e) => setSize(e.target.value)}
+            placeholder="size"
+            className="nb-input w-20 shrink-0"
+          />
+          <button type="button" onClick={save} className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground">
+            <Plus className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+    </Field>
+  );
+}
+
+// Picking a group brings up everything in it, already ticked. Tap one off if
+// you skipped it; Add looks the rest up.
+export function MedGroupField({ field, value, onChange, groups, color, darkText }) {
+  return (
+    <Field label={field.label} hint="set the groups up in your profile" span>
+      {groups.length === 0 && (
+        <p className="text-sm text-muted-foreground">No med groups yet — add one in your profile and it will be here.</p>
+      )}
+      <div className="flex flex-wrap gap-1.5">
+        {groups.map((g) => (
+          <button
+            key={g.id}
+            type="button"
+            onClick={() => onChange(value === g.name ? undefined : g.name, g)}
+            className="nb-chip"
+            style={fillStyle(value === g.name, color, darkText)}
+          >
+            {g.name}
+          </button>
+        ))}
+      </div>
+    </Field>
+  );
+}
+
+export function MedListField({ field, value, onChange, color, darkText }) {
+  const [looking, setLooking] = useState(false);
+  const taken = value || [];
+
+  return (
+    <Field label={field.label} span>
+      {taken.length === 0 && !looking && (
+        <p className="text-sm text-muted-foreground">Pick a group above, or add a medicine on its own.</p>
+      )}
+      <div className="space-y-1.5">
+        {taken.map((m, i) => (
+          <div key={`${m.name}-${i}`} className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => onChange(taken.map((x, j) => (j === i ? { ...x, skipped: !x.skipped } : x)))}
+              aria-pressed={!m.skipped}
+              className="flex-1 min-w-0 flex items-center gap-2 border-2 rounded-xl px-2.5 py-2 text-left"
+              style={m.skipped ? {} : fillStyle(true, color, darkText)}
+            >
+              <span className="flex-1 min-w-0 text-sm font-semibold break-words">
+                {m.name}
+                {m.dose && <span className="opacity-75">{"\u00a0· "}{m.dose}</span>}
+              </span>
+              <span className="nb-label shrink-0 opacity-75">{m.skipped ? "skipped" : "taken"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange(taken.filter((_, j) => j !== i))}
+              className="nb-btn h-12 w-12 shrink-0 bg-card"
+              aria-label={`Remove ${m.name}`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {looking ? (
+        <DrugLookup
+          onPick={(drug) => {
+            onChange([...taken, { name: drug.name, rxcui: drug.rxcui }]);
+            setLooking(false);
+          }}
+          onCancel={() => setLooking(false)}
+        />
+      ) : (
+        <button type="button" onClick={() => setLooking(true)} className="nb-chip gap-1.5 bg-muted mt-1.5">
+          <Plus className="w-3.5 h-3.5" /> Add a medicine
+        </button>
+      )}
     </Field>
   );
 }

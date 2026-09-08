@@ -147,6 +147,10 @@ export const gradeColor = (v, max, highIs) =>
 
 const areasOf = (d) => (Array.isArray(d.areas) ? d.areas : []);
 const nutrientsOf = (d) => Object.entries(d.nutrients || {}).filter(([, v]) => v !== "" && v != null);
+// The medicines on a Med entry: what was actually taken, and what was brought
+// up by the group and then tapped off.
+const takenOf = (d) => (Array.isArray(d.taken) ? d.taken : []).filter((m) => !m.skipped);
+const skippedOf = (d) => (Array.isArray(d.taken) ? d.taken : []).filter((m) => m.skipped);
 const findingsOf = (d) =>
   Object.entries(d.findings || {}).flatMap(([area, syms]) => (syms || []).map((s) => [area, s]));
 
@@ -212,13 +216,24 @@ export const TYPES = {
   med: {
     label: "Med", icon: Pill, color: "#9B5DE5",
     fields: [
-      { key: "group", label: "Group", kind: "text", placeholder: "e.g. AM Meds" },
-      { key: "drug", label: "Drug", kind: "text", placeholder: "e.g. Tylenol 500mg" },
-      { key: "dose", label: "Dose", kind: "text", placeholder: "e.g. 2 pills" },
+      { key: "group", label: "Group", kind: "medGroup" },
+      { key: "taken", label: "Medicines", kind: "medList" },
       { key: "next_allowed", label: "Next allowed time", kind: "time" }
     ],
-    summary: (d) => join([d.group, d.drug, d.dose, d.next_allowed && `next: ${d.next_allowed}`]),
-    pills: (d) => [pill(d.group || d.drug || "Med")]
+    summary: (d) =>
+      join([
+        d.group,
+        ...takenOf(d).map((m) => join([m.name, m.dose])),
+        skippedOf(d).length && `skipped: ${skippedOf(d).map((m) => m.name).join(", ")}`,
+        d.next_allowed && `next: ${d.next_allowed}`
+      ]),
+    pills: (d) => {
+      const skipped = skippedOf(d).length;
+      return [
+        pill(d.group || takenOf(d)[0]?.name || "Med"),
+        skipped ? pill(`${skipped} skipped`, { tone: "warn" }) : null
+      ].filter(Boolean);
+    }
   },
   temp: {
     label: "Temp", icon: Thermometer, color: "#FF006E",
@@ -326,7 +341,7 @@ export const TYPES = {
   compression: {
     label: "Compression", icon: Shirt, color: "#06D6A0",
     fields: [
-      { key: "garment", label: "Garment", kind: "text", placeholder: "e.g. Marena stage 1" },
+      { key: "garment", label: "Garment", kind: "garment" },
       { key: "action", label: "Action", kind: "chips", options: ["on", "off", "adjust"] },
       { key: "fit", label: "Fit", kind: "chips", options: ["loose", "right", "tight", "cutting in"] },
       { key: "behaviour", label: "Behaviour", kind: "chipsMulti", options: ["rolling", "bunching", "sliding", "seam pressure"] }

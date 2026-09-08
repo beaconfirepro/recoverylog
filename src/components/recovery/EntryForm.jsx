@@ -1,17 +1,21 @@
 import React, { useState } from "react";
 import { TYPES, PINNED, checkinConfig, checkinSlots, defaultSlot } from "@/lib/recovery";
 import { usePatient } from "@/lib/PatientContext";
+import { useLibrary } from "@/lib/library";
 import { nowTime } from "@/lib/dates";
 import {
   ScaleField, ChipsField, ChipsMultiField, NumberField, DurationField, TextField,
   TimeField, SpotsField, FileField, NoteField, Scale5Field, HungerField,
-  BristolField, AreaSymptomsField, AreaStatusField, NutrientsField
+  BristolField, AreaSymptomsField, AreaStatusField, NutrientsField,
+  GarmentField, MedGroupField, MedListField
 } from "./Fields";
 import BodyMap from "./BodyMap";
 import CheckinStack from "./CheckinStack";
 
 export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot, onSave, onCancel, onDelete, saving }) {
   const { activeSurgery } = usePatient();
+  const garments = useLibrary("Garment");
+  const medGroups = useLibrary("MedGroup");
   // The check-in is the one type a surgery reshapes: how often it asks and
   // what it records. Every other type is the same for everyone.
   const cfg = type === PINNED ? checkinConfig(activeSurgery) : TYPES[type];
@@ -117,6 +121,40 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
             return <AreaSymptomsField key={f.key} field={f} areas={areas} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
           case "areaStatus":
             return <AreaStatusField key={f.key} field={f} areas={areas} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
+          case "garment":
+            return (
+              <GarmentField
+                key={f.key}
+                field={f}
+                value={data[f.key]}
+                onChange={(v) => setField(f.key, v)}
+                garments={garments.rows}
+                onAddGarment={garments.add}
+                {...props}
+              />
+            );
+          case "medGroup":
+            return (
+              <MedGroupField
+                key={f.key}
+                field={f}
+                value={data[f.key]}
+                // Picking a group brings its medicines up already ticked;
+                // unpicking it clears them, so the list always belongs to the
+                // group on screen rather than to one chosen a moment ago.
+                onChange={(v, group) =>
+                  setData((prev) => ({
+                    ...prev,
+                    group: v,
+                    taken: v ? (group.medicines || []).map((m) => ({ name: m.name, dose: m.dose })) : []
+                  }))
+                }
+                groups={medGroups.rows}
+                {...props}
+              />
+            );
+          case "medList":
+            return <MedListField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
           case "nutrients":
             return <NutrientsField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "file":
