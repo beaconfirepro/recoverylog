@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Check, LogOut, Plus, X } from "lucide-react";
-import { todayStr, fullDate, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
+import { todayStr, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes, sameEmail } from "@/lib/PatientContext";
 import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
@@ -28,7 +28,7 @@ const Row = ({ label, value }) => (
 export default function Profile() {
   const { user, logout } = useAuth();
   const { theme, choose } = useTheme();
-  const { patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
+  const { me, patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const [team, setTeam] = useState([]);
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -199,9 +199,14 @@ export default function Profile() {
     <div className="space-y-4">
       <h1 className="font-display text-2xl uppercase">Profile</h1>
 
+      {/* You, not the patient. A care team member's profile is their own
+          account; whose log they are reading is on the home page and in the
+          bar at the top, where it belongs. */}
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
-          <div className="font-display text-xl uppercase leading-tight break-words">Patient</div>
+          <div className="font-display text-xl uppercase leading-tight break-words">
+            {isOwner ? "You, the patient" : "You"}
+          </div>
         </div>
         <div className="p-4">
           {isOwner ? (
@@ -224,13 +229,10 @@ export default function Profile() {
               </button>
             </div>
           ) : (
-            <Row label="Patient" value={displayName(patient)} />
+            <Row label="Your name" value={displayName(me)} />
           )}
           <Row label="Signed in as" value={user?.email} />
-          <Row label="Your access" value={isOwner ? "Patient — full access" : canWrite ? "Care team — can edit" : "Care team — read only"} />
-          <Row label="Tracking" value={activeSurgery?.label} />
-          <Row label="Surgery date" value={activeSurgery?.surgery_date ? fullDate(activeSurgery.surgery_date) : null} />
-          <Row label="Surgeon" value={activeSurgery?.surgeon} />
+          <Row label="Your access" value={isOwner ? "Patient, full access" : canWrite ? "Care team, can edit" : "Care team, read only"} />
         </div>
         <div className="px-4 pb-4">
           <button className="nb-btn w-full h-12 bg-card flex items-center justify-center gap-2" onClick={() => logout()}>

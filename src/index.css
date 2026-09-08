@@ -214,8 +214,14 @@
   }
   /* A screen that appears rather than replaces. Short enough not to be in the
      way of someone logging six things in a row. */
+  /* "backwards" rather than "both". With a forwards fill the transform stays
+     under the animation's control after it finishes, which keeps <main> a
+     containing block for position:fixed descendants for the life of the page:
+     anything fixed inside a page is then positioned against main rather than
+     the screen. The final keyframe is transform:none, so forwards was buying
+     nothing and costing that. */
   .animate-page {
-    animation: page-in 180ms ease-out both;
+    animation: page-in 180ms ease-out backwards;
   }
   @keyframes page-in {
     from { opacity: 0; transform: translateY(6px); }

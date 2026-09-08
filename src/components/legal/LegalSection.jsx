@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronRight, X } from "lucide-react";
 import { useLegal } from "@/lib/legal";
 import DocReader from "./DocReader";
@@ -46,7 +47,10 @@ export default function LegalSection() {
         })}
       </div>
 
-      {doc && (
+      {/* Portalled out of the card. A reader that covers the screen must not be
+          a descendant of the page it was opened from: main is its own stacking
+          context, so a z-50 child of it still paints under the z-30 bars. */}
+      {doc && createPortal(
         <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
           <div className="max-w-lg mx-auto px-4 py-6">
             <div className="flex items-start justify-between gap-2 mb-3 min-w-0">
@@ -65,7 +69,8 @@ export default function LegalSection() {
             </div>
             <DocReader body={doc.body} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

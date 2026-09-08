@@ -143,6 +143,26 @@ export const PatientProvider = ({ children }) => {
     [checkUserAuth]
   );
 
+  // Confirm the patient's details against the copies on your own membership row
+  // and open their log. The check is what turns an invite into access, and the
+  // stamp is what stops the care page asking again.
+  const claimMembership = useCallback(
+    async (row, form) => {
+      const norm = (v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+      const matches =
+        norm(row.match_first_name) === norm(form.first_name) &&
+        norm(row.match_last_name) === norm(form.last_name) &&
+        String(row.match_dob ?? "") === String(form.dob);
+      if (!matches) return false;
+      if (!row.claimed_at) {
+        await base44.entities.AppUser.update(row.id, { claimed_at: new Date().toISOString() });
+      }
+      await switchPatient(row.patient_id);
+      return true;
+    },
+    [switchPatient]
+  );
+
   // Step off a care team. Removing your own row is the one deletion row
   // security lets you make against a group you do not own, which is right:
   // access someone gave you is always yours to hand back. Your own log is not
@@ -169,6 +189,7 @@ export const PatientProvider = ({ children }) => {
         linked,
         groups,
         switchPatient,
+        claimMembership,
         leaveTeam,
         canWrite: me?.can_write !== false,
         loadingPatient: loading,

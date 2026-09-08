@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import { Image } from "@/components/ui/image";
-import { Clock, Loader2, Minus, Plus, Upload, X } from "lucide-react";
+import { Loader2, Minus, Plus, Upload, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import Field from "@/components/Field";
-import { nowTime } from "@/lib/dates";
 import DrugLookup from "./DrugLookup";
 import {
   BRISTOL, HUNGER_COLORS, HUNGER_LEVELS, INCISION_LEVELS, INCISION_SYMPTOMS,
