@@ -11,7 +11,7 @@ const agreedOn = (iso) => new Date(iso).toLocaleDateString();
 // time from Profile, which is what "stored in settings" has to mean for a
 // thing you agreed to once at the door.
 export default function LegalSection() {
-  const { docs, failed, acceptedVersion } = useLegal();
+  const { docs, error, acceptedVersion } = useLegal();
   const [open, setOpen] = useState(null);
   const doc = docs.find((d) => d.kind === open);
 
@@ -23,7 +23,7 @@ export default function LegalSection() {
       </div>
 
       <div className="p-4 space-y-2">
-        {failed && <p className="text-sm font-semibold text-destructive break-words">These could not be loaded.</p>}
+        {error && <p className="text-sm font-semibold text-destructive break-words">{error}</p>}
 
         {docs.map((d) => {
           const mine = acceptedVersion(d.kind);
