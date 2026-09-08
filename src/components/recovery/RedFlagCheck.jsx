@@ -28,14 +28,25 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
     });
     return merged;
   });
+  // Where each answer came from. A suggestion she leaves standing is the day's
+  // own entries speaking; the moment she touches a question it becomes hers,
+  // whichever way she answers it.
+  const [sources, setSources] = useState(() => {
+    const saved = day.red_flag_sources || {};
+    const merged = { ...saved };
+    Object.keys(suggestions).forEach((k) => {
+      if ((day.red_flag_answers || {})[k] === undefined) merged[k] = "auto";
+    });
+    return merged;
+  });
   const [saving, setSaving] = useState(false);
 
   const answered = Object.keys(answers).length;
   const yesKeys = Object.keys(answers).filter((k) => answers[k] === "yes");
-  const answeredHere = day.red_flag_answers || {};
 
   const setAns = (key, v) => {
     setAnswers((a) => ({ ...a, [key]: v }));
+    setSources((s) => ({ ...s, [key]: "user" }));
     if (v === "no") {
       setDetails((d) => {
         const n = { ...d };
@@ -57,6 +68,7 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
     await base44.entities.RecoveryDay.update(day.id, {
       red_flag_answers: answers,
       red_flag_details: details,
+      red_flag_sources: sources,
       red_flag_completed: answered === RED_FLAG_ITEMS.length
     });
     setSaving(false);
@@ -82,7 +94,7 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
           const ans = answers[item.key];
           const det = details[item.key];
           // Marked as read off the day only while she has not answered it herself.
-          const hint = answeredHere[item.key] === undefined ? suggestions[item.key]?.why : null;
+          const hint = sources[item.key] === "auto" ? suggestions[item.key]?.why : null;
           return (
             <div key={item.key}>
               <div className="flex items-center justify-between gap-2">

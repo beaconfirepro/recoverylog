@@ -144,7 +144,7 @@ export default function DayView({ date, startCollapsed }) {
         )}
       </div>
 
-      <DayTotals totals={totals} surgery={activeSurgery} />
+      <DayTotals totals={totals} day={day} surgery={activeSurgery} />
 
       <RedFlagCheck
         key={day.id + JSON.stringify(day.red_flag_answers || {}) + JSON.stringify(day.red_flag_details || {})}
