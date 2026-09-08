@@ -26,10 +26,7 @@ function BodyWorkRow({ entries, goal, onEdit }) {
             <span className="relative inline-flex items-center overflow-hidden border-2 rounded-full px-2 py-0.5 bg-background">
               <span
                 className="absolute inset-y-0 left-0"
-                style={{
-                  width: `${Math.min(100, (minutes / goal) * 100)}%`,
-                  backgroundColor: minutes >= goal ? "#12E235" : TYPES.mld.color
-                }}
+                style={{ width: `${Math.min(100, (minutes / goal) * 100)}%`, backgroundColor: TYPES.mld.color }}
               />
               <span className="relative font-heading text-[10px] whitespace-nowrap text-[#1A1024]">{minutes}m</span>
             </span>

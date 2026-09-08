@@ -10,14 +10,15 @@ const CAP = 3;
 function Pill({ spec, color, darkText }) {
   if (spec.fill && spec.fill.goal) {
     // The number is this entry; the bar behind it is the day so far against the
-    // goal, which is the only place the day's total appears on a card.
+    // goal, which is the only place the day's total appears on a card. It fills
+    // in the tracker's own colour the whole way: a bar that changes colour at
+    // the end reads as a different measure rather than as the same one, full.
     const { done, goal } = spec.fill;
-    const met = done >= goal;
     return (
       <span className="relative inline-flex items-center overflow-hidden border-2 rounded-full px-2 py-0.5 bg-background">
         <span
           className="absolute inset-y-0 left-0"
-          style={{ width: `${Math.min(100, (done / goal) * 100)}%`, backgroundColor: met ? "#12E235" : color }}
+          style={{ width: `${Math.min(100, (done / goal) * 100)}%`, backgroundColor: color }}
         />
         <span className="relative font-heading text-[10px] whitespace-nowrap text-[#1A1024]">{spec.text}</span>
       </span>

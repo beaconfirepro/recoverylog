@@ -3,9 +3,21 @@ import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { niceDate, postOpLabel } from "@/lib/dates";
 import { computeTotals, redFlagYesCount } from "@/lib/daySummary";
-import { entryNotes } from "@/lib/recovery";
+import { TYPES, entryNotes } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
 import { usePatient } from "@/lib/PatientContext";
+
+// A tracker with a real total says the total; the rest say how many times it
+// was logged, which is the only honest summary of a list of events.
+const summaryFor = (type, t, count) => {
+  if (type === "water") return `${t.water} oz`;
+  if (type === "nutrients") return `${t.protein} g protein`;
+  if (type === "rest") return `${(t.sleepH + t.napH).toFixed(1)} h`;
+  if (type === "compression") return `${(t.garmentMin / 60).toFixed(1)} h`;
+  if (type === "weight") return t.weight != null ? `${t.weight} lbs` : "—";
+  if (type === "temp") return t.tempPm != null ? `${t.tempPm}°F` : "—";
+  return `×${count}`;
+};
 
 export default function History() {
   const { activeSurgery, activeSurgeryId } = usePatient();
@@ -13,6 +25,7 @@ export default function History() {
   const [totalsByDay, setTotalsByDay] = useState(null);
   const [notesByDay, setNotesByDay] = useState({});
   const [surgeryDate, setSurgeryDate] = useState(null);
+  const [countsByDay, setCountsByDay] = useState({});
 
   useEffect(() => {
     const run = async () => {
@@ -33,8 +46,10 @@ export default function History() {
       });
       const totals = {};
       const notes = {};
+      const counts = {};
       Object.keys(byDate).forEach((d) => {
         totals[d] = computeTotals(byDate[d], d);
+        counts[d] = byDate[d].reduce((acc, e) => ({ ...acc, [e.type]: (acc[e.type] || 0) + 1 }), {});
         notes[d] = byDate[d].flatMap((e) =>
           entryNotes(e).map((n, i) => ({ id: `${e.id}-${i}`, time: e.entry_time, label: n.label, note: n.text }))
         );
@@ -42,10 +57,14 @@ export default function History() {
       setSurgeryDate(activeSurgery?.surgery_date || null);
       setDays(ds);
       setNotesByDay(notes);
+      setCountsByDay(counts);
       setTotalsByDay(totals);
     };
     run();
-  }, []);
+  }, [activeSurgery, activeSurgeryId]);
+
+  // The trackers this surgery asked to see summarised here, in settings order.
+  const onCard = activeSurgery?.history_types || [];
 
   if (!days || !totalsByDay) {
     return (
@@ -68,6 +87,7 @@ export default function History() {
         const flags = redFlagYesCount(d);
         const label = postOpLabel(surgeryDate, d.date);
         const notes = notesByDay[d.date] || [];
+        const counts = countsByDay[d.date] || {};
         return (
           <Link key={d.id} to={`/day/${d.date}`} className="nb-card block p-3">
             <div className="flex items-baseline justify-between gap-2 min-w-0">
@@ -75,10 +95,21 @@ export default function History() {
               {label && <span className="text-sm font-semibold text-muted-foreground shrink-0">{niceDate(d.date)}</span>}
             </div>
             <div className="flex flex-wrap gap-1.5 mt-2">
-              <span className="nb-chip px-2.5 py-1 text-xs bg-[#00B4D8] text-white">💧 {t.water} oz</span>
-              <span className="nb-chip px-2.5 py-1 text-xs bg-[#FF9E00] text-[#1A1024]">🍗 {t.protein} g</span>
-              <span className="nb-chip px-2.5 py-1 text-xs bg-[#4361EE] text-white">🏃 {t.walks} movement</span>
-              <span className="nb-chip px-2.5 py-1 text-xs bg-[#5A189A] text-white">😴 {(t.sleepH + t.napH).toFixed(1)} h</span>
+              {/* Only what this surgery asked for. A card that shows every
+                  tracker shows nothing, because none of it stands out. */}
+              {onCard.map((type) => {
+                const cfg = TYPES[type];
+                if (!cfg) return null;
+                return (
+                  <span
+                    key={type}
+                    className="nb-chip px-2.5 py-1 text-xs"
+                    style={{ backgroundColor: cfg.color, color: cfg.darkText ? "#1A1024" : "#fff" }}
+                  >
+                    {cfg.label} {summaryFor(type, t, counts[type] || 0)}
+                  </span>
+                );
+              })}
               <span
                 className="nb-chip px-2.5 py-1 text-xs"
                 style={flags > 0 ? { backgroundColor: "hsl(var(--destructive))", color: "#fff" } : { backgroundColor: "#06D6A0" }}
