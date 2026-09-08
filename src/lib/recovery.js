@@ -1,5 +1,5 @@
 import {
-  ClipboardList, Droplets, Utensils, Pill, Zap, Thermometer, Droplet, Bath,
+  ClipboardList, Droplets, Utensils, Pill, Thermometer, Droplet, Bath,
   Layers, Stethoscope, Shirt, Hand, Activity, Moon, Waves, Camera, Ruler, Scale,
   Brush, HeartHandshake, Vibrate
 } from "lucide-react";
@@ -142,16 +142,6 @@ export const TYPES = {
     ],
     summary: (d) => join([d.drug, d.dose, d.reason, d.next_allowed && `next: ${d.next_allowed}`]),
     marker: (d, e) => `MED ${e.entry_time}`
-  },
-  pain: {
-    label: "Pain recheck", icon: Zap, color: "#FF5400",
-    fields: [
-      S("pain", "Pain", "bad"),
-      { key: "quality", label: "Quality", kind: "chips", options: ["aching", "burning", "stabbing", "throbbing", "tight", "pulling", "zinging", "numb"] },
-      { key: "worse_with", label: "Worse with", kind: "chipsMulti", options: ["standing", "walking", "coughing", "twisting", "garment"] }
-    ],
-    summary: (d) => join([`Pain ${d.pain ?? "–"}`, d.quality, (d.worse_with || []).join(", ")]),
-    marker: (d) => `PAIN ${d.pain ?? ""}`
   },
   temp: {
     label: "Temp", icon: Thermometer, color: "#FF006E",
@@ -323,8 +313,6 @@ export const TYPES = {
     marker: (d) => `WT ${d.weight ?? ""}`
   }
 };
-
-TYPES.walk = { ...TYPES.movement }; // legacy entries logged as "walk"
 
 // Check-in is pinned above the grid, always on, and configured rather than
 // toggled, so it is not one of the buttons you can arrange.
