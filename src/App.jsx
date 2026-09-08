@@ -22,6 +22,7 @@ import History from './pages/History';
 import Trends from './pages/Trends';
 import Profile from './pages/Profile';
 import SurgeryInfo from './pages/SurgeryInfo';
+import Care, { hasPicked } from './pages/Care';
 
 // A signed-in account still has to resolve to a patient before the log opens:
 // the owner's own record, or one an invite linked it to. The terms come first,
@@ -41,6 +42,16 @@ const PatientGate = () => {
     );
   }
   return <ConsentGate>{!linked ? <ClaimAccess /> : <Layout />}</ConsentGate>;
+};
+
+// A care team member starts on their care page rather than in a log: which
+// patient they are looking at is a choice they make, not one the app makes for
+// them. Once they have opened one this visit, home is that patient's day.
+const CareOrHome = () => {
+  const { isOwner, groups } = usePatient();
+  const teams = groups.filter((g) => !g.own);
+  if (!isOwner && teams.length > 0 && !hasPicked()) return <Navigate to="/care" replace />;
+  return <Home />;
 };
 
 const AuthenticatedApp = () => {
@@ -73,7 +84,8 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<PatientGate />}>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<CareOrHome />} />
+        <Route path="/care" element={<Care />} />
         <Route path="/day/:date" element={<Day />} />
         <Route path="/history" element={<History />} />
         <Route path="/trends" element={<Trends />} />
