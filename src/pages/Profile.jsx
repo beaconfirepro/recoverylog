@@ -5,6 +5,8 @@ import { todayStr, fullDate, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
 import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
+import DeleteAccount from "@/components/DeleteAccount";
+import { THEMES, useTheme } from "@/lib/theme";
 import {
   TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, checkinSlots,
   NUTRIENTS, BODYWORK_GOAL, nutrientUnit
@@ -22,6 +24,7 @@ const Row = ({ label, value }) => (
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const { theme, choose } = useTheme();
   const { patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const [team, setTeam] = useState([]);
   const [first, setFirst] = useState("");
@@ -328,7 +331,7 @@ export default function Profile() {
               aria-label="Surgery being set up"
               value={activeSurgeryId || ""}
               onChange={(e) => selectSurgery(e.target.value)}
-              className="nb-input"
+              className="nb-select"
             >
               {surgeries
                 .filter((x) => !x.archived || x.id === activeSurgeryId)
@@ -575,6 +578,29 @@ export default function Profile() {
           {done && !busy && <p className="col-span-2 text-sm font-bold text-center">PDF downloaded ✔</p>}
         </div>
       </div>
+
+      <div className="nb-card overflow-hidden">
+        <div className="px-4 py-3 border-b-2 bg-muted">
+          <div className="font-display text-xl uppercase leading-tight break-words">Appearance</div>
+          <div className="text-sm font-semibold break-words">Follows your phone unless you say otherwise.</div>
+        </div>
+        <div className="p-4 flex gap-1.5">
+          {THEMES.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => choose(t)}
+              aria-pressed={theme === t}
+              className="nb-chip flex-1 justify-center capitalize"
+              style={theme === t ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <DeleteAccount isOwner={isOwner} />
     </div>
   );
 }

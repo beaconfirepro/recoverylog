@@ -6,6 +6,7 @@ import { sortEntries, runningTotals, computeTotals } from "@/lib/daySummary";
 import { suggestFlags } from "@/lib/redFlags";
 import { asRows } from "@/lib/recoveryUtils";
 import { usePatient, trackedTypes } from "@/lib/PatientContext";
+import PullToRefresh from "@/components/PullToRefresh";
 import QuickAdd from "./QuickAdd";
 import DayFeed from "./DayFeed";
 import EntryForm from "./EntryForm";
@@ -74,10 +75,26 @@ export default function DayView({ date, startCollapsed }) {
   const totals = computeTotals(entries, date);
   const suggestions = suggestFlags(entries, activeSurgery, lastBm, date);
 
+  // The dialog closes and the day updates on the spot, then the write goes out.
+  // Waiting on a round trip to see your own entry appear is what makes a log
+  // feel like a form rather than a notebook.
   const saveEntry = async (payload) => {
-    setSaving(true);
-    if (dialog.entry) await base44.entities.RecoveryEntry.update(dialog.entry.id, payload);
-    else
+    const editing = dialog.entry;
+    setDialog(null);
+    if (editing) {
+      setEntries((rows) => rows.map((e) => (e.id === editing.id ? { ...e, ...payload } : e)));
+      await base44.entities.RecoveryEntry.update(editing.id, payload);
+    } else {
+      const optimistic = {
+        id: `pending-${Date.now()}`,
+        date,
+        type: dialog.type,
+        patient_id: patientId,
+        surgery_id: activeSurgeryId,
+        created_date: new Date().toISOString(),
+        ...payload
+      };
+      setEntries((rows) => [...rows, optimistic]);
       await base44.entities.RecoveryEntry.create({
         date,
         type: dialog.type,
@@ -85,14 +102,17 @@ export default function DayView({ date, startCollapsed }) {
         surgery_id: activeSurgeryId,
         ...payload
       });
-    setSaving(false);
-    setDialog(null);
+    }
+    // Reload either way: it replaces the stand-in with the saved row, and puts
+    // the real state back on screen if the write did not land.
     load();
   };
 
   const deleteEntry = async () => {
-    await base44.entities.RecoveryEntry.delete(dialog.entry.id);
+    const gone = dialog.entry.id;
     setDialog(null);
+    setEntries((rows) => rows.filter((e) => e.id !== gone));
+    await base44.entities.RecoveryEntry.delete(gone);
     load();
   };
 
@@ -103,7 +123,8 @@ export default function DayView({ date, startCollapsed }) {
   };
 
   return (
-    <div className="space-y-4">
+    <PullToRefresh onRefresh={load}>
+      <div className="space-y-4">
       <DayHeader day={day} />
 
       <div>
@@ -169,6 +190,7 @@ export default function DayView({ date, startCollapsed }) {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }

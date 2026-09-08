@@ -1,5 +1,5 @@
-import React from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import React, { useEffect, useRef } from "react";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { CalendarDays, History as HistoryIcon, TrendingUp, UserRound, Scissors } from "lucide-react";
 import { usePatient, displayName } from "@/lib/PatientContext";
 
@@ -11,13 +11,34 @@ const NAV = [
   { to: "/profile", label: "Profile", icon: UserRound, match: (p) => p.startsWith("/profile") }
 ];
 
+// A tab keeps where you left it. Coming back to History and landing at the top
+// of a hundred days is the same as losing your place.
+const useTabScroll = (pathname) => {
+  const positions = useRef({});
+  const last = useRef(pathname);
+  useEffect(() => {
+    positions.current[last.current] = window.scrollY;
+    last.current = pathname;
+    const y = positions.current[pathname];
+    if (y) window.scrollTo({ top: y, behavior: "instant" });
+  }, [pathname]);
+};
+
 export default function Layout() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { patient, isOwner } = usePatient();
   const who = displayName(patient);
+  useTabScroll(pathname);
+
   return (
     <div className="min-h-screen">
-      <header className="border-b-2 bg-foreground text-background">
+      {/* Sticky rather than scrolled away: the bar carries whose log this is,
+          which a care-team member needs at any point down a long day. */}
+      <header
+        className="sticky top-0 z-30 border-b-2 bg-foreground text-background"
+        style={{ paddingTop: "var(--safe-t)" }}
+      >
         <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center justify-between">
           <span className="font-display uppercase tracking-widest text-sm shrink-0">Recovery Log</span>
           {isOwner ? (
@@ -37,10 +58,23 @@ export default function Layout() {
           )}
         </div>
       </header>
-      <main className="max-w-lg mx-auto px-3 py-4 pb-28">
+
+      <main
+        key={pathname}
+        className="max-w-lg mx-auto px-3 py-4 animate-page"
+        style={{
+          paddingBottom: "calc(7rem + var(--safe-b))",
+          paddingLeft: "max(0.75rem, var(--safe-l))",
+          paddingRight: "max(0.75rem, var(--safe-r))"
+        }}
+      >
         <Outlet />
       </main>
-      <nav className="fixed bottom-0 inset-x-0 border-t-2 bg-foreground">
+
+      <nav
+        className="fixed bottom-0 inset-x-0 z-30 border-t-2 bg-foreground"
+        style={{ paddingBottom: "var(--safe-b)" }}
+      >
         <div className="max-w-lg mx-auto grid grid-cols-5">
           {NAV.map((n) => {
             const Icon = n.icon;
@@ -49,6 +83,16 @@ export default function Layout() {
               <Link
                 key={n.to}
                 to={n.to}
+                // Tapping the tab you are on goes back to its root without
+                // stacking another copy of it behind the back gesture.
+                replace={active}
+                onClick={(e) => {
+                  if (active && pathname !== n.to) {
+                    e.preventDefault();
+                    navigate(n.to, { replace: true });
+                  }
+                }}
+                aria-current={active ? "page" : undefined}
                 className="h-16 flex flex-col items-center justify-center gap-1"
                 style={active ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : { color: "hsl(var(--background))" }}
               >

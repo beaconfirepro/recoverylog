@@ -36,7 +36,7 @@ export default function DayHeader({ day }) {
         ) : (
           <select
             id="surgery-picker"
-            className="nb-input"
+            className="nb-select"
             value={activeSurgeryId || ""}
             onChange={(e) => selectSurgery(e.target.value)}
           >
