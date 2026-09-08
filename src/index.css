@@ -85,8 +85,56 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    /* The page is the only scroller. Without this the rubber band at the top of
+       a list pulls the whole document and the fixed bars slide with it. */
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-background text-foreground font-body;
+    overscroll-behavior-y: none;
+    /* Named once so a bar can reserve room for the notch or the home indicator
+       without every component repeating the env() call. */
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+  }
+
+  /* The scheme follows the phone unless the log has been told otherwise. An
+     app that is bright white at 3am in a recliner is the wrong app. */
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) {
+      --background: 14 18% 10%;
+      --foreground: 48 100% 96%;
+      --card: 260 25% 14%;
+      --card-foreground: 48 100% 96%;
+      --popover: 260 25% 14%;
+      --popover-foreground: 48 100% 96%;
+      --primary: 330 100% 62%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 265 90% 66%;
+      --secondary-foreground: 0 0% 100%;
+      --muted: 14 12% 19%;
+      --muted-foreground: 48 30% 75%;
+      --accent: 80 85% 56%;
+      --accent-foreground: 260 30% 11%;
+      --destructive: 0 85% 58%;
+      --destructive-foreground: 0 0% 100%;
+      --border: 48 100% 96%;
+      --input: 48 100% 96%;
+      --ring: 330 100% 62%;
+    }
+  }
+
+  /* Motion is a nicety. Anyone who has turned it off has said so. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   .font-heading,
@@ -146,6 +194,32 @@
   }
   .nb-textarea {
     @apply nb-input h-auto py-2 font-medium resize-none;
+  }
+  /* A native select with the platform arrow stripped has nothing to say it
+     opens. The caret is drawn back on so it still reads as a control. */
+  .nb-select {
+    @apply nb-input pr-10 cursor-pointer;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231A1024' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.1rem;
+  }
+  :root:not(.light) .nb-select {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFF7E0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not(.dark) .nb-select {
+      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231A1024' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    }
+  }
+  /* A screen that appears rather than replaces. Short enough not to be in the
+     way of someone logging six things in a row. */
+  .animate-page {
+    animation: page-in 180ms ease-out both;
+  }
+  @keyframes page-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
   }
   .nb-label {
     @apply block font-heading text-xs uppercase tracking-wide;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { niceDate, postOpLabel } from "@/lib/dates";
@@ -6,6 +6,7 @@ import { computeTotals, redFlagYesCount } from "@/lib/daySummary";
 import { TYPES, entryNotes } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
 import { usePatient } from "@/lib/PatientContext";
+import PullToRefresh from "@/components/PullToRefresh";
 
 // A tracker with a real total says the total; the rest say how many times it
 // was logged, which is the only honest summary of a list of events.
@@ -27,8 +28,7 @@ export default function History() {
   const [surgeryDate, setSurgeryDate] = useState(null);
   const [countsByDay, setCountsByDay] = useState({});
 
-  useEffect(() => {
-    const run = async () => {
+  const load = useCallback(async () => {
       if (!activeSurgeryId) {
         setDays([]);
         setTotalsByDay({});
@@ -59,9 +59,11 @@ export default function History() {
       setNotesByDay(notes);
       setCountsByDay(counts);
       setTotalsByDay(totals);
-    };
-    run();
   }, [activeSurgery, activeSurgeryId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // The trackers this surgery asked to see summarised here, in settings order.
   const onCard = activeSurgery?.history_types || [];
@@ -75,6 +77,7 @@ export default function History() {
   }
 
   return (
+    <PullToRefresh onRefresh={load}>
     <div className="space-y-3">
       <h1 className="font-display text-2xl uppercase">Day by day</h1>
       {days.length === 0 && (
@@ -138,5 +141,6 @@ export default function History() {
         );
       })}
     </div>
+    </PullToRefresh>
   );
 }

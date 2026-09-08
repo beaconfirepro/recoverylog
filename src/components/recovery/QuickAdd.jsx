@@ -16,8 +16,13 @@ const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, ...handl
   return (
     <div
       ref={innerRef}
-      className="relative select-none"
-      style={{ touchAction: arranging ? "none" : undefined, WebkitTouchCallout: "none" }}
+      // Selection, the callout and the scroll are suppressed only while the
+      // grid is being arranged. Outside that a long press on a tile does what
+      // the phone says it does.
+      className={`relative ${arranging ? "select-none" : ""}`}
+      style={
+        arranging ? { touchAction: "none", WebkitTouchCallout: "none", WebkitUserSelect: "none" } : undefined
+      }
       {...handlers}
     >
       <button

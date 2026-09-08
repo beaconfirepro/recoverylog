@@ -2,8 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="https://base44.com/logo_v2.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- viewport-fit=cover is what makes env(safe-area-inset-*) report anything
+         but zero. Without it the notch and the home indicator are simply not
+         measurable, and a bar pinned to the bottom sits under the gesture bar. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- The bars are drawn in the foreground colour, which the two schemes swap.
+         The status bar has to follow them or it reads as a seam. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#1A1024" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#FFF7EB" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Recovery Log" />
+    <meta name="description" content="A post-surgery log: what you tracked, day by day, in a form a surgeon can read." />
     <link rel="manifest" href="/manifest.json" />
     <title>Recovery Log</title>
   </head>

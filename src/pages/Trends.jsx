@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { asRows } from "@/lib/recoveryUtils";
 import { computeTotals } from "@/lib/daySummary";
 import { daysBetween, shortDate } from "@/lib/dates";
 import { usePatient } from "@/lib/PatientContext";
+import PullToRefresh from "@/components/PullToRefresh";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, Tooltip, Legend, ReferenceLine
@@ -25,8 +26,7 @@ export default function Trends() {
   const { activeSurgery, activeSurgeryId } = usePatient();
   const [rows, setRows] = useState(null);
 
-  useEffect(() => {
-    const run = async () => {
+  const load = useCallback(async () => {
       if (!activeSurgeryId) {
         setRows([]);
         return;
@@ -56,13 +56,16 @@ export default function Trends() {
         };
       });
       setRows(data);
-    };
-    run();
-  }, []);
+  }, [activeSurgery, activeSurgeryId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   if (!rows) return <Spinner />;
 
   return (
+    <PullToRefresh onRefresh={load}>
     <div className="space-y-4">
       <h1 className="font-display text-2xl uppercase">Trends</h1>
       {rows.length === 0 && (
@@ -105,5 +108,6 @@ export default function Trends() {
         </>
       )}
     </div>
+    </PullToRefresh>
   );
 }
