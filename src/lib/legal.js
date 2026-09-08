@@ -12,12 +12,17 @@ const byOrder = (a, b) => DOC_ORDER.indexOf(a.kind) - DOC_ORDER.indexOf(b.kind);
 // The documents live in the LegalDoc table, not in this bundle. A shipped copy
 // would go stale the moment one is reworded, and the version a person accepted
 // has to be the version they were actually shown.
+//
+// They come through the legalDocs function rather than straight off the table.
+// LegalDoc has no read rule, which denies rather than opens it, and that is
+// deliberate: the function is the one door, so nothing in the browser can read
+// the table and nothing can write to it either.
 export function useLegal() {
   const { user, isAuthenticated } = useAuth();
   const [docs, setDocs] = useState([]);
   const [mine, setMine] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
+  const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     if (!isAuthenticated || !user) {
@@ -25,22 +30,27 @@ export function useLegal() {
       return;
     }
     setLoading(true);
-    setFailed(false);
+    setError("");
     try {
       const [published, accepted] = await Promise.all([
-        base44.entities.LegalDoc.filter({ current: true }, "kind", 20),
+        base44.functions.invoke("legalDocs", {}),
         base44.entities.Consent.list("-accepted_at", 100)
       ]);
-      const rows = asRows(published).sort(byOrder);
+      if (published?.error) throw new Error(published.error);
+      const rows = asRows(published?.docs).sort(byOrder);
       // No documents is not "nothing to agree to". It is a read that did not
       // work, and the gate must hold rather than wave everyone through.
-      if (rows.length !== DOC_ORDER.length) throw new Error("The terms could not be loaded.");
+      if (rows.length !== DOC_ORDER.length) {
+        throw new Error(`Expected ${DOC_ORDER.length} documents, got ${rows.length}.`);
+      }
       setDocs(rows);
       setMine(asRows(accepted));
-    } catch {
+    } catch (e) {
+      // A screen that stops the whole app has to say what went wrong. Throwing
+      // the reason away left "could not load" and nothing to act on.
       setDocs([]);
       setMine([]);
-      setFailed(true);
+      setError(e.message || "The terms could not be loaded.");
     }
     setLoading(false);
   }, [isAuthenticated, user]);
@@ -67,5 +77,5 @@ export function useLegal() {
     await load();
   };
 
-  return { docs, loading, failed, outstanding, acceptedVersion, accept, reload: load };
+  return { docs, loading, error, outstanding, acceptedVersion, accept, reload: load };
 }

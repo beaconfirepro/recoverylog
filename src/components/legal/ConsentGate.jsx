@@ -111,12 +111,12 @@ function Asking({ outstanding, accept }) {
 // before the terms are agreed, so this sits in front of ClaimAccess rather than
 // behind it.
 export default function ConsentGate({ children }) {
-  const { loading, failed, outstanding, accept, reload } = useLegal();
+  const { loading, error, outstanding, accept, reload } = useLegal();
 
   if (loading) return <Spinner />;
 
   // A read that failed must not be read as "nothing to agree to".
-  if (failed) {
+  if (error) {
     return (
       <div className="max-w-lg mx-auto px-4 py-10">
         <div className="nb-card p-4 space-y-3">
@@ -126,6 +126,7 @@ export default function ConsentGate({ children }) {
           <p className="text-sm font-semibold break-words">
             The app could not load its privacy and permissions documents, so it cannot ask you to agree to them yet.
           </p>
+          <p className="text-xs font-semibold text-muted-foreground break-words">{error}</p>
           <button className="nb-btn w-full h-12 bg-card" onClick={reload}>
             Try again
           </button>

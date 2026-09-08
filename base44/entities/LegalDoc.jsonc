@@ -35,10 +35,11 @@
       "type": "boolean"
     }
   },
-  // Everyone signed in can read these: they are the app's own terms, and the
-  // consent gate cannot ask you to accept what it may not show you. Nobody can
-  // write them from the app. A legal document that any account could rewrite,
-  // in a table every account reads, is not a legal document.
+  // No read rule, which denies rather than opens: nothing in the browser reads
+  // this table. The documents are served by the legalDocs function instead, so
+  // there is one door to them and it is server side. Nobody can write them from
+  // the app either. A legal document that any account could rewrite, in a table
+  // every account reads, is not a legal document.
   "rls": {
     "create": { "user_condition": { "role": "admin" } },
     "update": { "user_condition": { "role": "admin" } },

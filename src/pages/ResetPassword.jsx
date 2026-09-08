@@ -1,12 +1,28 @@
 import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Lock, Loader2, AlertTriangle } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 
+// Read the token out of the raw query string rather than through
+// URLSearchParams. In a query string "+" means a space, so any token
+// containing one comes back through searchParams.get() with that character
+// silently replaced, and the server rejects it as invalid every single time.
+// Base64 tokens contain "+" often. Taking the raw text and decoding it
+// ourselves is right whether the link percent-encodes the token or not.
+const tokenFromUrl = () => {
+  const pair = window.location.search.replace(/^\?/, "").split("&").find((p) => p.startsWith("token="));
+  if (!pair) return null;
+  const raw = pair.slice("token=".length);
+  try {
+    return decodeURIComponent(raw) || null;
+  } catch {
+    return raw || null;
+  }
+};
+
 export default function ResetPassword() {
-  const [searchParams] = useSearchParams();
-  const resetToken = searchParams.get("token");
+  const resetToken = tokenFromUrl();
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
