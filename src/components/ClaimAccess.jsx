@@ -48,7 +48,8 @@ export default function ClaimAccess() {
     setBusy(true);
     setError("");
     const created = await base44.entities.AppUser.create({
-      email: user.email,
+      // Stored the way an invite is stored, so the two are always comparable.
+      email: String(user.email).trim().toLowerCase(),
       kind: "patient",
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),

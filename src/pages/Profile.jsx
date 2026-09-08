@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Check, LogOut, Plus, X } from "lucide-react";
 import { todayStr, fullDate, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
-import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
+import { usePatient, displayName, trackedTypes, sameEmail } from "@/lib/PatientContext";
 import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
 import DeleteAccount from "@/components/DeleteAccount";
 import LegalSection from "@/components/legal/LegalSection";
@@ -82,7 +82,7 @@ export default function Profile() {
       setInviteError("Email, first name and last name are all needed.");
       return;
     }
-    if (team.some((m) => m.email === email)) {
+    if (team.some((m) => sameEmail(m.email, email))) {
       setInviteError("That email is already on the care team.");
       return;
     }
