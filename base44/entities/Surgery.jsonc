@@ -7,7 +7,7 @@
       "type": "boolean"
     },
     "checkin_measures": {
-      "description": "Which measures the check-in records: pain, nausea, swelling, energy, mood, mobility, worst_spot. Empty or absent means all of them. A surgery can ask for fewer, never more.",
+      "description": "Which measures the check-in records: pain, nausea, swelling, energy, mood, mobility. Empty or absent means all of them. A surgery can ask for fewer, never more.",
       "items": {
         "type": "string"
       },
@@ -32,6 +32,24 @@
     },
     "fever_threshold": {
       "type": "number"
+    },
+    "goals": {
+      "description": "Daily targets for the trackers that have one. A tracker with a goal draws its day-page pill as a bar: the number is that entry, the fill is the day's running total against the goal.",
+      "properties": {
+        "bodywork": {
+          "description": "Minutes of body work a day, across MLD, tool work, other bodywork and the pump.",
+          "type": "number"
+        },
+        "nutrients": {
+          "description": "A target per nutrient, keyed by its name: Protein, Carbs, Fat, Fiber, Sugar, Sodium.",
+          "type": "object"
+        },
+        "water": {
+          "description": "Ounces of fluid a day.",
+          "type": "number"
+        }
+      },
+      "type": "object"
     },
     "label": {
       "description": "Short name shown in the day-header picker, e.g. 'Tummy tuck' or 'Left knee'.",
