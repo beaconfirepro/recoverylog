@@ -35,12 +35,22 @@
       "type": "boolean"
     }
   },
-  // No read rule, which denies rather than opens: nothing in the browser reads
-  // this table. The documents are served by the legalDocs function instead, so
-  // there is one door to them and it is server side. Nobody can write them from
-  // the app either. A legal document that any account could rewrite, in a table
-  // every account reads, is not a legal document.
+  // Read by everyone signed in, written by nobody but an admin. That is the
+  // whole requirement: these are the app's own terms, so there is nothing to
+  // keep from a reader and everything to keep from a writer. A legal document
+  // any account could rewrite, in a table every account reads, is not a legal
+  // document.
+  //
+  // The read rule is a tautology because it has to be. Rules must compare
+  // against a user template variable rather than a constant, so "anyone" is
+  // spelled as "created it, or did not".
   "rls": {
+    "read": {
+      "$or": [
+        { "created_by_id": "{{user.id}}" },
+        { "created_by_id": { "$ne": "{{user.id}}" } }
+      ]
+    },
     "create": { "user_condition": { "role": "admin" } },
     "update": { "user_condition": { "role": "admin" } },
     "delete": { "user_condition": { "role": "admin" } }
