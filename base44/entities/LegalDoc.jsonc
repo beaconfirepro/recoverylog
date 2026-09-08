@@ -1,76 +1,58 @@
 {
   "name": "LegalDoc",
+  "type": "object",
+  "required": ["kind", "version", "title", "body"],
   "properties": {
-    "body": {
-      "description": "The document itself. Plain text; a line ending in a colon and typed in capitals is rendered as a heading.",
-      "type": "string"
-    },
-    "current": {
-      "default": false,
-      "description": "True on the one row per kind the app serves. Older versions stay for the record.",
-      "type": "boolean"
-    },
-    "effective_date": {
-      "description": "Date this version takes effect.",
-      "format": "date",
-      "type": "string"
-    },
     "kind": {
       "description": "Which document this is. One row per kind is current at a time.",
-      "enum": [
-        "privacy",
-        "permissions",
-        "pii_sharing"
-      ],
+      "enum": ["privacy", "permissions", "pii_sharing"],
       "type": "string"
     },
-    "summary": {
-      "description": "One line describing the document, shown next to its title before it is opened.",
+    "version": {
+      "description": "Version of this document, as a date, e.g. 2026-09-08. Accepting a document records this string, so a new version asks the user again.",
       "type": "string"
     },
     "title": {
       "description": "Heading shown on the consent gate and in Profile.",
       "type": "string"
     },
-    "version": {
-      "description": "Version of this document, as a date, e.g. 2026-09-08. Accepting a document records this string, so a new version asks the user again.",
+    "summary": {
+      "description": "One line describing the document, shown next to its title before it is opened.",
       "type": "string"
+    },
+    "body": {
+      "description": "The document itself. Plain text; a line ending in a colon and typed in capitals is rendered as a heading.",
+      "type": "string"
+    },
+    "effective_date": {
+      "description": "Date this version takes effect.",
+      "format": "date",
+      "type": "string"
+    },
+    "current": {
+      "default": false,
+      "description": "True on the one row per kind the app serves. Older versions stay for the record.",
+      "type": "boolean"
     }
   },
-  "required": [
-    "kind",
-    "version",
-    "title",
-    "body"
-  ],
+  // Read by everyone signed in, written by nobody but an admin. That is the
+  // whole requirement: these are the app's own terms, so there is nothing to
+  // keep from a reader and everything to keep from a writer. A legal document
+  // any account could rewrite, in a table every account reads, is not a legal
+  // document.
+  //
+  // The read rule is a tautology because it has to be. Rules must compare
+  // against a user template variable rather than a constant, so "anyone" is
+  // spelled as "created it, or did not".
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
     "read": {
       "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "created_by_id": {
-            "$ne": "{{user.id}}"
-          }
-        }
+        { "created_by_id": "{{user.id}}" },
+        { "created_by_id": { "$ne": "{{user.id}}" } }
       ]
     },
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
-  },
-  "type": "object"
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
 }

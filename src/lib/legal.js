@@ -13,10 +13,10 @@ const byOrder = (a, b) => DOC_ORDER.indexOf(a.kind) - DOC_ORDER.indexOf(b.kind);
 // would go stale the moment one is reworded, and the version a person accepted
 // has to be the version they were actually shown.
 //
-// They come through the legalDocs function rather than straight off the table.
-// LegalDoc has no read rule, which denies rather than opens it, and that is
-// deliberate: the function is the one door, so nothing in the browser can read
-// the table and nothing can write to it either.
+// The table is read directly. Its read rule matches every signed-in account and
+// its write rules admit nobody but an admin, which is the whole requirement:
+// these are the app's own terms, so there is nothing to keep from a reader and
+// everything to keep from a writer.
 export function useLegal() {
   const { user, isAuthenticated } = useAuth();
   const [docs, setDocs] = useState([]);
@@ -33,15 +33,16 @@ export function useLegal() {
     setError("");
     try {
       const [published, accepted] = await Promise.all([
-        base44.functions.invoke("legalDocs", {}),
+        base44.entities.LegalDoc.filter({ current: true }, "kind", 20),
         base44.entities.Consent.list("-accepted_at", 100)
       ]);
-      if (published?.error) throw new Error(published.error);
-      const rows = asRows(published?.docs).sort(byOrder);
+      const rows = asRows(published).sort(byOrder);
       // No documents is not "nothing to agree to". It is a read that did not
-      // work, and the gate must hold rather than wave everyone through.
+      // work, and the gate must hold rather than wave everyone through. More
+      // than one current row per kind is just as bad: we could not say which
+      // version a person had agreed to.
       if (rows.length !== DOC_ORDER.length) {
-        throw new Error(`Expected ${DOC_ORDER.length} documents, got ${rows.length}.`);
+        throw new Error(`Expected ${DOC_ORDER.length} current documents, got ${rows.length}.`);
       }
       setDocs(rows);
       setMine(asRows(accepted));
