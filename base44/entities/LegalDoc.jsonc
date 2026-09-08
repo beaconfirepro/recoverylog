@@ -21,7 +21,7 @@
       "type": "string"
     },
     "body": {
-      "description": "The document itself. Plain text; a line typed in capitals and ending in a colon is rendered as a heading.",
+      "description": "The document itself. Plain text; a line ending in a colon and typed in capitals is rendered as a heading.",
       "type": "string"
     },
     "effective_date": {
