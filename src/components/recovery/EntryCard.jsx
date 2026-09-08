@@ -1,47 +1,89 @@
 import React from "react";
-import { TYPES, entryNotes } from "@/lib/recovery";
-import { Image } from "@/components/ui/image";
+import { TYPES, gradeColor } from "@/lib/recovery";
 
-export default function EntryCard({ entry, run, onEdit }) {
+const SIGNAL = { warn: "#F7B801", bad: "#E01E37" };
+
+// At most this many pills before the row starts counting the rest. A bad skin
+// day is nine findings, which would take a third of the screen unwrapped.
+const CAP = 3;
+
+function Pill({ spec, color, darkText }) {
+  if (spec.fill && spec.fill.goal) {
+    // The number is this entry; the bar behind it is the day so far against the
+    // goal, which is the only place the day's total appears on a card.
+    const { done, goal } = spec.fill;
+    const met = done >= goal;
+    return (
+      <span className="relative inline-flex items-center overflow-hidden border-2 rounded-full px-2 py-0.5 bg-background">
+        <span
+          className="absolute inset-y-0 left-0"
+          style={{ width: `${Math.min(100, (done / goal) * 100)}%`, backgroundColor: met ? "#12E235" : color }}
+        />
+        <span className="relative font-heading text-[10px] whitespace-nowrap text-[#1A1024]">{spec.text}</span>
+      </span>
+    );
+  }
+
+  const bg =
+    spec.tone === "grade" ? gradeColor(spec.grade - 1, 4, spec.highIs) : SIGNAL[spec.tone] || color;
+  const dark = spec.tone === "grade" || spec.tone === "warn" || (!spec.tone && darkText);
+  return (
+    <span
+      className="inline-block border-2 rounded-full px-2 py-0.5 font-heading text-[10px] whitespace-nowrap"
+      style={{ backgroundColor: bg, color: dark ? "#1A1024" : "#fff" }}
+    >
+      {spec.text}
+    </span>
+  );
+}
+
+// One entry, one line: the time, the tracker, and pills that say what it was.
+// A tracker whose pills are a list (skin findings, nutrients) puts its name on
+// its own line so a long list wraps underneath instead of squeezing it out.
+export default function EntryCard({ entry, run, goal, nutrientGoals, onEdit }) {
   const cfg = TYPES[entry.type];
-  const d = entry.data || {};
-  const summary = cfg.summary(d, entry, run) || cfg.label;
-  const marker = cfg.marker(d, entry, run);
-  const notes = entryNotes(entry);
+  const specs = cfg.pills(entry.data || {}, entry, run, cfg.goal?.perNutrient ? nutrientGoals : goal);
+  const shown = cfg.stacked ? specs.slice(0, CAP) : specs;
+  const rest = specs.length - shown.length;
+
+  const pills = (
+    <>
+      {shown.map((s, i) => (
+        <Pill key={i} spec={s} color={cfg.color} darkText={cfg.darkText} />
+      ))}
+      {rest > 0 && (
+        <span className="inline-block border-2 rounded-full px-2 py-0.5 font-heading text-[10px] whitespace-nowrap bg-muted text-muted-foreground">
+          +{rest} more
+        </span>
+      )}
+    </>
+  );
 
   return (
     <button
       onClick={onEdit}
-      className="w-full text-left flex items-stretch gap-2 border-2 rounded-xl bg-card p-2.5 transition-transform active:translate-x-[2px]"
+      className={`relative w-full text-left flex gap-2 border-2 rounded-xl bg-card px-2 py-1.5 transition-transform active:translate-x-[2px] ${
+        cfg.stacked ? "items-start" : "items-center"
+      }`}
     >
-      <div className="w-11 shrink-0 pt-0.5">
-        <div className="font-heading text-xs">{entry.entry_time}</div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="font-heading text-[10px] uppercase tracking-wider text-muted-foreground">{cfg.label}</div>
-        <div className="text-sm font-medium break-words">{summary}</div>
-        {notes.map((n) => (
-          <div key={n.label} className="text-xs italic text-muted-foreground break-words">
-            {n.label !== "Note" && <span className="not-italic font-heading uppercase">{n.label}: </span>}
-            {n.text}
-          </div>
-        ))}
-        {d.photo_url && (
-          <Image src={d.photo_url} alt="entry photo" className="h-20 w-20 mt-1 border-2 rounded-lg object-cover" />
-        )}
-      </div>
-      <div className="shrink-0 self-center">
-        <span
-          className="inline-block border-2 rounded-full px-2 py-1 text-[10px] font-heading whitespace-nowrap"
-          style={{
-            backgroundColor: cfg.color,
-            color: cfg.darkText ? "#1A1024" : "#fff",
-            borderColor: "hsl(var(--foreground))"
-          }}
-        >
-          {marker}
+      <span
+        className="absolute -left-[21px] top-1/2 -translate-y-1/2 w-3 h-3 border-2 rounded-full"
+        style={{ backgroundColor: cfg.color }}
+      />
+      <span className={`w-10 shrink-0 font-heading text-[11px] tabular-nums text-muted-foreground ${cfg.stacked ? "pt-1" : ""}`}>
+        {entry.entry_time}
+      </span>
+      {cfg.stacked ? (
+        <span className="flex-1 min-w-0 flex flex-col">
+          <span className="font-heading text-xs uppercase tracking-wide">{cfg.label}</span>
+          <span className="flex flex-wrap gap-1 mt-1">{pills}</span>
         </span>
-      </div>
+      ) : (
+        <>
+          <span className="flex-1 min-w-0 truncate font-heading text-xs uppercase tracking-wide">{cfg.label}</span>
+          <span className="shrink-0 flex gap-1">{pills}</span>
+        </>
+      )}
     </button>
   );
 }

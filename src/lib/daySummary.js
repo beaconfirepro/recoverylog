@@ -1,4 +1,5 @@
 import { todayStr, nowTime } from "./dates";
+import { BODYWORK_GROUP } from "./recovery";
 
 export const timeToMin = (t) => {
   if (!t) return 0;
@@ -9,13 +10,20 @@ export const timeToMin = (t) => {
 export const sortEntries = (list) =>
   [...list].sort((a, b) => timeToMin(a.entry_time) - timeToMin(b.entry_time) || String(a.created_date).localeCompare(String(b.created_date)));
 
+// What the day had reached by the time each entry was logged. The day page
+// draws its goal bars from this, so a card can say what it was while the bar
+// behind it says where the day had got to.
 export function runningTotals(sorted) {
-  let w = 0, p = 0;
+  let water = 0;
+  const nutrients = {};
   const map = {};
   sorted.forEach((e) => {
-    if (e.type === "water") w += +e.data?.ounces || 0;
-    if (e.type === "food") p += +e.data?.protein || 0;
-    map[e.id] = { water: w, protein: p };
+    if (e.type === "water") water += +e.data?.ounces || 0;
+    if (e.type === "nutrients")
+      Object.entries(e.data?.nutrients || {}).forEach(([n, v]) => {
+        nutrients[n] = (nutrients[n] || 0) + (+v || 0);
+      });
+    map[e.id] = { water, nutrients: { ...nutrients } };
   });
   return map;
 }
@@ -26,13 +34,18 @@ export function computeTotals(entries, dateStr) {
     entries.filter((e) => e.type === type).reduce((s, e) => s + (+e.data?.[key] || 0), 0);
 
   const water = sum("water", "ounces");
-  const protein = sum("food", "protein");
+  const protein = entries
+    .filter((e) => e.type === "nutrients")
+    .reduce((s, e) => s + (+e.data?.nutrients?.Protein || 0), 0);
   const walks = entries.filter((e) => e.type === "movement").length;
+  const bodyworkMin = entries
+    .filter((e) => BODYWORK_GROUP.includes(e.type))
+    .reduce((s, e) => s + (+e.data?.minutes || 0), 0);
 
   // Garment hours: on -> off pairs, open "on" counts until now (today) or midnight
   let onAt = null, gmin = 0;
   sorted.forEach((e) => {
-    if (e.type !== "garment") return;
+    if (e.type !== "compression") return;
     const a = e.data?.action;
     if (a === "on" && onAt === null) onAt = e.entry_time;
     else if (a === "off" && onAt !== null) { gmin += timeToMin(e.entry_time) - timeToMin(onAt); onAt = null; }
@@ -44,9 +57,9 @@ export function computeTotals(entries, dateStr) {
 
   let sleepMin = 0, napMin = 0;
   entries.forEach((e) => {
-    if (e.type !== "sleep") return;
-    const m = (+e.data?.hours || 0) * 60 + (+e.data?.minutes || 0);
-    if (e.data?.kind === "nap") napMin += m; else sleepMin += m;
+    if (e.type !== "rest") return;
+    const m = +e.data?.minutes || 0;
+    if (e.data?.state === "Sleeping") sleepMin += m; else napMin += m;
   });
 
   let tempAm = null, tempPm = null, weight = null, photoTaken = false, measurements = null, nextMed = null;
@@ -72,7 +85,7 @@ export function computeTotals(entries, dateStr) {
   });
 
   return {
-    water, protein, walks,
+    water, protein, walks, bodyworkMin,
     garmentMin: gmin,
     sleepH: sleepMin / 60, napH: napMin / 60,
     tempAm, tempPm, weight, photoTaken, measurements, nextMed, best, worst,

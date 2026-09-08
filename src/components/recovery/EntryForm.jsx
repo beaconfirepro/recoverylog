@@ -4,8 +4,10 @@ import { usePatient } from "@/lib/PatientContext";
 import { nowTime } from "@/lib/dates";
 import {
   ScaleField, ChipsField, ChipsMultiField, NumberField, DurationField, TextField,
-  TimeField, SpotsField, FileField, NoteField
+  TimeField, SpotsField, FileField, NoteField, Scale5Field, HungerField,
+  BristolField, AreaSymptomsField, AreaStatusField, NutrientsField
 } from "./Fields";
+import BodyMap from "./BodyMap";
 import CheckinStack from "./CheckinStack";
 
 export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot, onSave, onCancel, onDelete, saving }) {
@@ -18,9 +20,10 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
     const base = { ...(entry?.data || {}) };
     if (!entry) {
       if (type === PINNED) base.slot = base.slot || defaultSlot(checkinSlots(activeSurgery));
-      if (type === "sleep") base.kind = base.kind || "sleep";
-      if (type === "movement") base.kind = base.kind || "walk";
-      if (type === "garment") base.action = base.action || "on";
+      if (type === "rest") base.state = base.state || "Sleeping";
+      if (type === "movement") base.kind = base.kind || "Walk";
+      if (type === "compression") base.action = base.action || "on";
+      if (type === "urine") base.clarity = base.clarity || "Clear";
     }
     return base;
   });
@@ -30,6 +33,9 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
     setData((prev) => (kind === "spots" ? { ...prev, ...val } : { ...prev, [key]: val }));
 
   const props = { color: cfg.color, darkText: !!cfg.darkText };
+  // The parts marked on the map decide which per-area questions exist at all,
+  // so they are read here rather than passed down through every field.
+  const areas = Array.isArray(data.areas) ? data.areas : [];
 
   const header = (
     <div className="flex items-center gap-2 min-w-0">
@@ -99,6 +105,20 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
                 onRemoveSpot={onRemoveSpot}
               />
             );
+          case "scale5":
+            return <Scale5Field key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
+          case "hunger":
+            return <HungerField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
+          case "bristol":
+            return <BristolField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
+          case "bodymap":
+            return <BodyMap key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
+          case "areaSymptoms":
+            return <AreaSymptomsField key={f.key} field={f} areas={areas} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
+          case "areaStatus":
+            return <AreaStatusField key={f.key} field={f} areas={areas} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
+          case "nutrients":
+            return <NutrientsField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "file":
             return <FileField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           default:
