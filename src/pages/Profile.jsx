@@ -4,7 +4,11 @@ import { LogOut, Plus, X } from "lucide-react";
 import { todayStr, fullDate, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
-import { TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, checkinSlots } from "@/lib/recovery";
+import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
+import {
+  TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, checkinSlots,
+  NUTRIENTS, BODYWORK_GOAL, nutrientUnit
+} from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
 import { buildRecoveryPdf } from "@/lib/recoveryPdf";
 import Field from "@/components/Field";
@@ -125,6 +129,20 @@ export default function Profile() {
     const next = measures.includes(key) ? measures.filter((k) => k !== key) : [...measures, key];
     // Stored in the order the check-in asks, so the form never reshuffles.
     patchSurgery({ checkin_measures: CHECKIN_MEASURES.filter((m) => next.includes(m.key)).map((m) => m.key) });
+  };
+
+  // A goal turns that tracker's pill into a bar on the day page. Only the three
+  // you are trying to reach a number on take one; the rest are just recorded.
+  const goals = activeSurgery?.goals || {};
+  const setGoal = (key, raw) => {
+    const n = raw === "" ? null : +raw;
+    patchSurgery({ goals: { ...goals, [key]: Number.isFinite(n) && n > 0 ? n : null } });
+  };
+  const setNutrientGoal = (name, raw) => {
+    const n = raw === "" ? null : +raw;
+    patchSurgery({
+      goals: { ...goals, nutrients: { ...(goals.nutrients || {}), [name]: Number.isFinite(n) && n > 0 ? n : null } }
+    });
   };
 
   const toggleType = (t) => {
@@ -320,6 +338,46 @@ export default function Profile() {
             </p>
 
             <div className="border-t-2 pt-3 space-y-2">
+              <div className="nb-label">Goals</div>
+              <p className="text-[11px] font-semibold text-muted-foreground break-words">
+                Water, Body Work and Nutrients can carry a daily target. Their pill on the day page fills as the day
+                goes and turns green once you reach it. Leave one blank for a plain pill.
+              </p>
+              {[TYPES.water.goal, BODYWORK_GOAL].map((g) => (
+                <div key={g.key} className="flex items-center gap-2 min-w-0">
+                  <span className="flex-1 min-w-0 truncate text-sm font-semibold">{g.label}</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    placeholder={String(g.suggest)}
+                    defaultValue={goals[g.key] ?? ""}
+                    onBlur={(e) => setGoal(g.key, e.target.value)}
+                    disabled={savingTracking}
+                    className="nb-input w-24 shrink-0"
+                  />
+                  <span className="nb-label w-8 shrink-0 text-muted-foreground">{g.unit}</span>
+                </div>
+              ))}
+              <div className="nb-label pt-1">Per nutrient</div>
+              {NUTRIENTS.map((n) => (
+                <div key={n.name} className="flex items-center gap-2 min-w-0">
+                  <span className="flex-1 min-w-0 truncate text-sm font-semibold">{n.name}</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    defaultValue={goals.nutrients?.[n.name] ?? ""}
+                    onBlur={(e) => setNutrientGoal(n.name, e.target.value)}
+                    disabled={savingTracking}
+                    className="nb-input w-24 shrink-0"
+                  />
+                  <span className="nb-label w-8 shrink-0 text-muted-foreground">{nutrientUnit(n.name)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t-2 pt-3 space-y-2">
               {[
                 ["track_before", "Track days before surgery", "Log a baseline in the run-up."],
                 ["track_after", "Track days from surgery onwards", "The recovery itself."]
@@ -349,6 +407,10 @@ export default function Profile() {
           </div>
         </div>
       )}
+
+      {isOwner && <GarmentLibrary />}
+
+      {isOwner && <MedGroupLibrary />}
 
       {isOwner && (
         <div className="nb-card overflow-hidden">

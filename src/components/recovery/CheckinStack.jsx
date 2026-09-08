@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import Field from "@/components/Field";
 import { ChipsField, TextField, TimeField } from "./Fields";
+import { gradeColor as grade } from "@/lib/recovery";
 
 // Each measure carries its own note alongside its number, so "pain 8" can say
 // why. Kept on the entry data under the measure it belongs to.
@@ -9,8 +10,8 @@ export const noteKey = (fieldKey) => `${fieldKey}_note`;
 
 // Wellbeing, not the raw number: 10 is bad for pain and good for mood, so the
 // face and the colour read off this instead of the value itself.
-const well = (field, v) => (field.lowIs === "bad" ? 10 - v : v);
-const gradeColor = (field, v) => `hsl(${358 - (well(field, v) / 10) * 263} 88% 62%)`;
+const well = (field, v) => (field.highIs === "bad" ? 10 - v : v);
+const gradeColor = (field, v) => grade(well(field, v), 10, "good");
 
 // Drawn rather than picked from a set of emoji: the mouth, the brows and the
 // eyes all interpolate off wellbeing, so all eleven levels get their own face.

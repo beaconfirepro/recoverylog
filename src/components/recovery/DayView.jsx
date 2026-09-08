@@ -5,7 +5,7 @@ import { sortEntries, runningTotals, computeTotals } from "@/lib/daySummary";
 import { asRows } from "@/lib/recoveryUtils";
 import { usePatient, trackedTypes } from "@/lib/PatientContext";
 import QuickAdd from "./QuickAdd";
-import EntryCard from "./EntryCard";
+import DayFeed from "./DayFeed";
 import EntryForm from "./EntryForm";
 import DayHeader from "./DayHeader";
 import DayTotals from "./DayTotals";
@@ -142,12 +142,12 @@ export default function DayView({ date }) {
             Nothing logged yet — tap a button above and it will land here in order.
           </p>
         )}
-        {sorted.map((e) => (
-          <EntryCard key={e.id} entry={e} run={run[e.id]} onEdit={() => setDialog({ entry: e })} />
-        ))}
+        {sorted.length > 0 && (
+          <DayFeed entries={sorted} run={run} surgery={activeSurgery} onEdit={(e) => setDialog({ entry: e })} />
+        )}
       </div>
 
-      <DayTotals totals={totals} />
+      <DayTotals totals={totals} surgery={activeSurgery} />
 
       <RedFlagCheck
         key={day.id + JSON.stringify(day.red_flag_answers || {}) + JSON.stringify(day.red_flag_details || {})}
