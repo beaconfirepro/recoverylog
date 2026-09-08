@@ -5,7 +5,10 @@ import { base44 } from "@/api/base44Client";
 import Field from "@/components/Field";
 import { nowTime } from "@/lib/dates";
 import DrugLookup from "./DrugLookup";
-import { BRISTOL, HUNGER_COLORS, HUNGER_LEVELS, NUTRIENTS, gradeColor, nutrientUnit } from "@/lib/recovery";
+import {
+  BRISTOL, HUNGER_COLORS, HUNGER_LEVELS, INCISION_LEVELS, INCISION_SYMPTOMS,
+  MEASUREMENTS, NUTRIENTS, gradeColor, nutrientUnit
+} from "@/lib/recovery";
 
 const fillStyle = (active, color, darkText) =>
   active ? { backgroundColor: color, color: darkText ? "#1A1024" : "#fff" } : {};
@@ -103,7 +106,7 @@ export function ChipsMultiField({ field, value = [], onChange, color, darkText }
 
 export function NumberField({ field, value, onChange }) {
   return (
-    <Field label={field.label} span>
+    <Field label={field.label} hint={field.unit} span>
       <input
         type="number"
         inputMode={field.decimal ? "decimal" : "numeric"}
@@ -191,160 +194,26 @@ export function TextField({ field, value, onChange }) {
   );
 }
 
-const HOURS = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 const pad = (n) => String(n).padStart(2, "0");
 
-const readTime = (v) => {
-  const [H, M] = String(v || "").split(":").map(Number);
-  if (!Number.isFinite(H) || !Number.isFinite(M)) return null;
-  return { h12: H % 12 === 0 ? 12 : H % 12, m: M, mer: H < 12 ? "AM" : "PM" };
-};
-
-const writeTime = ({ h12, m, mer }) =>
-  `${pad(mer === "AM" ? (h12 === 12 ? 0 : h12) : h12 === 12 ? 12 : h12 + 12)}:${pad(m)}`;
-
 export const showTime = (v) => {
-  const t = readTime(v);
-  return t ? `${t.h12}:${pad(t.m)} ${t.mer}` : "Not set";
+  const [H, M] = String(v || "").split(":").map(Number);
+  if (!Number.isFinite(H) || !Number.isFinite(M)) return "Not set";
+  return `${H % 12 === 0 ? 12 : H % 12}:${pad(M)} ${H < 12 ? "AM" : "PM"}`;
 };
 
-// The system time wheel is the same grey drum in every app and it takes the
-// screen to use. This shows the time already set to now and stays shut until
-// it is asked for; opening it is a choice, not something that happens to you.
+// The browser's own time field: type it, or use the keypad it puts up. It opens
+// on now because that is what almost every entry wants, and there is nothing
+// else to press.
 export function TimeField({ label, value, onChange, span }) {
-  const [open, setOpen] = useState(false);
-  const t = readTime(value) || readTime(nowTime());
-  const minutes = MINUTES.includes(t.m) ? MINUTES : [...MINUTES, t.m].sort((a, b) => a - b);
-  const set = (patch) => onChange(writeTime({ ...t, ...patch }));
-
-  const toggle = () => {
-    // An empty field lands on now rather than on an empty grid, so adjusting
-    // from the right ballpark is the worst case.
-    if (!value) onChange(nowTime());
-    setOpen((o) => !o);
-  };
-
   return (
     <Field label={label} span={span}>
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={open}
-        className="nb-input flex items-center justify-between gap-2 text-left"
-      >
-        <span className="font-heading text-base tracking-wide">{showTime(value)}</span>
-        <span className="flex items-center gap-1 text-[10px] font-semibold uppercase text-muted-foreground shrink-0">
-          <Clock className="w-3.5 h-3.5" />
-          {open ? "Done" : "Change"}
-        </span>
-      </button>
-
-      {open && (
-        <div className="border-2 rounded-xl bg-card p-2.5 space-y-2.5">
-          <div className="flex flex-wrap gap-1">
-            {HOURS.map((h) => (
-              <button
-                key={h}
-                type="button"
-                onClick={() => set({ h12: h })}
-                className={`nb-chip w-10 px-0 text-center tabular-nums ${t.h12 === h ? "bg-foreground text-background" : ""}`}
-              >
-                {h}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-1">
-            {minutes.map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => set({ m })}
-                className={`nb-chip w-10 px-0 text-center tabular-nums ${t.m === m ? "bg-foreground text-background" : ""}`}
-              >
-                :{pad(m)}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {["AM", "PM"].map((mer) => (
-              <button
-                key={mer}
-                type="button"
-                onClick={() => set({ mer })}
-                className={`nb-btn h-11 ${t.mer === mer ? "bg-foreground text-background" : "bg-card"}`}
-              >
-                {mer}
-              </button>
-            ))}
-            <button type="button" onClick={() => onChange(nowTime())} className="nb-btn h-11 bg-accent text-accent-foreground">
-              Now
-            </button>
-          </div>
-        </div>
-      )}
-    </Field>
-  );
-}
-
-// Spots are named here, in the one place they are also measured, so naming a
-// spot and recording it are the same trip rather than two.
-export function SpotsField({ field, value, onChange, spots, onAddSpot, onRemoveSpot }) {
-  const [newSpot, setNewSpot] = useState("");
-  const vals = value || {};
-
-  const add = async () => {
-    const name = newSpot.trim();
-    if (!name) return;
-    setNewSpot("");
-    await onAddSpot(name);
-  };
-
-  return (
-    <Field label={field.label} span>
-      {spots.length === 0 && (
-        <p className="text-sm text-muted-foreground">No spots yet — name one below and it will be here every day.</p>
-      )}
-      <div className="space-y-1.5">
-        {spots.map((s) => (
-          <div key={s.id} className="flex items-center gap-2 min-w-0">
-            <span className="flex-1 min-w-0 truncate text-sm font-semibold">{s.name}</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              min="0"
-              step="0.25"
-              placeholder="in"
-              value={vals[s.name] ?? ""}
-              onChange={(e) => onChange({ ...vals, [s.name]: e.target.value === "" ? "" : +e.target.value })}
-              className="nb-input w-24 shrink-0"
-            />
-            <button
-              type="button"
-              onClick={() => onRemoveSpot(s.id)}
-              className="nb-btn h-12 w-12 shrink-0 bg-card"
-              aria-label={`Remove ${s.name}`}
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-2 min-w-0 pt-1.5">
-        <input
-          type="text"
-          value={newSpot}
-          onChange={(e) => setNewSpot(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())}
-          placeholder="add a spot — e.g. waist, left thigh"
-          className="nb-input"
-        />
-        <button type="button" className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground" onClick={add}>
-          <Plus className="w-5 h-5" />
-        </button>
-      </div>
+      <input
+        type="time"
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="nb-input"
+      />
     </Field>
   );
 }
@@ -444,15 +313,16 @@ export function HungerField({ field, value, onChange }) {
 }
 
 // The Bristol chart is a picture in every clinic that uses it, so it is a
-// picture here too: seven drawn types, the words underneath the one you pick.
+// picture here too. Drawn small and in the colour of the thing, because a large
+// black diagram of a stool is not what anyone wants on their phone.
 const BRISTOL_ART = [
-  <g key="1">{[30, 50, 70, 90].map((x) => <circle key={x} cx={x} cy="20" r="7" />)}</g>,
-  <g key="2"><rect x="20" y="10" width="80" height="20" rx="10" />{[38, 56, 74].map((x) => <rect key={x} x={x} y="8" width="4" height="24" fill="hsl(var(--card))" />)}</g>,
-  <g key="3"><rect x="16" y="12" width="88" height="16" rx="8" />{[40, 62, 84].map((x) => <rect key={x} x={x} y="10" width="2.5" height="20" fill="hsl(var(--card))" />)}</g>,
-  <g key="4"><rect x="14" y="13" width="92" height="14" rx="7" /></g>,
-  <g key="5">{[28, 52, 76].map((x) => <ellipse key={x} cx={x} cy="20" rx="12" ry="8" />)}</g>,
-  <g key="6"><path d="M16 24 q10 -12 20 0 q10 -12 20 0 q10 -12 20 0 q10 -12 20 0 v6 h-80 z" /></g>,
-  <g key="7"><path d="M14 26 q14 -10 26 -2 q12 8 24 0 q12 -8 24 2 v4 h-74 z" /></g>
+  <g key="1">{[16, 34, 52, 70].map((x) => <circle key={x} cx={x} cy="14" r="5" />)}</g>,
+  <g key="2"><rect x="10" y="6" width="66" height="16" rx="8" />{[28, 43, 58].map((x) => <rect key={x} x={x} y="4" width="3" height="20" fill="var(--art-gap)" />)}</g>,
+  <g key="3"><rect x="8" y="8" width="70" height="12" rx="6" />{[30, 48, 66].map((x) => <rect key={x} x={x} y="6" width="2" height="16" fill="var(--art-gap)" />)}</g>,
+  <g key="4"><rect x="6" y="9" width="74" height="10" rx="5" /></g>,
+  <g key="5">{[20, 42, 64].map((x) => <ellipse key={x} cx={x} cy="14" rx="10" ry="6" />)}</g>,
+  <g key="6"><path d="M8 18 q8 -10 16 0 q8 -10 16 0 q8 -10 16 0 q8 -10 16 0 v4 h-64 z" /></g>,
+  <g key="7"><path d="M6 20 q12 -8 22 -2 q10 6 20 0 q10 -6 22 2 v2 h-64 z" /></g>
 ];
 
 export function BristolField({ field, value, onChange, color }) {
@@ -468,17 +338,45 @@ export function BristolField({ field, value, onChange, color }) {
               type="button"
               onClick={() => onChange(on ? undefined : n)}
               aria-pressed={on}
-              className="w-full flex items-center gap-2.5 border-2 rounded-xl p-2 text-left"
-              style={on ? { backgroundColor: color, color: "#fff" } : {}}
+              className="w-full flex items-center gap-2.5 border-2 rounded-xl px-2.5 py-1.5 text-left"
+              style={
+                on
+                  ? { backgroundColor: color, color: "#fff", "--art-gap": color }
+                  : { "--art-gap": "hsl(var(--card))" }
+              }
             >
               <span className="font-heading text-sm w-4 shrink-0">{n}</span>
-              <svg viewBox="0 0 120 40" className="h-8 w-24 shrink-0" fill={on ? "#fff" : "currentColor"} aria-hidden="true">
+              <svg viewBox="0 0 86 28" className="h-5 w-[86px] shrink-0" fill={on ? "#fff" : color} aria-hidden="true">
                 {BRISTOL_ART[i]}
               </svg>
               <span className="text-sm font-semibold min-w-0 break-words">{text}</span>
             </button>
           );
         })}
+      </div>
+    </Field>
+  );
+}
+
+// Judged by eye against a chart, so the chart is the control.
+export function SwatchField({ field, value, onChange }) {
+  return (
+    <Field label={field.label} span>
+      <div className="grid grid-cols-2 gap-1.5">
+        {field.options.map(([name, swatch]) => (
+          <button
+            key={name}
+            type="button"
+            onClick={() => onChange(value === name ? undefined : name)}
+            aria-pressed={value === name}
+            className={`flex items-center gap-2 min-w-0 border-2 rounded-xl px-2 py-1.5 text-left ${
+              value === name ? "bg-foreground text-background" : "bg-card"
+            }`}
+          >
+            <span className="w-5 h-5 shrink-0 border-2 rounded-md" style={{ backgroundColor: swatch }} />
+            <span className="min-w-0 text-xs font-semibold break-words">{name}</span>
+          </button>
+        ))}
       </div>
     </Field>
   );
@@ -525,8 +423,10 @@ export function AreaSymptomsField({ field, areas, value, onChange, color, darkTe
   );
 }
 
-// One severity per marked incision, in the order they get worse.
-export function AreaStatusField({ field, areas, value, onChange, color, darkText }) {
+// One severity per marked incision, worst last. Marking one Minor or above
+// opens the symptom pills for it; a normal incision is not asked, because there
+// is nothing to say about it.
+export function IncisionsField({ field, areas, value, onChange }) {
   const status = value || {};
   if (!areas.length) {
     return (
@@ -535,25 +435,108 @@ export function AreaStatusField({ field, areas, value, onChange, color, darkText
       </div>
     );
   }
+  const setLevel = (area, level) =>
+    onChange({ ...status, [area]: { ...(status[area] || {}), level } });
+  const toggleSymptom = (area, sym) => {
+    const cur = status[area]?.symptoms || [];
+    onChange({
+      ...status,
+      [area]: { ...(status[area] || {}), symptoms: cur.includes(sym) ? cur.filter((s) => s !== sym) : [...cur, sym] }
+    });
+  };
   return (
     <Field label={field.label} span>
       <div className="space-y-2">
-        {areas.map((area) => (
-          <div key={area} className="border-2 rounded-xl bg-card p-2.5">
-            <div className="nb-label mb-1.5">{area}</div>
-            <div className="flex flex-wrap gap-1.5">
-              {field.options.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => onChange({ ...status, [area]: status[area] === opt ? undefined : opt })}
-                  className="nb-chip"
-                  style={status[area] === opt ? fillStyle(true, color, darkText) : {}}
-                >
-                  {opt}
-                </button>
-              ))}
+        {areas.map((area) => {
+          const cur = status[area] || {};
+          const tint = INCISION_LEVELS.find(([l]) => l === cur.level)?.[1];
+          return (
+            <div key={area} className="border-2 rounded-xl bg-card p-2.5 space-y-2">
+              <div className="nb-label">{area}</div>
+              <div className="grid grid-cols-4 gap-1">
+                {INCISION_LEVELS.map(([level, tone]) => (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setLevel(area, cur.level === level ? undefined : level)}
+                    aria-pressed={cur.level === level}
+                    className="h-10 border-2 rounded-lg font-heading text-[11px] uppercase"
+                    style={cur.level === level ? { backgroundColor: tone, color: level === "Minor" ? "#1A1024" : "#fff" } : {}}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+              {cur.level && cur.level !== "Normal" && (
+                <div>
+                  <span className="nb-label text-muted-foreground">What&rsquo;s wrong</span>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {INCISION_SYMPTOMS.map((sym) => (
+                      <button
+                        key={sym}
+                        type="button"
+                        onClick={() => toggleSymptom(area, sym)}
+                        className="nb-chip text-xs px-2.5 py-1.5"
+                        style={(cur.symptoms || []).includes(sym) ? { backgroundColor: tint, color: cur.level === "Minor" ? "#1A1024" : "#fff" } : {}}
+                      >
+                        {sym}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+          );
+        })}
+      </div>
+    </Field>
+  );
+}
+
+// The tape-measure sheet. Written as text rather than a number because these
+// come off a tape in eighths: "16 3/8" is the reading, not 16.375.
+export function MeasurementsField({ field, value, onChange }) {
+  const vals = value || {};
+  const setPair = (name, side, v) =>
+    onChange({ ...vals, [name]: { ...(vals[name] || {}), [side]: v } });
+
+  return (
+    <Field label={field.label} hint="inches" span>
+      <div className="flex gap-2 min-w-0">
+        <span className="flex-1 min-w-0" />
+        <span className="nb-label w-24 shrink-0 text-center text-muted-foreground">Right</span>
+        <span className="nb-label w-24 shrink-0 text-center text-muted-foreground">Left</span>
+      </div>
+      <div className="space-y-1.5">
+        {MEASUREMENTS.map((m) => (
+          <div key={m.name} className="flex items-center gap-2 min-w-0">
+            <span className="flex-1 min-w-0 truncate text-sm font-semibold">{m.name}</span>
+            {m.pair ? (
+              <>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={vals[m.name]?.r || ""}
+                  onChange={(e) => setPair(m.name, "r", e.target.value)}
+                  className="nb-input w-24 shrink-0 text-center"
+                />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={vals[m.name]?.l || ""}
+                  onChange={(e) => setPair(m.name, "l", e.target.value)}
+                  className="nb-input w-24 shrink-0 text-center"
+                />
+              </>
+            ) : (
+              <input
+                type="text"
+                inputMode="decimal"
+                value={typeof vals[m.name] === "string" ? vals[m.name] : ""}
+                onChange={(e) => onChange({ ...vals, [m.name]: e.target.value })}
+                className="nb-input w-[13rem] shrink-0 text-center"
+              />
+            )}
           </div>
         ))}
       </div>

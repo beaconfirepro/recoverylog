@@ -5,14 +5,14 @@ import { useLibrary } from "@/lib/library";
 import { nowTime } from "@/lib/dates";
 import {
   ScaleField, ChipsField, ChipsMultiField, NumberField, DurationField, TextField,
-  TimeField, SpotsField, FileField, NoteField, Scale5Field, HungerField,
-  BristolField, AreaSymptomsField, AreaStatusField, NutrientsField,
-  GarmentField, MedGroupField, MedListField
+  TimeField, FileField, NoteField, Scale5Field, HungerField, BristolField,
+  SwatchField, AreaSymptomsField, IncisionsField, MeasurementsField,
+  NutrientsField, GarmentField, MedGroupField, MedListField
 } from "./Fields";
 import BodyMap from "./BodyMap";
 import CheckinStack from "./CheckinStack";
 
-export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot, onSave, onCancel, onDelete, saving }) {
+export default function EntryForm({ type, entry, onSave, onCancel, onDelete, saving }) {
   const { activeSurgery } = usePatient();
   const garments = useLibrary("Garment");
   const medGroups = useLibrary("MedGroup");
@@ -33,8 +33,7 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
   });
   const [note, setNote] = useState(entry?.note || "");
 
-  const setField = (key, val, kind) =>
-    setData((prev) => (kind === "spots" ? { ...prev, ...val } : { ...prev, [key]: val }));
+  const setField = (key, val) => setData((prev) => ({ ...prev, [key]: val }));
 
   const props = { color: cfg.color, darkText: !!cfg.darkText };
   // The parts marked on the map decide which per-area questions exist at all,
@@ -97,30 +96,24 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
             return <TextField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "time":
             return <TimeField key={f.key} label={f.label} value={data[f.key] || ""} onChange={(v) => setField(f.key, v)} span />;
-          case "spots":
-            return (
-              <SpotsField
-                key={f.key}
-                field={f}
-                value={data}
-                onChange={(v) => setField(f.key, v, "spots")}
-                spots={spots}
-                onAddSpot={onAddSpot}
-                onRemoveSpot={onRemoveSpot}
-              />
-            );
           case "scale5":
             return <Scale5Field key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "hunger":
             return <HungerField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "bristol":
             return <BristolField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
+          case "swatch":
+            return <SwatchField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "bodymap":
             return <BodyMap key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
           case "areaSymptoms":
             return <AreaSymptomsField key={f.key} field={f} areas={areas} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
-          case "areaStatus":
-            return <AreaStatusField key={f.key} field={f} areas={areas} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
+          case "incisions":
+            return <IncisionsField key={f.key} field={f} areas={areas} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
+          case "measurements":
+            return <MeasurementsField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
+          case "nutrients":
+            return <NutrientsField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "garment":
             return (
               <GarmentField
@@ -155,8 +148,6 @@ export default function EntryForm({ type, entry, spots, onAddSpot, onRemoveSpot,
             );
           case "medList":
             return <MedListField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} {...props} />;
-          case "nutrients":
-            return <NutrientsField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "file":
             return <FileField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           default:

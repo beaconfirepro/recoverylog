@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { ChevronRight } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { base44 } from "@/api/base44Client";
 import { sortEntries, runningTotals, computeTotals } from "@/lib/daySummary";
+import { suggestFlags } from "@/lib/redFlags";
 import { asRows } from "@/lib/recoveryUtils";
 import { usePatient, trackedTypes } from "@/lib/PatientContext";
 import QuickAdd from "./QuickAdd";
@@ -18,13 +20,14 @@ const Spinner = () => (
   </div>
 );
 
-export default function DayView({ date }) {
+export default function DayView({ date, startCollapsed }) {
   const { patientId, activeSurgery, activeSurgeryId, canWrite, refreshSurgeries } = usePatient();
   const [day, setDay] = useState(null);
   const [entries, setEntries] = useState(null);
-  const [spots, setSpots] = useState([]);
   const [dialog, setDialog] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [addOpen, setAddOpen] = useState(!startCollapsed);
+  const [lastBm, setLastBm] = useState(null);
 
   const load = useCallback(async () => {
     if (!activeSurgeryId) {
@@ -38,21 +41,16 @@ export default function DayView({ date }) {
       (await base44.entities.RecoveryDay.create({ date, patient_id: patientId, surgery_id: activeSurgeryId }));
     setDay(d);
     setEntries(asRows(await base44.entities.RecoveryEntry.filter({ date, surgery_id: activeSurgeryId }, "created_date", 500)));
+    // The bowel red flag counts days, so it needs the last one before today.
+    const bm = asRows(await base44.entities.RecoveryEntry.filter({ type: "bm", surgery_id: activeSurgeryId }, "-date", 1));
+    setLastBm(bm.find((e) => e.date < date)?.date || null);
   }, [date, patientId, activeSurgeryId]);
-
-  const loadSpots = useCallback(async () => {
-    setSpots(asRows(await base44.entities.MeasurementSpot.list("sort_order", 50)));
-  }, []);
 
   useEffect(() => {
     setDay(null);
     setEntries(null);
     load();
   }, [load]);
-
-  useEffect(() => {
-    loadSpots();
-  }, [loadSpots]);
 
   if (!activeSurgeryId) {
     return (
@@ -74,6 +72,7 @@ export default function DayView({ date }) {
   const sorted = sortEntries(entries);
   const run = runningTotals(sorted);
   const totals = computeTotals(entries, date);
+  const suggestions = suggestFlags(entries, activeSurgery, lastBm, date);
 
   const saveEntry = async (payload) => {
     setSaving(true);
@@ -103,23 +102,21 @@ export default function DayView({ date }) {
     await refreshSurgeries();
   };
 
-  const addSpot = async (name) => {
-    await base44.entities.MeasurementSpot.create({ name, sort_order: spots.length, patient_id: patientId });
-    loadSpots();
-  };
-
-  const removeSpot = async (id) => {
-    await base44.entities.MeasurementSpot.delete(id);
-    loadSpots();
-  };
-
   return (
     <div className="space-y-4">
       <DayHeader day={day} />
 
       <div>
-        <h2 className="font-heading text-sm uppercase tracking-wider mb-2">Log an entry</h2>
-        {loggable ? (
+        <button
+          type="button"
+          onClick={() => setAddOpen((o) => !o)}
+          aria-expanded={addOpen}
+          className="w-full flex items-center gap-1.5 mb-2"
+        >
+          <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${addOpen ? "rotate-90" : ""}`} />
+          <h2 className="font-heading text-sm uppercase tracking-wider">Log an entry</h2>
+        </button>
+        {!addOpen ? null : loggable ? (
           <QuickAdd
             types={trackedTypes(activeSurgery)}
             onAdd={(type) => setDialog({ type })}
@@ -152,6 +149,7 @@ export default function DayView({ date }) {
       <RedFlagCheck
         key={day.id + JSON.stringify(day.red_flag_answers || {}) + JSON.stringify(day.red_flag_details || {})}
         day={day}
+        suggestions={suggestions}
         onSaved={load}
       />
 
@@ -163,9 +161,6 @@ export default function DayView({ date }) {
             <EntryForm
               type={dialog.entry ? dialog.entry.type : dialog.type}
               entry={dialog.entry}
-              spots={spots}
-              onAddSpot={addSpot}
-              onRemoveSpot={removeSpot}
               saving={saving}
               onSave={saveEntry}
               onCancel={() => setDialog(null)}

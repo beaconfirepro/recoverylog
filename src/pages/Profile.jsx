@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { LogOut, Plus, X } from "lucide-react";
+import { Check, LogOut, Plus, X } from "lucide-react";
 import { todayStr, fullDate, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
@@ -22,7 +22,7 @@ const Row = ({ label, value }) => (
 
 export default function Profile() {
   const { user, logout } = useAuth();
-  const { patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, refreshSurgeries } = usePatient();
+  const { patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const [team, setTeam] = useState([]);
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -145,11 +145,23 @@ export default function Profile() {
     });
   };
 
+  // Which trackers are summarised on the History card. A tracker turned off
+  // cannot be on the card, so switching it off drops it from here too.
+  const onHistory = activeSurgery?.history_types || [];
+  const toggleHistory = (t) => {
+    const next = onHistory.includes(t) ? onHistory.filter((x) => x !== t) : [...onHistory, t];
+    patchSurgery({ history_types: QUICK_ORDER.filter((x) => next.includes(x)) });
+  };
+
   const toggleType = (t) => {
     const next = selected.includes(t) ? selected.filter((x) => x !== t) : [...selected, t];
     // Keep the arranged order: a newly ticked type joins the end rather than
     // jumping to wherever the built-in list happens to put it.
-    patchSurgery({ tracked_types: next });
+    patchSurgery(
+      selected.includes(t)
+        ? { tracked_types: next, history_types: onHistory.filter((x) => x !== t) }
+        : { tracked_types: next }
+    );
   };
 
   // dateRange() stops at MAX_RANGE_DAYS. Silently dropping days out of a record
@@ -305,43 +317,89 @@ export default function Profile() {
 
       {isOwner && activeSurgery && (
         <div className="nb-card overflow-hidden">
-          <div className="px-4 py-3 border-b-2 bg-muted">
-            <div className="font-display text-xl uppercase leading-tight break-words">What to track</div>
-            <div className="text-sm font-semibold break-words">
-              For {activeSurgery.label}. Each surgery has its own.
+          <div className="px-4 py-3 border-b-2 bg-muted space-y-2">
+            <div>
+              <div className="font-display text-xl uppercase leading-tight break-words">What to track</div>
+              <div className="text-sm font-semibold break-words">Each surgery is set up on its own.</div>
             </div>
+            {/* The settings below belong to one surgery, so the surgery being
+                set up is picked here rather than inferred from another page. */}
+            <select
+              aria-label="Surgery being set up"
+              value={activeSurgeryId || ""}
+              onChange={(e) => selectSurgery(e.target.value)}
+              className="nb-input"
+            >
+              {surgeries
+                .filter((x) => !x.archived || x.id === activeSurgeryId)
+                .map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.label}
+                    {x.archived ? " (archived)" : ""}
+                  </option>
+                ))}
+            </select>
           </div>
 
           <div className="p-4 space-y-3">
-            <div className="flex flex-wrap gap-1.5">
+            <p className="text-[11px] font-semibold text-muted-foreground break-words">
+              Track puts a tracker's button on the day page. History adds it to the summary on each day's card in
+              History. Turning one off hides its button; anything already logged stays. The check-in is always on.
+            </p>
+            <div className="flex items-center gap-2 min-w-0 pb-1 border-b-2">
+              <span className="flex-1 min-w-0" />
+              <span className="nb-label w-14 shrink-0 text-center text-muted-foreground">Track</span>
+              <span className="nb-label w-14 shrink-0 text-center text-muted-foreground">History</span>
+            </div>
+            <div className="divide-y-2">
               {QUICK_ORDER.map((t) => {
                 const cfg = TYPES[t];
                 if (!cfg) return null;
                 const on = selected.includes(t);
                 return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => toggleType(t)}
-                    disabled={savingTracking}
-                    className="nb-chip"
-                    style={on ? { backgroundColor: cfg.color, color: cfg.darkText ? "#1A1024" : "#fff" } : {}}
-                  >
-                    {cfg.label}
-                  </button>
+                  <div key={t} className="flex items-center gap-2 min-w-0 py-1.5">
+                    <span className="w-4 h-4 shrink-0 border-2 rounded-md" style={{ backgroundColor: cfg.color }} />
+                    <span className="flex-1 min-w-0 truncate text-sm font-semibold">{cfg.label}</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={on}
+                      aria-label={`Track ${cfg.label}`}
+                      onClick={() => toggleType(t)}
+                      disabled={savingTracking}
+                      className="w-14 h-8 shrink-0 border-2 rounded-full relative"
+                      style={on ? { backgroundColor: cfg.color } : { backgroundColor: "hsl(var(--muted))" }}
+                    >
+                      <span
+                        className={`absolute top-1 w-5 h-5 border-2 rounded-full bg-card transition-all ${on ? "left-7" : "left-1"}`}
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={onHistory.includes(t)}
+                      aria-label={`Show ${cfg.label} on history card`}
+                      onClick={() => toggleHistory(t)}
+                      disabled={savingTracking || !on}
+                      className="w-14 h-8 shrink-0 grid place-items-center disabled:opacity-30"
+                    >
+                      <span
+                        className="w-6 h-6 border-2 rounded-md grid place-items-center"
+                        style={onHistory.includes(t) ? { backgroundColor: cfg.color } : {}}
+                      >
+                        {onHistory.includes(t) && <Check className="w-4 h-4" strokeWidth={3.5} />}
+                      </span>
+                    </button>
+                  </div>
                 );
               })}
             </div>
-            <p className="text-[11px] font-semibold text-muted-foreground break-words">
-              {selected.length} of {QUICK_ORDER.length} selected. Turning one off hides its button; anything already
-              logged stays. The check-in above is always on.
-            </p>
 
             <div className="border-t-2 pt-3 space-y-2">
               <div className="nb-label">Goals</div>
               <p className="text-[11px] font-semibold text-muted-foreground break-words">
                 Water, Body Work and Nutrients can carry a daily target. Their pill on the day page fills as the day
-                goes and turns green once you reach it. Leave one blank for a plain pill.
+                goes, and Day totals reads out of it. Leave one blank for a plain pill.
               </p>
               {[TYPES.water.goal, BODYWORK_GOAL].map((g) => (
                 <div key={g.key} className="flex items-center gap-2 min-w-0">

@@ -98,16 +98,38 @@ export const BODY_PARTS = [
 
 export const SKIN_SYMPTOMS = ["Bruising", "Edema", "Numbness", "Flaking", "Pale or cold", "Rash / hives"];
 
+// Urine is judged by eye against a chart, so the chart is the control: a swatch
+// per colour with its name, rather than a word you have to picture.
+export const URINE_COLORS = [
+  ["Pale yellow", "#F5EFA8"], ["Dark yellow / amber", "#E8B33A"], ["Orange", "#E8792B"],
+  ["Pink / red", "#E0555F"], ["Brown / tea", "#8C5A2B"], ["Green / blue", "#3FB8A0"]
+];
+
+// Worst last. An incision marked Minor or above is asked what is wrong with it;
+// a normal one is not, because there is nothing to say.
+export const INCISION_LEVELS = [
+  ["Normal", "#06D6A0"], ["Minor", "#FFC93C"], ["Risk", "#F77F00"], ["Issue", "#E01E37"]
+];
+export const INCISION_SYMPTOMS = [
+  "Increased pain", "Redness", "Increased warmth", "Swelling", "Pus", "Odor", "Delayed healing"
+];
+
+// The tape-measure sheet, in the order it is worked down the body. The paired
+// ones are measured on both sides; the rest are a single number.
+export const MEASUREMENTS = [
+  { name: "Bicep", pair: true }, { name: "Elbow", pair: true }, { name: "Wrist", pair: true },
+  { name: "Thigh", pair: true }, { name: "Knee", pair: true }, { name: "Calf", pair: true },
+  { name: "Ankle", pair: true },
+  { name: "Bust" }, { name: "Under bust" }, { name: "Waist" }, { name: "Hips" },
+  { name: "Waist to hips" }, { name: "Hips to thigh" }, { name: "Thigh to knee" },
+  { name: "Knee to calf" }, { name: "Calf to ankle" }
+];
+
 // The Bristol stool scale, drawn rather than described in the popup; the words
 // are what the entry reads back as.
 export const BRISTOL = [
-  "Separate hard lumps",
-  "Lumpy and sausage-shaped",
-  "Sausage with cracks",
-  "Smooth and soft",
-  "Soft blobs, clear edges",
-  "Mushy, ragged edges",
-  "Liquid, no solid pieces"
+  "Hard lumps", "Lumpy sausage", "Cracked sausage", "Smooth and soft",
+  "Soft blobs", "Mushy", "Watery"
 ];
 
 // 1 painfully hungry to 5 painfully full, with 3 as the sweet spot. The colour
@@ -151,6 +173,15 @@ const nutrientsOf = (d) => Object.entries(d.nutrients || {}).filter(([, v]) => v
 // up by the group and then tapped off.
 const takenOf = (d) => (Array.isArray(d.taken) ? d.taken : []).filter((m) => !m.skipped);
 const skippedOf = (d) => (Array.isArray(d.taken) ? d.taken : []).filter((m) => m.skipped);
+// Every number actually written on the tape-measure sheet, left and right
+// counted separately, so "16 marks" means sixteen readings.
+const measuredOf = (d) =>
+  Object.entries(d.values || {}).flatMap(([name, v]) =>
+    typeof v === "object" && v !== null
+      ? [["l", "r"].map((s) => (v[s] ? [`${name} ${s === "l" ? "left" : "right"}`, v[s]] : null))].flat().filter(Boolean)
+      : v
+        ? [[name, v]]
+        : []);
 const findingsOf = (d) =>
   Object.entries(d.findings || {}).flatMap(([area, syms]) => (syms || []).map((s) => [area, s]));
 
@@ -187,21 +218,21 @@ export const TYPES = {
   meals: {
     label: "Meals", icon: Utensils, color: "#FF9E00", darkText: true,
     fields: [
-      { key: "meal", label: "Meal", kind: "chips", options: ["Breakfast", "Lunch", "Dinner", "Snack"] },
-      { key: "description", label: "What you ate", kind: "text", placeholder: "e.g. eggs and toast" },
+      { key: "meal", label: "Meal", kind: "chips", options: ["Breakfast", "Snack", "Lunch", "Afternoon snack", "Dinner"] },
+      { key: "description", label: "What you ate", kind: "text", placeholder: "e.g. half a chicken sandwich" },
       { key: "hunger", label: "Hunger", kind: "hunger" },
-      { key: "tolerance", label: "How it went down", kind: "chips", options: ["fine", "slow", "nausea", "vomited"] }
+      { key: "went_down", label: "Went down", kind: "chips", options: ["fine", "slow", "hurt", "couldn't finish"] }
     ],
     summary: (d) =>
       join([
         d.meal, d.description,
         d.hunger?.before != null && `before ${HUNGER_LEVELS[d.hunger.before - 1]}`,
         d.hunger?.after != null && `after ${HUNGER_LEVELS[d.hunger.after - 1]}`,
-        d.tolerance && `went down: ${d.tolerance}`
+        d.went_down && `went down: ${d.went_down}`
       ]),
     pills: (d) => [
       pill(d.meal || "Meal"),
-      d.tolerance && d.tolerance !== "fine" ? pill(d.tolerance, { tone: d.tolerance === "vomited" ? "bad" : "warn" }) : null
+      d.went_down && d.went_down !== "fine" ? pill(d.went_down, { tone: d.went_down === "couldn't finish" ? "bad" : "warn" }) : null
     ].filter(Boolean)
   },
   nutrients: {
@@ -218,7 +249,7 @@ export const TYPES = {
     fields: [
       { key: "group", label: "Group", kind: "medGroup" },
       { key: "taken", label: "Medicines", kind: "medList" },
-      { key: "next_allowed", label: "Next allowed time", kind: "time" }
+      { key: "next_allowed", label: "Next dose", kind: "time" }
     ],
     summary: (d) =>
       join([
@@ -247,8 +278,8 @@ export const TYPES = {
   rest: {
     label: "Rest", icon: Moon, color: "#5A189A",
     fields: [
-      { key: "state", label: "State", kind: "chips", options: ["Sleeping", "Dozing", "Lying down", "Resting"] },
-      { key: "minutes", label: "How long", kind: "duration" },
+      { key: "state", label: "Kind", kind: "chips", options: ["Dozing", "Napping", "Sleeping"] },
+      { key: "minutes", label: "How long", kind: "duration", step: 60 },
       { key: "position", label: "Position", kind: "chips", options: ["recliner", "wedge", "propped", "flat", "side"] },
       { key: "quality", label: "Quality", kind: "scale5", highIs: "good", ends: ["worst", "best"] },
       { key: "woke_for", label: "Woke for", kind: "chipsMulti", options: ["pain", "bathroom", "nausea", "garment", "alarm"] }
@@ -266,18 +297,18 @@ export const TYPES = {
   movement: {
     label: "Movement", icon: Activity, color: "#4361EE",
     fields: [
-      { key: "kind", label: "Type", kind: "chips", options: ["Walk", "Resistance", "Yoga", "Swimming", "Stretching"] },
+      { key: "kind", label: "Kind", kind: "chips", options: ["Walk", "Run", "Swim", "Dance", "Yoga", "Weights", "Pilates", "Boxing", "Other"] },
       { key: "minutes", label: "How long", kind: "duration" },
-      { key: "miles", label: "Distance (miles)", kind: "number", decimal: true, placeholder: "0.5" },
-      { key: "pain", label: "Pain", kind: "scale5", highIs: "bad", ends: ["none", "worst"] },
+      { key: "miles", label: "Distance", kind: "number", decimal: true, unit: "miles", placeholder: "0.5" },
       { key: "help", label: "Help", kind: "chips", options: ["none", "one person", "walker"] },
-      { key: "during", label: "During", kind: "chipsMulti", options: ["steady", "dizzy", "breathless", "had to stop"] }
+      { key: "felt", label: "How it felt", kind: "chipsMulti", options: ["steady", "dizzy", "breathless", "tired", "good"] },
+      { key: "pain", label: "Pain", kind: "scale5", highIs: "bad", ends: ["none", "worst"] }
     ],
     summary: (d) =>
       join([
         d.kind, d.minutes != null && d.minutes !== "" && `${d.minutes} min`,
         d.miles != null && d.miles !== "" && `${d.miles} mi`,
-        d.pain != null && `pain ${d.pain}`, d.help, (d.during || []).join(", ")
+        d.help, (d.felt || []).join(", "), d.pain != null && `pain ${d.pain}`
       ]),
     pills: (d) => [
       pill(d.kind || "Movement"),
@@ -286,16 +317,16 @@ export const TYPES = {
   },
   bm: {
     label: "BM", icon: Bath, color: "#6D4C2F",
-    fields: [{ key: "bristol", label: "Type", kind: "bristol" }],
+    fields: [{ key: "bristol", label: "Bristol type", kind: "bristol" }],
     summary: (d) => (d.bristol ? `Bristol ${d.bristol} · ${BRISTOL[d.bristol - 1]}` : "BM"),
     pills: (d) => [pill(d.bristol ? `Bristol ${d.bristol}` : "BM")]
   },
   urine: {
     label: "Urine", icon: Droplet, color: "#E8B33A", darkText: true,
     fields: [
-      { key: "color", label: "Color", kind: "chips", options: ["Clear", "Pale", "Yellow", "Dark yellow", "Amber", "Tea", "Pink", "Red"] },
-      { key: "clarity", label: "Clarity", kind: "chips", options: ["Clear", "Cloudy", "Sediment"] },
-      { key: "symptoms", label: "Symptoms", kind: "chipsMulti", options: ["burning", "urgency", "hard to start", "smell"] }
+      { key: "color", label: "Colour", kind: "swatch", options: URINE_COLORS },
+      { key: "clarity", label: "Clarity", kind: "chips", options: ["Clear", "Slightly cloudy", "Cloudy", "Foamy", "Sediment"] },
+      { key: "symptoms", label: "Symptoms", kind: "chipsMulti", options: ["burning", "urgency", "hesitancy"] }
     ],
     summary: (d) => join([d.color, d.clarity, (d.symptoms || []).join(", ")]),
     pills: (d) => [
@@ -308,7 +339,7 @@ export const TYPES = {
     fields: [
       { key: "count", label: "Pads changed", kind: "number", steps: [1, 2, 3, 4] },
       { key: "amount", label: "Amount", kind: "chips", options: ["spotting", "light", "half soaked", "soaked"] },
-      { key: "color", label: "Color", kind: "chips", options: ["Bright red", "Dark red", "Maroon", "Pink", "Watery pink", "Straw", "Clear", "Yellow", "Green"] },
+      { key: "color", label: "Colour", kind: "chips", options: ["Bright Red", "Maroon", "Pink or Pink Tinged", "Clear or Yellow translucent"] },
       { key: "odor", label: "Odor", kind: "chips", options: ["none", "foul"] }
     ],
     summary: (d) => join([d.count != null && d.count !== "" && `×${d.count}`, d.amount, d.color, d.odor && `odor: ${d.odor}`]),
@@ -321,20 +352,21 @@ export const TYPES = {
     label: "Incisions", icon: Stethoscope, color: "#FB5607",
     fields: [
       { key: "areas", label: "Where", kind: "bodymap" },
-      { key: "status", label: "How each one looks", kind: "areaStatus", options: ["normal", "minor", "risk", "issue"] },
-      { key: "odor", label: "Odor", kind: "chips", options: ["none", "foul"] }
+      { key: "status", label: "How each one looks", kind: "incisions" }
     ],
     summary: (d) =>
-      join([
-        ...areasOf(d).map((a) => `${a}: ${d.status?.[a] || "normal"}`),
-        d.odor === "foul" && "odor: foul"
-      ]),
+      join(
+        areasOf(d).map((a) =>
+          join([`${a}: ${d.status?.[a]?.level || "Normal"}`, (d.status?.[a]?.symptoms || []).join(", ")]))
+      ),
     pills: (d) => {
       const areas = areasOf(d);
-      const bad = areas.filter((a) => ["risk", "issue"].includes(d.status?.[a]));
+      const flagged = areas.filter((a) => ["Risk", "Issue"].includes(d.status?.[a]?.level));
       return [
-        pill(areas.length ? `${areas.length - bad.length} of ${areas.length}` : "Incisions"),
-        bad.length ? pill(bad.length === 1 ? d.status[bad[0]] : `${bad.length} flagged`, { tone: "bad" }) : null
+        pill(areas.length ? `${areas.length - flagged.length} of ${areas.length}` : "Incisions"),
+        flagged.length
+          ? pill(flagged.length === 1 ? d.status[flagged[0]].level : `${flagged.length} flagged`, { tone: "bad" })
+          : null
       ].filter(Boolean);
     }
   },
@@ -342,14 +374,15 @@ export const TYPES = {
     label: "Compression", icon: Shirt, color: "#06D6A0",
     fields: [
       { key: "garment", label: "Garment", kind: "garment" },
-      { key: "action", label: "Action", kind: "chips", options: ["on", "off", "adjust"] },
-      { key: "fit", label: "Fit", kind: "chips", options: ["loose", "right", "tight", "cutting in"] },
-      { key: "behaviour", label: "Behaviour", kind: "chipsMulti", options: ["rolling", "bunching", "sliding", "seam pressure"] }
+      { key: "action", label: "Action", kind: "chips", options: ["on", "off", "adjusted"] },
+      { key: "fit", label: "Fit", kind: "chips", options: ["tight", "right", "loose"] },
+      { key: "problems", label: "Problems", kind: "chipsMulti", options: ["rolling", "bunching", "digging", "seam pressure"] },
+      { key: "foam", label: "Foam", kind: "chips", options: ["fine", "shifted", "removed"] }
     ],
-    summary: (d) => join([d.garment, d.action, d.fit, (d.behaviour || []).join(", ")]),
+    summary: (d) => join([d.garment, d.action, d.fit, (d.problems || []).join(", "), d.foam && `foam: ${d.foam}`]),
     pills: (d) => [
       pill(d.garment || d.action || "Compression"),
-      d.fit === "cutting in" ? pill("Cutting in", { tone: "warn" }) : null
+      (d.problems || []).length ? pill(d.problems[0], { tone: "warn" }) : null
     ].filter(Boolean)
   },
   skin: {
@@ -365,9 +398,9 @@ export const TYPES = {
     label: "MLD / massage", icon: Waves, color: "#B5179E", group: "bodywork", abbr: "MLD",
     fields: [
       { key: "minutes", label: "How long", kind: "duration" },
-      { key: "who", label: "Who", kind: "chips", options: ["therapist", "self", "caregiver"] },
+      { key: "who", label: "Who", kind: "chips", options: ["therapist", "self", "partner"] },
       { key: "areas", label: "Areas", kind: "bodymap" },
-      { key: "after", label: "After", kind: "chipsMulti", options: ["softer", "looser", "sore", "weeping fluid", "more swollen"] }
+      { key: "after", label: "After", kind: "chipsMulti", options: ["softer", "looser", "sore", "tired"] }
     ],
     summary: (d) => join([d.minutes != null && d.minutes !== "" && `${d.minutes} min`, d.who, areasOf(d).join(", "), (d.after || []).join(", ")]),
     pills: (d) => [pill(`MLD ${d.minutes || 0}m`)]
@@ -375,11 +408,11 @@ export const TYPES = {
   tools: {
     label: "Tool work", icon: Brush, color: "#2EC4B6", darkText: true, group: "bodywork", abbr: "TOOL",
     fields: [
-      { key: "tool", label: "Tool", kind: "chipsMulti", options: ["dry brush", "gua sha", "cupping", "fascia tool", "roller", "wooden tool", "other"] },
+      { key: "tool", label: "Tools", kind: "chipsMulti", options: ["dry brush", "gua sha", "cup", "roller", "ball"] },
       { key: "minutes", label: "How long", kind: "duration" },
-      { key: "areas", label: "Areas", kind: "bodymap" },
       { key: "pressure", label: "Pressure", kind: "chips", options: ["light", "medium", "firm"] },
-      { key: "after", label: "After", kind: "chipsMulti", options: ["softer", "looser", "sore", "redness", "bruising", "broken skin", "more swollen"] }
+      { key: "areas", label: "Areas", kind: "bodymap" },
+      { key: "after", label: "After", kind: "chipsMulti", options: ["softer", "looser", "sore", "tired"] }
     ],
     summary: (d) => join([(d.tool || []).join(", "), d.minutes != null && d.minutes !== "" && `${d.minutes} min`, d.pressure, areasOf(d).join(", "), (d.after || []).join(", ")]),
     pills: (d) => [pill(`TOOL ${d.minutes || 0}m`)]
@@ -387,11 +420,11 @@ export const TYPES = {
   bodywork: {
     label: "Other bodywork", icon: HeartHandshake, color: "#E76F51", group: "bodywork", abbr: "ACU",
     fields: [
-      { key: "kind", label: "Kind", kind: "chips", options: ["acupuncture", "somatic therapy", "physical therapy", "chiropractic", "craniosacral", "cupping therapy", "other"] },
+      { key: "kind", label: "Kind", kind: "chips", options: ["acupuncture", "somatic", "physical therapy", "chiropractic", "other"] },
       { key: "minutes", label: "How long", kind: "duration" },
       { key: "provider", label: "Who", kind: "text", placeholder: "e.g. Dr. Vega, self" },
       { key: "areas", label: "Areas", kind: "bodymap" },
-      { key: "after", label: "After", kind: "chipsMulti", options: ["softer", "looser", "sore", "drained", "energised", "more swollen"] }
+      { key: "after", label: "After", kind: "chipsMulti", options: ["softer", "looser", "sore", "tired"] }
     ],
     summary: (d) => join([d.kind, d.minutes != null && d.minutes !== "" && `${d.minutes} min`, d.provider, areasOf(d).join(", "), (d.after || []).join(", ")]),
     pills: (d) => [pill(`ACU ${d.minutes || 0}m`)]
@@ -399,7 +432,7 @@ export const TYPES = {
   pump: {
     label: "Compression Pump", icon: Wind, color: "#457B9D", group: "bodywork", abbr: "PUMP",
     fields: [
-      { key: "minutes", label: "Treatment time", kind: "duration" },
+      { key: "minutes", label: "Treatment time", kind: "duration", step: 15 },
       { key: "areas", label: "Areas", kind: "bodymap" }
     ],
     summary: (d) => join([d.minutes != null && d.minutes !== "" && `${d.minutes} min`, areasOf(d).join(", ")]),
@@ -409,9 +442,9 @@ export const TYPES = {
     label: "Vibration plate", icon: Vibrate, color: "#FFBE0B", darkText: true,
     fields: [
       { key: "minutes", label: "How long", kind: "duration" },
-      { key: "intensity", label: "Intensity", kind: "chips", options: ["low", "medium", "high"] },
-      { key: "position", label: "Position", kind: "chips", options: ["standing", "seated", "feet only", "hands / arms", "lying"] },
-      { key: "after", label: "After", kind: "chipsMulti", options: ["looser", "tingly", "sore", "dizzy", "more swollen", "fine"] }
+      { key: "intensity", label: "Setting", kind: "chips", options: ["low", "medium", "high"] },
+      { key: "position", label: "Position", kind: "chips", options: ["standing", "seated", "hands"] },
+      { key: "after", label: "After", kind: "chipsMulti", options: ["looser", "tingly", "sore", "tired"] }
     ],
     summary: (d) => join([d.minutes != null && d.minutes !== "" && `${d.minutes} min`, d.intensity, d.position, (d.after || []).join(", ")]),
     pills: (d) => [pill(`${d.minutes || 0}m`)]
@@ -427,13 +460,16 @@ export const TYPES = {
   },
   measure: {
     label: "Measurements", icon: Ruler, color: "#80FFDB", darkText: true,
-    fields: [{ key: "values", label: "Measurements", kind: "spots" }],
-    summary: (d) => join(Object.entries(d || {}).filter(([k, v]) => v !== null && v !== "" && k !== "photo_url").map(([k, v]) => `${k}: ${v}`)),
-    pills: (d) => [pill(`${Object.values(d || {}).filter((v) => v !== "" && v != null).length} marks`)]
+    fields: [
+      { key: "values", label: "Measurements", kind: "measurements" },
+      { key: "cup", label: "Cup size", kind: "text", placeholder: "e.g. D (sometimes DD)" }
+    ],
+    summary: (d) => join([...measuredOf(d).map(([n, v]) => `${n} ${v}`), d.cup && `cup ${d.cup}`]),
+    pills: (d) => [pill(`${measuredOf(d).length} marks`)]
   },
   weight: {
     label: "Weight", icon: Scale, color: "#E0AAFF", darkText: true,
-    fields: [{ key: "weight", label: "Weight (lbs)", kind: "number", decimal: true, placeholder: "142" }],
+    fields: [{ key: "weight", label: "Weight", kind: "number", decimal: true, unit: "lbs", placeholder: "142" }],
     summary: (d) => `${d.weight ?? "?"} lbs`,
     pills: (d) => [pill(`${d.weight ?? "?"} lbs`)]
   }

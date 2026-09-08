@@ -1,16 +1,38 @@
 import React, { useState } from "react";
-import { AlertTriangle, Check } from "lucide-react";
+import { AlertTriangle, Check, Sparkles } from "lucide-react";
 import { RED_FLAG_ITEMS } from "@/lib/recovery";
 import { nowTime } from "@/lib/dates";
 import { base44 } from "@/api/base44Client";
 
-export default function RedFlagCheck({ day, onSaved }) {
-  const [answers, setAnswers] = useState(day.red_flag_answers || {});
-  const [details, setDetails] = useState(day.red_flag_details || {});
+export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
+  // A suggestion fills a question she has not answered herself. Once she
+  // answers one, hers is the answer: the day's entries never overwrite it.
+  const [answers, setAnswers] = useState(() => {
+    const saved = day.red_flag_answers || {};
+    const merged = { ...saved };
+    Object.entries(suggestions).forEach(([k, v]) => {
+      if (merged[k] === undefined) merged[k] = v.answer;
+    });
+    return merged;
+  });
+  // A suggested yes needs somewhere to write the next action, so its detail
+  // block exists from the moment the suggestion lands rather than only when she
+  // taps Yes herself.
+  const [details, setDetails] = useState(() => {
+    const saved = day.red_flag_details || {};
+    const merged = { ...saved };
+    Object.entries(suggestions).forEach(([k, v]) => {
+      if (v.answer === "yes" && (day.red_flag_answers || {})[k] === undefined && !merged[k]) {
+        merged[k] = { time: nowTime(), office_called: false, note: "" };
+      }
+    });
+    return merged;
+  });
   const [saving, setSaving] = useState(false);
 
   const answered = Object.keys(answers).length;
   const yesKeys = Object.keys(answers).filter((k) => answers[k] === "yes");
+  const answeredHere = day.red_flag_answers || {};
 
   const setAns = (key, v) => {
     setAnswers((a) => ({ ...a, [key]: v }));
@@ -21,9 +43,14 @@ export default function RedFlagCheck({ day, onSaved }) {
         return n;
       });
     } else {
-      setDetails((d) => ({ ...d, [key]: { time: d[key]?.time || nowTime(), office_called: d[key]?.office_called || false } }));
+      setDetails((d) => ({
+        ...d,
+        [key]: { time: d[key]?.time || nowTime(), office_called: d[key]?.office_called || false, note: d[key]?.note || "" }
+      }));
     }
   };
+
+  const patch = (key, fields) => setDetails((d) => ({ ...d, [key]: { ...d[key], ...fields } }));
 
   const save = async () => {
     setSaving(true);
@@ -54,10 +81,22 @@ export default function RedFlagCheck({ day, onSaved }) {
         {RED_FLAG_ITEMS.map((item) => {
           const ans = answers[item.key];
           const det = details[item.key];
+          // Marked as read off the day only while she has not answered it herself.
+          const hint = answeredHere[item.key] === undefined ? suggestions[item.key]?.why : null;
           return (
             <div key={item.key}>
               <div className="flex items-center justify-between gap-2">
-                <span className={`text-sm font-semibold min-w-0 break-words ${ans === "yes" ? "text-destructive" : ""}`}>{item.label}</span>
+                <span className="min-w-0">
+                  <span className={`block text-sm font-semibold break-words ${ans === "yes" ? "text-destructive" : ""}`}>
+                    {item.label}
+                  </span>
+                  {hint && (
+                    <span className="flex items-start gap-1 text-xs font-semibold text-muted-foreground break-words">
+                      <Sparkles className="w-3 h-3 mt-0.5 shrink-0" />
+                      {hint}
+                    </span>
+                  )}
+                </span>
                 <div className="flex gap-1.5 shrink-0">
                   <button
                     className="nb-chip h-9 text-xs"
@@ -76,20 +115,30 @@ export default function RedFlagCheck({ day, onSaved }) {
                 </div>
               </div>
               {ans === "yes" && (
-                <div className="flex items-center gap-2 mt-1.5 pl-2">
-                  <input
-                    type="time"
-                    value={det?.time || ""}
-                    onChange={(e) => setDetails((d) => ({ ...d, [item.key]: { ...d[item.key], time: e.target.value } }))}
-                    className="nb-input w-32 h-9 shrink-0"
+                <div className="mt-1.5 pl-2 space-y-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <input
+                      type="time"
+                      value={det?.time || ""}
+                      onChange={(e) => patch(item.key, { time: e.target.value })}
+                      className="nb-input w-32 h-9 shrink-0"
+                    />
+                    <button
+                      className="nb-chip h-9 text-xs"
+                      style={det?.office_called ? { backgroundColor: "hsl(var(--secondary))", color: "#fff" } : {}}
+                      onClick={() => patch(item.key, { office_called: !det?.office_called })}
+                    >
+                      Office called
+                    </button>
+                  </div>
+                  {/* A flag with no next action is a worry written down. This is
+                      where what happens about it goes. */}
+                  <textarea
+                    className="nb-textarea min-h-[3.5rem]"
+                    value={det?.note || ""}
+                    onChange={(e) => patch(item.key, { note: e.target.value })}
+                    placeholder="what happens next — who you called, what they said, what to watch"
                   />
-                  <button
-                    className="nb-chip h-9 text-xs"
-                    style={det?.office_called ? { backgroundColor: "hsl(var(--secondary))", color: "#fff" } : {}}
-                    onClick={() => setDetails((d) => ({ ...d, [item.key]: { ...d[item.key], office_called: !d[item.key]?.office_called } }))}
-                  >
-                    Office called
-                  </button>
                 </div>
               )}
             </div>

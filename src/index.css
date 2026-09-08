@@ -123,6 +123,26 @@
     @apply block w-full min-w-0 h-12 appearance-none border-2 rounded-xl bg-card px-3 text-base font-semibold;
     @apply placeholder:font-medium placeholder:text-muted-foreground;
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+    /* An input has no line box to centre against, so a fixed height plus an
+       inherited line-height leaves the text sitting high. Zero the padding and
+       let the height do the centring. */
+    line-height: normal;
+    padding-block: 0;
+  }
+  /* WebKit lays a date, time or number value out at the top of its own box
+       rather than in the middle of the field, which is why every date read
+       high. The value is in a pseudo-element, so that is what has to centre. */
+  .nb-input::-webkit-datetime-edit,
+  .nb-input::-webkit-date-and-time-value {
+    @apply flex items-center;
+    height: 100%;
+    margin: 0;
+    text-align: inherit;
+  }
+  .nb-input::-webkit-datetime-edit-fields-wrapper {
+    @apply flex items-center;
+    height: 100%;
+    padding: 0;
   }
   .nb-textarea {
     @apply nb-input h-auto py-2 font-medium resize-none;
