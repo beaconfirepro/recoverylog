@@ -10,7 +10,10 @@ export const noteKey = (fieldKey) => `${fieldKey}_note`;
 // Wellbeing, not the raw number: 10 is bad for pain and good for mood, so the
 // face and the colour read off this instead of the value itself.
 const well = (field, v) => (field.lowIs === "bad" ? 10 - v : v);
-const gradeColor = (field, v) => `hsl(${358 - (well(field, v) / 10) * 263} 88% 62%)`;
+// Red up through amber to green. Counting hue down from 358 instead runs the
+// long way round the wheel, so a middling pain came out blue and a bad one
+// magenta, which reads as a colour scheme rather than as a warning.
+const gradeColor = (field, v) => `hsl(${(well(field, v) / 10) * 130} 85% 58%)`;
 
 // Drawn rather than picked from a set of emoji: the mouth, the brows and the
 // eyes all interpolate off wellbeing, so all eleven levels get their own face.
