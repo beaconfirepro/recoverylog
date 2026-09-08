@@ -56,7 +56,7 @@ export function NoteField({ value, onChange }) {
         className="nb-textarea min-h-[5rem]"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="anything else?"
+        placeholder="Anything else"
       />
     </Field>
   );
@@ -389,7 +389,7 @@ export function AreaSymptomsField({ field, areas, value, onChange, color, darkTe
   if (!areas.length) {
     return (
       <div className="col-span-2 min-w-0">
-        <p className="text-sm text-muted-foreground">Mark a part on the body above and its symptoms appear here.</p>
+        <p className="text-sm text-muted-foreground">Mark a part above.</p>
       </div>
     );
   }
@@ -431,7 +431,7 @@ export function IncisionsField({ field, areas, value, onChange }) {
   if (!areas.length) {
     return (
       <div className="col-span-2 min-w-0">
-        <p className="text-sm text-muted-foreground">Mark an incision on the body above and it appears here.</p>
+        <p className="text-sm text-muted-foreground">Mark an incision above.</p>
       </div>
     );
   }
@@ -549,7 +549,7 @@ export function MeasurementsField({ field, value, onChange }) {
 export function NutrientsField({ field, value, onChange }) {
   const vals = value || {};
   return (
-    <Field label={field.label} hint="fill in the ones you are counting" span>
+    <Field label={field.label} span>
       <div className="space-y-1.5">
         {NUTRIENTS.map((n) => (
           <div key={n.name} className="flex items-center gap-2 min-w-0">
@@ -591,7 +591,7 @@ export function GarmentField({ field, value, onChange, garments, onAddGarment, c
   return (
     <Field label={field.label} span>
       {garments.length === 0 && !adding && (
-        <p className="text-sm text-muted-foreground">No garments yet — add one and it will be here every day.</p>
+        <p className="text-sm text-muted-foreground">No garments yet.</p>
       )}
       <div className="flex flex-wrap gap-1.5">
         {garments.map((g) => (
@@ -626,7 +626,7 @@ export function GarmentField({ field, value, onChange, garments, onAddGarment, c
             type="text"
             value={size}
             onChange={(e) => setSize(e.target.value)}
-            placeholder="size"
+            placeholder="Size"
             className="nb-input w-20 shrink-0"
           />
           <button type="button" onClick={save} className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground">
@@ -642,9 +642,9 @@ export function GarmentField({ field, value, onChange, garments, onAddGarment, c
 // you skipped it; Add looks the rest up.
 export function MedGroupField({ field, value, onChange, groups, color, darkText }) {
   return (
-    <Field label={field.label} hint="set the groups up in your profile" span>
+    <Field label={field.label} span>
       {groups.length === 0 && (
-        <p className="text-sm text-muted-foreground">No med groups yet — add one in your profile and it will be here.</p>
+        <p className="text-sm text-muted-foreground">No med groups yet. Add one in Profile.</p>
       )}
       <div className="flex flex-wrap gap-1.5">
         {groups.map((g) => (
@@ -670,7 +670,7 @@ export function MedListField({ field, value, onChange, color, darkText }) {
   return (
     <Field label={field.label} span>
       {taken.length === 0 && !looking && (
-        <p className="text-sm text-muted-foreground">Pick a group above, or add a medicine on its own.</p>
+        <p className="text-sm text-muted-foreground">Pick a group, or add a medicine.</p>
       )}
       <div className="space-y-1.5">
         {taken.map((m, i) => (

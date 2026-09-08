@@ -102,7 +102,7 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
               className="nb-textarea min-h-[5rem]"
               value={note || ""}
               onChange={(e) => onNoteChange(e.target.value)}
-              placeholder={`what made ${field.label.toLowerCase()} this today?`}
+              placeholder="Why?"
             />
           </Field>
         </div>
@@ -112,7 +112,7 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
           className="nb-label flex items-center gap-1.5 text-muted-foreground mt-3 self-start"
           onClick={() => setNoteOpen(true)}
         >
-          <Plus className="w-3.5 h-3.5" /> Add a note about {field.label.toLowerCase()}
+          <Plus className="w-3.5 h-3.5" /> Add a note
         </button>
       )}
     </div>
@@ -182,12 +182,12 @@ export default function CheckinStack({ cfg, data, setField, time, setTime, note,
         )}
 
         {current.kind === "note" && (
-          <Field label="Note" hint="anything the numbers miss" span>
+          <Field label="Note" span>
             <textarea
               className="nb-textarea min-h-[8rem]"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="e.g. slept badly, left side much tighter than yesterday"
+              placeholder="Anything the numbers miss"
             />
           </Field>
         )}

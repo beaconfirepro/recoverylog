@@ -73,7 +73,7 @@ export default function SurgeryInfo() {
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
           <div className="font-display text-xl uppercase leading-tight break-words">Surgeries</div>
-          <div className="text-sm font-semibold break-words">Each one keeps its own days and entries.</div>
+          <div className="text-sm font-semibold break-words">Each keeps its own days.</div>
         </div>
         <div className="p-4 space-y-2">
           {surgeries.length === 0 && (
@@ -188,7 +188,7 @@ export default function SurgeryInfo() {
               <textarea
                 rows={4}
                 value={editing.notes ?? ""}
-                placeholder="restrictions, drains, garment schedule, follow-up date…"
+                placeholder="Restrictions, drains, garment schedule, follow-up…"
                 onChange={text("notes")}
                 className="nb-textarea"
               />

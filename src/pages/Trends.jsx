@@ -70,7 +70,7 @@ export default function Trends() {
       <h1 className="font-display text-2xl uppercase">Trends</h1>
       {rows.length === 0 && (
         <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card">
-          Log a few check-ins and the charts will draw themselves.
+          Not enough check-ins yet.
         </p>
       )}
 

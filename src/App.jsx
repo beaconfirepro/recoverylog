@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import { PatientProvider, usePatient } from '@/lib/PatientContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ClaimAccess from '@/components/ClaimAccess';
+import ConsentGate from '@/components/legal/ConsentGate';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import Login from './pages/Login';
@@ -23,7 +24,9 @@ import Profile from './pages/Profile';
 import SurgeryInfo from './pages/SurgeryInfo';
 
 // A signed-in account still has to resolve to a patient before the log opens:
-// the owner's own record, or one an invite linked it to.
+// the owner's own record, or one an invite linked it to. The terms come first,
+// ahead of the patient link, so nothing medical is typed in before they are
+// agreed to.
 const PatientGate = () => {
   const { isAuthenticated, authChecked } = useAuth();
   const { linked, loadingPatient } = usePatient();
@@ -37,8 +40,7 @@ const PatientGate = () => {
       </div>
     );
   }
-  if (!linked) return <ClaimAccess />;
-  return <Layout />;
+  return <ConsentGate>{!linked ? <ClaimAccess /> : <Layout />}</ConsentGate>;
 };
 
 const AuthenticatedApp = () => {

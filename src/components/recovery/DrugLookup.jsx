@@ -51,7 +51,7 @@ export default function DrugLookup({ onPick, onCancel }) {
           type="text"
           value={term}
           onChange={(e) => setTerm(e.target.value)}
-          placeholder="start typing a drug name"
+          placeholder="Search for a medicine"
           className="nb-input"
         />
         {busy && <Loader2 className="w-4 h-4 shrink-0 animate-spin" />}

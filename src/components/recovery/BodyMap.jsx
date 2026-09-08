@@ -44,7 +44,7 @@ export default function BodyMap({ field, value, onChange, color, darkText }) {
     onChange(selected.includes(part) ? selected.filter((p) => p !== part) : [...selected, part]);
 
   return (
-    <Field label={field.label} hint="tap the body, or pick from the list" span>
+    <Field label={field.label} hint="tap the body or pick from the list" span>
       <div className="flex gap-2">
         {["front", "back"].map((s) => (
           <button

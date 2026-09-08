@@ -48,20 +48,25 @@ export function Pills({ children, one }) {
   return <span className={`grid gap-2 h-full items-center ${one ? "grid-cols-1" : "grid-cols-2"}`}>{children}</span>;
 }
 
+// The whole pill is the goal named in the corner of the card; the fill is the
+// day's total up to and including this entry. It fills in the tracker's own
+// colour the whole way, because a bar that changes colour at the end reads as a
+// different measure rather than as the same one, full.
+export function FillPill({ text, done, goal, color }) {
+  return (
+    <span className="relative flex items-center justify-center overflow-hidden border-2 rounded-full px-3 py-2 bg-background">
+      <span
+        className="absolute inset-y-0 left-0"
+        style={{ width: `${Math.min(100, (done / goal) * 100)}%`, backgroundColor: color }}
+      />
+      <span className="relative font-heading text-[11px] text-center break-words text-[#1A1024]">{text}</span>
+    </span>
+  );
+}
+
 function Pill({ spec, color, darkText }) {
   if (spec.fill && spec.fill.goal) {
-    // The number is this entry; the bar behind it is the day so far against the
-    // goal named in the corner of the card.
-    const { done, goal } = spec.fill;
-    return (
-      <span className="relative flex items-center justify-center overflow-hidden border-2 rounded-full px-3 py-2 bg-background">
-        <span
-          className="absolute inset-y-0 left-0"
-          style={{ width: `${Math.min(100, (done / goal) * 100)}%`, backgroundColor: color }}
-        />
-        <span className="relative font-heading text-xs text-center break-words text-[#1A1024]">{spec.text}</span>
-      </span>
-    );
+    return <FillPill text={spec.text} done={spec.fill.done} goal={spec.fill.goal} color={color} />;
   }
 
   const bg =
@@ -69,7 +74,7 @@ function Pill({ spec, color, darkText }) {
   const dark = spec.tone === "grade" || spec.tone === "warn" || (!spec.tone && darkText);
   return (
     <span
-      className="flex items-center justify-center border-2 rounded-full px-3 py-2 font-heading text-xs text-center break-words"
+      className="flex items-center justify-center border-2 rounded-full px-3 py-2 font-heading text-[11px] text-center break-words"
       style={{ backgroundColor: bg, color: dark ? "#1A1024" : "#fff" }}
     >
       {spec.text}
@@ -92,7 +97,7 @@ export default function EntryCard({ entry, run, goal, goalLabel, nutrientGoals, 
             <Pill key={i} spec={s} color={cfg.color} darkText={cfg.darkText} />
           ))}
           {rest > 0 && (
-            <span className="flex items-center justify-center border-2 rounded-full px-3 py-2 font-heading text-xs bg-muted text-muted-foreground">
+            <span className="flex items-center justify-center border-2 rounded-full px-3 py-2 font-heading text-[11px] bg-muted text-muted-foreground">
               +{rest} more…
             </span>
           )}

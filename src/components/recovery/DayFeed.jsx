@@ -1,6 +1,6 @@
 import React from "react";
 import { TYPES, BODYWORK_GROUP, checkinConfig, gradeColor, goalFor, nutrientGoals } from "@/lib/recovery";
-import EntryCard, { Card, Pills, Plate } from "./EntryCard";
+import EntryCard, { Card, FillPill, Pills, Plate } from "./EntryCard";
 
 // The check-in is the one entry that is not a pill. It records six things at
 // once, and a day is read by comparing them, so it keeps its grid rather than
@@ -47,22 +47,30 @@ function CheckinCard({ entry, cfg, onEdit }) {
 // The four body-map sessions land on one line. Five separate rows for one
 // afternoon of treatment reads as five events; it was one.
 function BodyWorkRow({ entries, goal, onEdit }) {
-  const minutes = entries.reduce((t, e) => t + (+e.data?.minutes || 0), 0);
+  // Each session's pill is the whole goal, filled to where the day had got to
+  // once that session was done. Reading down them shows the afternoon adding up.
+  let done = 0;
+  const running = entries.map((e) => (done += +e.data?.minutes || 0));
+
   return (
     <div className="relative">
-      <Card corner={goal ? `${minutes}m of ${goal} min` : `${minutes}m`}>
+      <Card corner={goal ? `Goal: ${goal} min` : null}>
         <Pills one={entries.length === 1}>
-          {entries.map((e) => {
+          {entries.map((e, i) => {
             const cfg = TYPES[e.type];
+            const label = `${cfg.abbr} ${e.data?.minutes || 0}m`;
             return (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => onEdit(e)}
-                className="flex items-center justify-center border-2 rounded-full px-3 py-2 font-heading text-xs"
-                style={{ backgroundColor: cfg.color, color: cfg.darkText ? "#1A1024" : "#fff" }}
-              >
-                {cfg.abbr} {e.data?.minutes || 0}m
+              <button key={e.id} type="button" onClick={() => onEdit(e)} className="block text-left">
+                {goal ? (
+                  <FillPill text={label} done={running[i]} goal={goal} color={cfg.color} />
+                ) : (
+                  <span
+                    className="flex items-center justify-center border-2 rounded-full px-3 py-2 font-heading text-[11px]"
+                    style={{ backgroundColor: cfg.color, color: cfg.darkText ? "#1A1024" : "#fff" }}
+                  >
+                    {label}
+                  </span>
+                )}
               </button>
             );
           })}

@@ -63,6 +63,10 @@ export default function Layout() {
         key={pathname}
         className="max-w-lg mx-auto px-3 py-4 animate-page"
         style={{
+          // Nothing inside the page can paint over the bars. Without this the
+          // timeline's plates, which sit at z-10 to cross the rail, outrank a
+          // bar that is only pinned there, and the day runs over the tabs.
+          isolation: "isolate",
           paddingBottom: "calc(7rem + var(--safe-b))",
           paddingLeft: "max(0.75rem, var(--safe-l))",
           paddingRight: "max(0.75rem, var(--safe-r))"

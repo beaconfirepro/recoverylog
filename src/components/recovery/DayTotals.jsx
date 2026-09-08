@@ -71,7 +71,7 @@ export default function DayTotals({ totals, day, surgery }) {
               <span className="font-heading text-sm">{r.value}</span>
             </div>
             {r.needsGoal && (
-              <p className="text-[11px] font-semibold text-muted-foreground">Set a goal in Profile to see this out of a target.</p>
+              <p className="text-[11px] font-semibold text-muted-foreground">Set a goal in Profile.</p>
             )}
             {!!r.frac && (
               <div className="h-3 border-2 rounded-full mt-1 overflow-hidden bg-muted">

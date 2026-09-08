@@ -29,7 +29,7 @@ export function GarmentLibrary() {
   };
 
   return (
-    <Card title="My garments" blurb="The Compression tracker offers these instead of asking you to type one.">
+    <Card title="My garments" blurb="Offered on the Compression tracker.">
       {rows.length === 0 && <p className="text-sm text-muted-foreground">Nothing here yet.</p>}
       <div className="space-y-1.5">
         {rows.map((g) => (
@@ -60,7 +60,7 @@ export function GarmentLibrary() {
           type="text"
           value={size}
           onChange={(e) => setSize(e.target.value)}
-          placeholder="size"
+          placeholder="Size"
           className="nb-input w-20 shrink-0"
         />
         <button type="button" onClick={save} className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground">
@@ -92,7 +92,7 @@ function MedRow({ med, onChange, onRemove }) {
           value={draft.dose || ""}
           onChange={(e) => setDraft({ ...draft, dose: e.target.value })}
           onBlur={commit}
-          placeholder="dose — e.g. 1 capsule"
+          placeholder="Dose"
           className="nb-input"
         />
         <input
@@ -100,7 +100,7 @@ function MedRow({ med, onChange, onRemove }) {
           value={draft.reason || ""}
           onChange={(e) => setDraft({ ...draft, reason: e.target.value })}
           onBlur={commit}
-          placeholder="reason"
+          placeholder="Reason"
           className="nb-input"
         />
       </div>
@@ -187,7 +187,7 @@ export function MedGroupLibrary() {
   return (
     <Card
       title="My med groups"
-      blurb="Pick a group on the Med tracker and everything in it comes up already ticked."
+      blurb="Offered on the Med tracker, with everything in the group already ticked."
     >
       {rows.length === 0 && <p className="text-sm text-muted-foreground">Nothing here yet.</p>}
       <div className="space-y-2">

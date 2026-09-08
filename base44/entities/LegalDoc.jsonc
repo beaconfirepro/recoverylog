@@ -1,64 +1,47 @@
 {
   "name": "LegalDoc",
   "type": "object",
-  "required": [
-    "kind",
-    "version",
-    "title",
-    "body"
-  ],
+  "required": ["kind", "version", "title", "body"],
   "properties": {
     "kind": {
-      "type": "string",
       "description": "Which document this is. One row per kind is current at a time.",
-      "enum": [
-        "privacy",
-        "permissions",
-        "pii_sharing"
-      ]
+      "enum": ["privacy", "permissions", "pii_sharing"],
+      "type": "string"
     },
     "version": {
-      "type": "string",
-      "description": "Version of this document, as a date, e.g. 2026-09-08. Accepting a document records this string, so a new version asks the user again."
+      "description": "Version of this document, as a date, e.g. 2026-09-08. Accepting a document records this string, so a new version asks the user again.",
+      "type": "string"
     },
     "title": {
-      "type": "string",
-      "description": "Heading shown on the consent gate and in Profile."
+      "description": "Heading shown on the consent gate and in Profile.",
+      "type": "string"
     },
     "summary": {
-      "type": "string",
-      "description": "One line describing the document, shown next to its title before it is opened."
+      "description": "One line describing the document, shown next to its title before it is opened.",
+      "type": "string"
     },
     "body": {
-      "type": "string",
-      "description": "The document itself. Plain text; a line ending in a colon and typed in capitals is rendered as a heading."
+      "description": "The document itself. Plain text; a line ending in a colon and typed in capitals is rendered as a heading.",
+      "type": "string"
     },
     "effective_date": {
-      "type": "string",
+      "description": "Date this version takes effect.",
       "format": "date",
-      "description": "Date this version takes effect."
+      "type": "string"
     },
     "current": {
-      "type": "boolean",
       "default": false,
-      "description": "True on the one row per kind the app serves. Older versions stay for the record."
+      "description": "True on the one row per kind the app serves. Older versions stay for the record.",
+      "type": "boolean"
     }
   },
+  // Everyone signed in can read these: they are the app's own terms, and the
+  // consent gate cannot ask you to accept what it may not show you. Nobody can
+  // write them from the app. A legal document that any account could rewrite,
+  // in a table every account reads, is not a legal document.
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "update": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
-    }
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
   }
 }

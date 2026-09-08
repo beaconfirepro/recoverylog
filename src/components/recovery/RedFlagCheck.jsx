@@ -149,7 +149,7 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
                     className="nb-textarea min-h-[3.5rem]"
                     value={det?.note || ""}
                     onChange={(e) => patch(item.key, { note: e.target.value })}
-                    placeholder="what happens next — who you called, what they said, what to watch"
+                    placeholder="What happens next"
                   />
                 </div>
               )}
