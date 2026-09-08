@@ -19,12 +19,18 @@
       "type": "array"
     },
     "red_flag_answers": {
+      "description": "yes or no per red-flag key.",
       "type": "object"
     },
     "red_flag_completed": {
       "type": "boolean"
     },
     "red_flag_details": {
+      "description": "Per raised flag: the time, whether the office was called, and the note saying what happens next.",
+      "type": "object"
+    },
+    "red_flag_sources": {
+      "description": "Where each answer came from, keyed the same as red_flag_answers: \"auto\" if the day's own entries raised it and she left it standing, \"user\" if she answered it herself. Read on the day page to colour each flag.",
       "type": "object"
     },
     "slept_hours": {
