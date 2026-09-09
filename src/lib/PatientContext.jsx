@@ -85,10 +85,19 @@ export const PatientProvider = ({ children }) => {
     // The link is what row security scopes to, so this group's patient row was
     // not visible a moment ago. The guard stops a link that will not take from
     // being retried on every pass.
+    // patient_id is the log this account reads. write_patient_id is the log it
+    // may write to, and it is only ever the account's own. Two fields rather
+    // than one flag, because row security compares a row to the user record and
+    // cannot reach into another entity to ask whether someone may write.
+    const writeId = active?.own ? groupId : null;
     let rows = people;
-    if (groupId && user.patient_id !== groupId && linking.current !== groupId) {
-      linking.current = groupId;
-      await base44.auth.updateMe({ patient_id: groupId });
+    if (
+      groupId &&
+      (user.patient_id !== groupId || (user.write_patient_id || null) !== writeId) &&
+      linking.current !== `${groupId}:${writeId}`
+    ) {
+      linking.current = `${groupId}:${writeId}`;
+      await base44.auth.updateMe({ patient_id: groupId, write_patient_id: writeId });
       await checkUserAuth();
       rows = asRows(await base44.entities.AppUser.list("created_date", 50));
     }
@@ -136,11 +145,15 @@ export const PatientProvider = ({ children }) => {
   // Open a different patient's log. Only a care team member has more than one.
   const switchPatient = useCallback(
     async (pid) => {
-      linking.current = pid;
-      await base44.auth.updateMe({ patient_id: pid });
+      // Write access follows only your own log. Opening someone else's clears
+      // it, so a member never carries a write claim into a log they help with.
+      const own = groups.find((g) => g.id === pid)?.own || false;
+      const writeId = own ? pid : null;
+      linking.current = `${pid}:${writeId}`;
+      await base44.auth.updateMe({ patient_id: pid, write_patient_id: writeId });
       await checkUserAuth();
     },
-    [checkUserAuth]
+    [checkUserAuth, groups]
   );
 
   // Confirm the patient's details against the copies on your own membership row
@@ -191,7 +204,10 @@ export const PatientProvider = ({ children }) => {
         switchPatient,
         claimMembership,
         leaveTeam,
-        canWrite: me?.can_write !== false,
+        // Only the patient writes. A care team member reads. Nothing in the
+        // app hands out write access, so there is no per-member flag to read:
+        // being the owner is the whole of it.
+        canWrite: isOwner,
         loadingPatient: loading,
         refreshPatient: load,
         surgeries,

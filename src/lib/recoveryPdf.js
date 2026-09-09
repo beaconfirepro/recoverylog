@@ -291,7 +291,7 @@ export function buildRecoveryPdf({
     bullets(
       team.map((m) => {
         const name = [m.first_name, m.last_name].filter(Boolean).join(" ").trim();
-        return `${name || m.email}${name ? `  ${m.email}` : ""}${m.can_write === false ? "  (read only)" : ""}`;
+        return `${name || m.email}${name ? `  ${m.email}` : ""}  (read only)`;
       })
     );
   }

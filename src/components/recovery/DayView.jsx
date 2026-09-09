@@ -161,20 +161,33 @@ export default function DayView({ date, startCollapsed }) {
           </p>
         )}
         {sorted.length > 0 && (
-          <DayFeed entries={sorted} run={run} surgery={activeSurgery} onEdit={(e) => setDialog({ entry: e })} />
+          <DayFeed
+            entries={sorted}
+            run={run}
+            surgery={activeSurgery}
+            onEdit={canWrite ? (e) => setDialog({ entry: e }) : undefined}
+          />
         )}
       </div>
 
       <DayTotals totals={totals} day={day} surgery={activeSurgery} />
 
+      {/* A care team member reads the log. Nothing on the day is theirs to
+          change, so the controls are not there rather than disabled. */}
       <RedFlagCheck
         key={day.id + JSON.stringify(day.red_flag_answers || {}) + JSON.stringify(day.red_flag_details || {})}
         day={day}
         suggestions={suggestions}
         onSaved={load}
+        canWrite={canWrite}
       />
 
-      <QuestionsCard key={day.id + JSON.stringify(day.questions || [])} day={day} onSaved={load} />
+      <QuestionsCard
+        key={day.id + JSON.stringify(day.questions || [])}
+        day={day}
+        onSaved={load}
+        canWrite={canWrite}
+      />
 
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
         {/* Radix focuses the first field when the dialog opens, which throws the

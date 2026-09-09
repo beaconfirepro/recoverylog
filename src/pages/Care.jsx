@@ -143,7 +143,6 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
       email,
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
-      can_write: true,
       // Copied onto their row so they can match against it. Row security does
       // not let an unlinked account read the patient's own row.
       match_first_name: patient?.first_name || "",
@@ -250,9 +249,7 @@ export default function Care() {
             >
               <span className="flex-1 min-w-0">
                 <span className="block nb-label truncate">{nameOf(g.row)}</span>
-                <span className="block text-xs font-semibold text-muted-foreground truncate">
-                  {g.row.can_write === false ? "Read only" : "Can edit"}
-                </span>
+                <span className="block text-xs font-semibold text-muted-foreground truncate">Read only</span>
               </span>
               <ChevronRight className="w-5 h-5 shrink-0" />
             </button>
@@ -311,7 +308,7 @@ export default function Care() {
           </div>
           <div className="text-sm font-semibold break-words">
             {isOwner
-              ? "They sign in with this email, then confirm your name and date of birth."
+              ? "They sign in with this email, confirm your name and date of birth, and can read your log."
               : `Who else helps ${displayName(patient) || "this patient"}.`}
           </div>
         </div>
@@ -330,10 +327,7 @@ export default function Care() {
               <div className="flex items-center gap-2 min-w-0">
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-bold truncate">{displayName(m) || m.email}</div>
-                  <div className="text-[11px] font-semibold text-muted-foreground truncate">
-                    {m.email}
-                    {m.can_write === false ? " · read only" : ""}
-                  </div>
+                  <div className="text-[11px] font-semibold text-muted-foreground truncate">{m.email}</div>
                 </div>
                 {isOwner && (
                   <button

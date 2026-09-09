@@ -21,7 +21,7 @@ const BLANK = {
 // written. It lives on the care page: a surgery is not a place you go, it is
 // one of the two lists that page is for.
 export default function Surgeries() {
-  const { patientId, surgeries, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
+  const { patientId, surgeries, activeSurgeryId, selectSurgery, refreshSurgeries, canWrite } = usePatient();
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -108,21 +108,23 @@ export default function Surgeries() {
               </span>
             </button>
           ))}
-          <button
-            type="button"
-            className="nb-btn w-full h-12 bg-accent text-accent-foreground flex items-center justify-center gap-2"
-            onClick={() => {
-              setDraft({ ...BLANK });
-              setSaved(false);
-            }}
-          >
-            <Plus className="w-4 h-4" />
-            Add a surgery
-          </button>
+          {canWrite && (
+            <button
+              type="button"
+              className="nb-btn w-full h-12 bg-accent text-accent-foreground flex items-center justify-center gap-2"
+              onClick={() => {
+                setDraft({ ...BLANK });
+                setSaved(false);
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              Add a surgery
+            </button>
+          )}
         </div>
       </div>
 
-      {editing && (
+      {editing && canWrite && (
         <div className="nb-card overflow-hidden">
           <div className={`px-4 py-3 border-b-2 ${editing.surgery_date ? "bg-accent text-accent-foreground" : "bg-muted"}`}>
             <div className="font-display text-xl uppercase leading-tight break-words">
