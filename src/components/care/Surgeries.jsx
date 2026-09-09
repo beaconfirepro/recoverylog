@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { usePatient } from "@/lib/PatientContext";
 import { todayStr, postOpLabel, fullDate } from "@/lib/dates";
-import { Plus } from "lucide-react";
+import { Plus, Scissors } from "lucide-react";
 import Field from "@/components/Field";
 import TimeInput from "@/components/recovery/TimeInput";
 
@@ -17,7 +17,10 @@ const BLANK = {
   notes: ""
 };
 
-export default function SurgeryInfo() {
+// The surgeries on the open log, and the form for whichever one is being
+// written. It lives on the care page: a surgery is not a place you go, it is
+// one of the two lists that page is for.
+export default function Surgeries() {
   const { patientId, surgeries, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -68,17 +71,19 @@ export default function SurgeryInfo() {
     : "Surgery date not set";
 
   return (
-    <div className="space-y-4">
-      <h1 className="font-display text-2xl uppercase">Surgery</h1>
-
+    <>
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
-          <div className="font-display text-xl uppercase leading-tight break-words">Surgeries</div>
+          <div className="font-display text-xl uppercase leading-tight break-words flex items-center gap-2">
+            <Scissors className="w-5 h-5 shrink-0" /> Surgeries
+          </div>
           <div className="text-sm font-semibold break-words">Each keeps its own days.</div>
         </div>
         <div className="p-4 space-y-2">
           {surgeries.length === 0 && (
-            <p className="text-sm text-muted-foreground">None yet — add one below.</p>
+            <p className="text-sm text-muted-foreground break-words">
+              No surgeries yet. Add one and your days start counting from its date.
+            </p>
           )}
           {surgeries.map((s) => (
             <button
@@ -206,6 +211,6 @@ export default function SurgeryInfo() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
