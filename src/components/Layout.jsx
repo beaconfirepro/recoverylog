@@ -7,9 +7,8 @@ const NAV = [
   { to: "/", label: "Today", icon: CalendarDays, match: (p) => p === "/" || p.startsWith("/day") },
   { to: "/history", label: "History", icon: HistoryIcon, match: (p) => p.startsWith("/history") },
   { to: "/trends", label: "Trends", icon: TrendingUp, match: (p) => p.startsWith("/trends") },
-  // Care holds both lists: who is on the team, and the surgeries. The surgery
-  // page is reached from it, so it lights this tab rather than none.
-  { to: "/care", label: "Care", icon: Users, match: (p) => p.startsWith("/care") || p.startsWith("/surgery") },
+  // Care holds both lists: who is on the team, and the surgeries.
+  { to: "/care", label: "Care", icon: Users, match: (p) => p.startsWith("/care") },
   { to: "/profile", label: "Profile", icon: UserRound, match: (p) => p.startsWith("/profile") }
 ];
 

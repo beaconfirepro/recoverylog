@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, LogOut, Scissors, Users } from "lucide-react";
+import { ChevronRight, LogOut, Users } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName } from "@/lib/PatientContext";
 import Field from "@/components/Field";
 import { useCareTeam } from "@/lib/careTeam";
+import Surgeries from "@/components/care/Surgeries";
 
 // Set when a log is opened, so a member is asked which patient once a session
 // rather than on every navigation. sessionStorage rather than local: a new
@@ -95,7 +96,7 @@ function Claim({ row, onDone, onCancel }) {
 export default function Care() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { me, patient, groups, isOwner, surgeries, switchPatient } = usePatient();
+  const { me, patient, groups, isOwner, switchPatient } = usePatient();
   const { team } = useCareTeam();
   const [claiming, setClaiming] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -229,46 +230,7 @@ export default function Care() {
         </div>
       </div>
 
-      {/* The surgeries on the open log. Opening one goes to the surgery page,
-          which is where they are written. */}
-      <div className="nb-card overflow-hidden">
-        <div className="px-4 py-3 border-b-2 bg-muted">
-          <div className="font-display text-xl uppercase leading-tight break-words flex items-center gap-2">
-            <Scissors className="w-5 h-5 shrink-0" /> Surgeries
-          </div>
-          <div className="text-sm font-semibold break-words">Each keeps its own days.</div>
-        </div>
-
-        <div className="p-4 space-y-2">
-          {surgeries.length === 0 && (
-            <p className="text-sm text-muted-foreground break-words">
-              No surgeries yet. Add one and your days start counting from its date.
-            </p>
-          )}
-
-          {surgeries.map((sx) => (
-            <button
-              key={sx.id}
-              type="button"
-              onClick={() => navigate("/surgery")}
-              className="w-full text-left border-2 rounded-xl bg-background p-3 flex items-center gap-2 min-w-0"
-            >
-              <span className="flex-1 min-w-0">
-                <span className="block nb-label truncate">{sx.label}</span>
-                <span className="block text-xs font-semibold text-muted-foreground truncate">
-                  {sx.surgery_date || "no date"}
-                  {sx.archived ? " · archived" : ""}
-                </span>
-              </span>
-              <ChevronRight className="w-5 h-5 shrink-0" />
-            </button>
-          ))}
-
-          <button type="button" className="nb-btn w-full h-12 bg-card" onClick={() => navigate("/surgery")}>
-            {surgeries.length === 0 ? "Add a surgery" : "Manage surgeries"}
-          </button>
-        </div>
-      </div>
+      <Surgeries />
 
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">

@@ -21,7 +21,6 @@ import Day from './pages/Day';
 import History from './pages/History';
 import Trends from './pages/Trends';
 import Profile from './pages/Profile';
-import SurgeryInfo from './pages/SurgeryInfo';
 import Care, { hasPicked } from './pages/Care';
 
 // A signed-in account still has to resolve to a patient before the log opens:
@@ -89,8 +88,8 @@ const AuthenticatedApp = () => {
         <Route path="/day/:date" element={<Day />} />
         <Route path="/history" element={<History />} />
         <Route path="/trends" element={<Trends />} />
-        <Route path="/surgery" element={<SurgeryInfo />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/surgery" element={<Navigate to="/care" replace />} />
         <Route path="/export" element={<Navigate to="/profile" replace />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
