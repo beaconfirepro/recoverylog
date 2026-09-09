@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, LogOut, Users } from "lucide-react";
+import { ChevronRight, LogOut, Scissors, Users } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName } from "@/lib/PatientContext";
 import Field from "@/components/Field";
+import { useCareTeam } from "@/lib/careTeam";
 
 // Set when a log is opened, so a member is asked which patient once a session
 // rather than on every navigation. sessionStorage rather than local: a new
@@ -94,7 +95,8 @@ function Claim({ row, onDone, onCancel }) {
 export default function Care() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { me, groups, switchPatient } = usePatient();
+  const { me, patient, groups, isOwner, surgeries, switchPatient } = usePatient();
+  const { team } = useCareTeam();
   const [claiming, setClaiming] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -111,8 +113,9 @@ export default function Care() {
 
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-2xl uppercase">Your care pages</h1>
+      <h1 className="font-display text-2xl uppercase">Care</h1>
 
+      {(teams.length > 0 || !isOwner) && (
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
           <div className="font-display text-xl uppercase leading-tight break-words flex items-center gap-2">
@@ -178,6 +181,92 @@ export default function Care() {
               No invitations yet. A patient adds {user?.email} to their care team, and it appears here.
             </p>
           )}
+        </div>
+      </div>
+
+      )}
+
+      {/* Who else can see this log. A patient manages the list in Profile; a
+          care team member is shown it so they know who they are working with. */}
+      <div className="nb-card overflow-hidden">
+        <div className="px-4 py-3 border-b-2 bg-muted">
+          <div className="font-display text-xl uppercase leading-tight break-words flex items-center gap-2">
+            <Users className="w-5 h-5 shrink-0" /> Care team
+          </div>
+          <div className="text-sm font-semibold break-words">
+            {isOwner ? "Who can see your log." : `Who else helps ${displayName(patient) || "this patient"}.`}
+          </div>
+        </div>
+
+        <div className="p-4 space-y-2">
+          {team.length === 0 && (
+            <p className="text-sm text-muted-foreground break-words">
+              {isOwner
+                ? "Nobody else can see this log. Add someone in Profile and they get in once they confirm your name and date of birth."
+                : "Nobody else is on this care team."}
+            </p>
+          )}
+
+          {team.map((m) => (
+            <div key={m.id} className="border-2 rounded-xl bg-background p-3 min-w-0">
+              <div className="nb-label truncate">{displayName(m) || m.email}</div>
+              <div className="text-xs font-semibold text-muted-foreground truncate">{m.email}</div>
+              <div className="text-xs font-semibold text-muted-foreground truncate">
+                {m.can_write === false ? "Read only" : "Can edit"}
+              </div>
+            </div>
+          ))}
+
+          {isOwner && (
+            <button
+              type="button"
+              className="nb-btn w-full h-12 bg-card"
+              onClick={() => navigate("/profile")}
+            >
+              Add or remove people
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* The surgeries on the open log. Opening one goes to the surgery page,
+          which is where they are written. */}
+      <div className="nb-card overflow-hidden">
+        <div className="px-4 py-3 border-b-2 bg-muted">
+          <div className="font-display text-xl uppercase leading-tight break-words flex items-center gap-2">
+            <Scissors className="w-5 h-5 shrink-0" /> Surgeries
+          </div>
+          <div className="text-sm font-semibold break-words">Each keeps its own days.</div>
+        </div>
+
+        <div className="p-4 space-y-2">
+          {surgeries.length === 0 && (
+            <p className="text-sm text-muted-foreground break-words">
+              No surgeries yet. Add one and your days start counting from its date.
+            </p>
+          )}
+
+          {surgeries.map((sx) => (
+            <button
+              key={sx.id}
+              type="button"
+              onClick={() => navigate("/surgery")}
+              className="w-full text-left border-2 rounded-xl bg-background p-3 flex items-center gap-2 min-w-0"
+            >
+              <span className="flex-1 min-w-0">
+                <span className="block nb-label truncate">{sx.label}</span>
+                <span className="block text-xs font-semibold text-muted-foreground truncate">
+                  {sx.surgery_date || "no date"}
+                  {sx.archived ? " · archived" : ""}
+                </span>
+              </span>
+              <ChevronRight className="w-5 h-5 shrink-0" />
+            </button>
+          ))}
+
+          <button type="button" className="nb-btn w-full h-12 bg-card" onClick={() => navigate("/surgery")}>
+            {surgeries.length === 0 ? "Add a surgery" : "Manage surgeries"}
+          </button>
         </div>
       </div>
 

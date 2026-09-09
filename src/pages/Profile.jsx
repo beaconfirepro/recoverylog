@@ -4,6 +4,7 @@ import { Check, LogOut, Plus, X } from "lucide-react";
 import { todayStr, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes, sameEmail } from "@/lib/PatientContext";
+import { useCareTeam } from "@/lib/careTeam";
 import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
 import DeleteAccount from "@/components/DeleteAccount";
 import LegalSection from "@/components/legal/LegalSection";
@@ -30,7 +31,7 @@ export default function Profile() {
   const { user, logout } = useAuth();
   const { theme, choose } = useTheme();
   const { me, patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
-  const [team, setTeam] = useState([]);
+  const { team, reload: loadTeam } = useCareTeam();
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
   const [dob, setDob] = useState("");
@@ -48,14 +49,6 @@ export default function Profile() {
     setDob(patient?.dob || "");
   }, [patient]);
 
-  const loadTeam = useCallback(() => {
-    if (!patientId) return;
-    base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 50).then((r) => setTeam(asRows(r)));
-  }, [patientId]);
-
-  useEffect(() => {
-    loadTeam();
-  }, [loadTeam]);
 
   const savePatient = async () => {
     setSavingPatient(true);

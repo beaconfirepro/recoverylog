@@ -57,7 +57,7 @@ export default function DayView({ date, startCollapsed }) {
     return (
       <div className="nb-card p-4">
         <p className="text-sm font-semibold break-words">
-          No surgery is being tracked yet. Add one on the Surgery page.
+          No surgery is being tracked yet. Add one on the Care page.
         </p>
       </div>
     );

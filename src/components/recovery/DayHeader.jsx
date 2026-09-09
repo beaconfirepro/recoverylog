@@ -31,7 +31,7 @@ export default function DayHeader({ day }) {
         </label>
         {choosable.length === 0 ? (
           <p className="text-sm font-semibold break-words">
-            Add a surgery on the Surgery page and days will count from its date.
+            Add a surgery on the Care page and days will count from its date.
           </p>
         ) : (
           <select
