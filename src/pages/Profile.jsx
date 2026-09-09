@@ -1,15 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Check, LogOut, Plus, X } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
 import { todayStr, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes, sameEmail } from "@/lib/PatientContext";
 import { useCareTeam } from "@/lib/careTeam";
 import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
-import DeleteAccount from "@/components/DeleteAccount";
-import LegalSection from "@/components/legal/LegalSection";
-import SignInMethod from "@/components/legal/SignInMethod";
-import MyLogs from "@/components/legal/MyLogs";
 import { THEMES, useTheme } from "@/lib/theme";
 import {
   TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, checkinSlots,
@@ -20,23 +16,12 @@ import { buildRecoveryPdf } from "@/lib/recoveryPdf";
 import Field from "@/components/Field";
 import TimeInput from "@/components/recovery/TimeInput";
 
-const Row = ({ label, value }) => (
-  <div className="flex items-baseline justify-between gap-3 py-1.5 border-b-2 last:border-b-0 min-w-0">
-    <span className="font-heading text-[11px] uppercase tracking-wider text-muted-foreground shrink-0">{label}</span>
-    <span className="text-sm font-bold text-right break-words min-w-0">{value || "—"}</span>
-  </div>
-);
-
 export default function Profile() {
   const { user, logout } = useAuth();
   const { theme, choose } = useTheme();
   const { me, patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const { team, reload: loadTeam } = useCareTeam();
   const [removing, setRemoving] = useState(null);
-  const [first, setFirst] = useState("");
-  const [last, setLast] = useState("");
-  const [dob, setDob] = useState("");
-  const [savingPatient, setSavingPatient] = useState(false);
   const [invite, setInvite] = useState({ email: "", first_name: "", last_name: "" });
   const [inviteError, setInviteError] = useState("");
   const [from, setFrom] = useState(todayStr());
@@ -44,32 +29,6 @@ export default function Profile() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
-  useEffect(() => {
-    setFirst(patient?.first_name || "");
-    setLast(patient?.last_name || "");
-    setDob(patient?.dob || "");
-  }, [patient]);
-
-
-  const savePatient = async () => {
-    setSavingPatient(true);
-    const next = { first_name: first.trim(), last_name: last.trim(), dob: dob || null };
-    await base44.entities.AppUser.update(patient.id, next);
-    // Every member row carries a copy of these to match against, so they move
-    // with it. Otherwise a name change would lock the care team out.
-    await Promise.all(
-      team.map((m) =>
-        base44.entities.AppUser.update(m.id, {
-          match_first_name: next.first_name,
-          match_last_name: next.last_name,
-          match_dob: next.dob
-        })
-      )
-    );
-    await refreshPatient();
-    loadTeam();
-    setSavingPatient(false);
-  };
 
   const addMember = async () => {
     const email = invite.email.trim().toLowerCase();
@@ -204,52 +163,7 @@ export default function Profile() {
 
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-2xl uppercase">Profile</h1>
-
-      {/* You, not the patient. A care team member's profile is their own
-          account; whose log they are reading is on the home page and in the
-          bar at the top, where it belongs. */}
-      <div className="nb-card overflow-hidden">
-        <div className="px-4 py-3 border-b-2 bg-muted">
-          <div className="font-display text-xl uppercase leading-tight break-words">
-            {isOwner ? "You, the patient" : "You"}
-          </div>
-        </div>
-        <div className="p-4">
-          {isOwner ? (
-            <div className="grid grid-cols-2 gap-3 min-w-0 pb-2">
-              <Field label="Patient first name">
-                <input type="text" value={first} onChange={(e) => setFirst(e.target.value)} className="nb-input" />
-              </Field>
-              <Field label="Patient last name">
-                <input type="text" value={last} onChange={(e) => setLast(e.target.value)} className="nb-input" />
-              </Field>
-              <Field label="Date of birth" span hint="your care team confirms this to get in">
-                <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="nb-input" />
-              </Field>
-              <button
-                className="col-span-2 nb-btn w-full h-12 bg-primary text-primary-foreground"
-                onClick={savePatient}
-                disabled={savingPatient || !first.trim() || !last.trim()}
-              >
-                {savingPatient ? "Saving…" : "Save my details"}
-              </button>
-            </div>
-          ) : (
-            <Row label="Your name" value={displayName(me)} />
-          )}
-          <Row label="Signed in as" value={user?.email} />
-          <Row label="Your access" value={isOwner ? "Patient, full access" : canWrite ? "Care team, can edit" : "Care team, read only"} />
-        </div>
-        <div className="px-4 pb-4">
-          <button className="nb-btn w-full h-12 bg-card flex items-center justify-center gap-2" onClick={() => logout()}>
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        </div>
-      </div>
-
-      <MyLogs />
+      <h1 className="font-display text-2xl uppercase">Setup</h1>
 
       {isOwner && (
         <div className="nb-card overflow-hidden">
@@ -640,11 +554,6 @@ export default function Profile() {
         </div>
       </div>
 
-      <SignInMethod />
-
-      <LegalSection />
-
-      <DeleteAccount isOwner={isOwner} />
     </div>
   );
 }
