@@ -2,7 +2,7 @@
   "name": "User",
   "properties": {
     "patient_id": {
-      "description": "Patient whose log this user may read and write. Set when a care-team invite is claimed; blank until then.",
+      "description": "Whose log this account reads. Their own if they are the patient, or the patient's if they are on a care team. Blank until a log is opened.",
       "type": "string"
     },
     "role": {
@@ -11,6 +11,10 @@
         "admin",
         "user"
       ],
+      "type": "string"
+    },
+    "write_patient_id": {
+      "description": "Whose log this account may write to. Only ever its own, so a care team member reads and never writes. Blank for anyone who is not the patient. Kept apart from patient_id because row security compares a row to this record and cannot reach into AppUser to ask whether someone may write.",
       "type": "string"
     }
   },
