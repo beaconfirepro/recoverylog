@@ -1,26 +1,16 @@
 {
   "name": "MedGroup",
-  "type": "object",
-  "required": [
-    "name"
-  ],
   "properties": {
-    "name": {
-      "description": "What the group is called on the Med tracker, e.g. 'AM Meds' or 'PRN Pain'.",
-      "type": "string"
-    },
     "medicines": {
       "description": "The medicines this group offers. Picking the group on a Med entry brings all of these up already ticked; anything skipped is tapped off there.",
-      "type": "array",
       "items": {
-        "type": "object",
         "properties": {
-          "name": {
-            "description": "Medicine name and strength, e.g. 'Gabapentin 300 mg'.",
-            "type": "string"
-          },
           "dose": {
             "description": "How much is taken, e.g. '1 capsule'.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Medicine name and strength, e.g. 'Gabapentin 300 mg'.",
             "type": "string"
           },
           "reason": {
@@ -31,8 +21,14 @@
             "description": "RxNorm concept id, when the medicine came from the drug lookup rather than being typed.",
             "type": "string"
           }
-        }
-      }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "name": {
+      "description": "What the group is called on the Med tracker, e.g. 'AM Meds' or 'PRN Pain'.",
+      "type": "string"
     },
     "patient_id": {
       "description": "Patient this group belongs to.",
@@ -42,26 +38,15 @@
       "type": "number"
     }
   },
+  "required": [
+    "name"
+  ],
   "rls": {
     "create": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
+      "data.patient_id": "{{user.data.write_patient_id}}"
     },
     "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
+      "data.patient_id": "{{user.data.write_patient_id}}"
     },
     "read": {
       "$or": [
@@ -74,14 +59,8 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
+      "data.patient_id": "{{user.data.write_patient_id}}"
     }
-  }
+  },
+  "type": "object"
 }
