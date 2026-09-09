@@ -51,10 +51,18 @@ After every merge, without being asked:
 1. Sync the sandbox: `git merge --ff-only origin/main`.
 2. Create a checkpoint.
 3. Kick the build with `edit_base44_app`.
-4. **Verify it is live.** Fetch `https://lipnode.app/` and check that the
-   `/assets/index-*.js` hash has changed from the one before the merge. The
-   served `index.html` is small and changes immediately when anything
-   publishes, so a stale hash there means nothing shipped.
+4. **Verify it is live.** Every build stamps its commit into the bundle
+   (`vite.config.js` → `__BUILD_COMMIT__`), and the front page prints it in
+   small type under the day. Two ways to read it, both authoritative:
+
+   - Open the app and read the line at the bottom of Today.
+   - Fetch the served `/assets/index-*.js` and grep it for
+     `git rev-parse --short HEAD`.
+
+   Do not trust the Base44 editor's "last commit" for this. It reports the
+   builder's own last commit, not the branch tip, so it can read as tens of
+   minutes stale while main is seconds old — and it says nothing at all about
+   what is deployed.
 5. Still stale after the builder reports finished → kick it again. Do not
    report the work as done, and do not hand the publish back to the user.
 
