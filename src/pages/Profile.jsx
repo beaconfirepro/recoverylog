@@ -6,13 +6,20 @@ import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
 import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
 import {
-  TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, checkinSlots,
+  TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, DEFAULT_CHECKIN_SLOTS,
   NUTRIENTS, BODYWORK_GOAL, nutrientUnit
 } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
 import { buildRecoveryPdf } from "@/lib/recoveryPdf";
 import Field from "@/components/Field";
 import TimeInput from "@/components/recovery/TimeInput";
+
+// What the patient actually has saved, blank rows and all. The check-in form
+// reads through checkinSlots(), which drops the blanks; the editor must not.
+const savedSlots = (patient) => {
+  const saved = Array.isArray(patient?.checkin_slots) ? patient.checkin_slots : [];
+  return saved.length ? saved : DEFAULT_CHECKIN_SLOTS;
+};
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -41,7 +48,17 @@ export default function Profile() {
   // the patient rather than a surgery, because how often you are asked how you
   // feel does not change because a second operation was added.
   const [savingCheckin, setSavingCheckin] = useState(false);
-  const slots = checkinSlots(patient);
+  // The editor holds its own list. checkinSlots() drops any slot without a
+  // label, which is right for the check-in form and wrong here: a row you have
+  // just added has no label yet, so reading through it made "Add a time" look
+  // like it did nothing.
+  const [slots, setSlotsLocal] = useState(() => savedSlots(patient));
+  useEffect(() => {
+    setSlotsLocal(savedSlots(patient));
+    // Seeded per patient. Saving reuses the same row, so this must not re-run
+    // on every write or it would stomp the row being typed into.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patient?.id]);
   const measures = patient?.checkin_measures?.length
     ? patient.checkin_measures
     : CHECKIN_MEASURES.map((m) => m.key);
@@ -54,7 +71,10 @@ export default function Profile() {
     setSavingCheckin(false);
   };
 
-  const setSlots = (next) => patchPatient({ checkin_slots: next });
+  const setSlots = (next) => {
+    setSlotsLocal(next);
+    patchPatient({ checkin_slots: next });
+  };
 
   const toggleMeasure = (key) => {
     const next = measures.includes(key) ? measures.filter((k) => k !== key) : [...measures, key];
