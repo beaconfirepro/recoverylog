@@ -61,7 +61,7 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7.5);
     doc.setTextColor(...GREY);
-    doc.text("RECOVERY LOG", L, H - M + 6);
+    doc.text("LIPNODE", L, H - M + 6);
     doc.text(String(page), R, H - M + 6, { align: "right" });
   };
 
@@ -96,7 +96,7 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
       doc.setFont("helvetica", "bold");
       doc.setFontSize(24);
       doc.setTextColor(255, 255, 255);
-      doc.text("RECOVERY LOG", L + 16, y);
+      doc.text("LIPNODE", L + 16, y);
       doc.setFillColor(...PINK);
       doc.rect(L + 16, y + 6, 88, 4, "F");
       y += 24;

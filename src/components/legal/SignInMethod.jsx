@@ -58,7 +58,7 @@ export default function SignInMethod() {
             removal of the first one, and pretending otherwise is worse than
             the gap itself. */}
         <p className="text-xs font-semibold text-muted-foreground break-words">
-          Setting a password does not disconnect Google from this account. To do that, remove Recovery Log from your
+          Setting a password does not disconnect Google from this account. To do that, remove LipNode from your
           Google account at myaccount.google.com under Data and privacy, then sign in here with your email and password.
         </p>
       </div>

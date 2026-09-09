@@ -202,7 +202,7 @@ export default function Profile() {
       entries,
       patientName: displayName(patient)
     });
-    doc.save(`recovery-log-${from}_to_${to}.pdf`);
+    doc.save(`lipnode-${from}_to_${to}.pdf`);
     setBusy(false);
     setDone(true);
   };
