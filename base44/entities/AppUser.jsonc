@@ -6,6 +6,22 @@
       "description": "False makes a team member read-only.",
       "type": "boolean"
     },
+    "checkin_measures": {
+      "description": "Which measures the check-in records: pain, nausea, swelling, energy, mood, mobility. Empty or absent means all of them. Belongs to the patient rather than a surgery: how often you are asked how you feel does not change because a second operation was added.",
+      "items": { "type": "string" },
+      "type": "array"
+    },
+    "checkin_slots": {
+      "description": "How many times a day this patient checks in, and when. Empty or absent means the built-in four.",
+      "items": {
+        "properties": {
+          "label": { "description": "Chip shown on the check-in form, e.g. 'Waking'.", "type": "string" },
+          "time": { "description": "When this check-in is due, HH:MM. Picks the slot for you when the form opens.", "type": "string" }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
     "claimed_at": {
       "description": "On a team_member row: when this person first confirmed the patient's name and date of birth and opened the log. Blank means the invite is still open.",
       "type": "string"

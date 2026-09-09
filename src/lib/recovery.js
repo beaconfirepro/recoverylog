@@ -535,17 +535,19 @@ export const DEFAULT_CHECKIN_SLOTS = [
 
 const namedSlots = (slots) => (slots || []).filter((s) => s && s.label && String(s.label).trim());
 
-export const checkinSlots = (surgery) => {
-  const saved = namedSlots(surgery?.checkin_slots);
+export const checkinSlots = (patient) => {
+  const saved = namedSlots(patient?.checkin_slots);
   return saved.length ? saved : DEFAULT_CHECKIN_SLOTS;
 };
 
-// The check-in this surgery actually asks for. TYPES.checkin is the maximum;
-// a surgery can ask fewer times and record fewer things, never more.
-export const checkinConfig = (surgery) => {
-  const slots = checkinSlots(surgery);
-  const wanted = surgery?.checkin_measures?.length
-    ? CHECKIN_MEASURES.filter((m) => surgery.checkin_measures.includes(m.key))
+// The check-in belongs to the patient, not to a surgery. How often you are
+// asked how you feel, and what you are asked, does not change because a second
+// operation was added. TYPES.checkin is the maximum; a patient can ask fewer
+// times and record fewer things, never more.
+export const checkinConfig = (patient) => {
+  const slots = checkinSlots(patient);
+  const wanted = patient?.checkin_measures?.length
+    ? CHECKIN_MEASURES.filter((m) => patient.checkin_measures.includes(m.key))
     : CHECKIN_MEASURES;
   const byKey = Object.fromEntries(TYPES.checkin.fields.map((f) => [f.key, f]));
   return {

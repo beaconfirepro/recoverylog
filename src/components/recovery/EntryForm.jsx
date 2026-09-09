@@ -13,17 +13,17 @@ import BodyMap from "./BodyMap";
 import CheckinStack from "./CheckinStack";
 
 export default function EntryForm({ type, entry, onSave, onCancel, onDelete, saving }) {
-  const { activeSurgery } = usePatient();
+  const { patient } = usePatient();
   const garments = useLibrary("Garment");
   const medGroups = useLibrary("MedGroup");
-  // The check-in is the one type a surgery reshapes: how often it asks and
+  // The check-in is the one type the patient reshapes: how often it asks and
   // what it records. Every other type is the same for everyone.
-  const cfg = type === PINNED ? checkinConfig(activeSurgery) : TYPES[type];
+  const cfg = type === PINNED ? checkinConfig(patient) : TYPES[type];
   const [time, setTime] = useState(entry?.entry_time || nowTime());
   const [data, setData] = useState(() => {
     const base = { ...(entry?.data || {}) };
     if (!entry) {
-      if (type === PINNED) base.slot = base.slot || defaultSlot(checkinSlots(activeSurgery));
+      if (type === PINNED) base.slot = base.slot || defaultSlot(checkinSlots(patient));
       if (type === "rest") base.state = base.state || "Sleeping";
       if (type === "movement") base.kind = base.kind || "Walk";
       if (type === "compression") base.action = base.action || "on";
