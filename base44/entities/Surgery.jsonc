@@ -6,30 +6,6 @@
       "description": "Hidden from the picker but its days are kept.",
       "type": "boolean"
     },
-    "checkin_measures": {
-      "description": "Which measures the check-in records: pain, nausea, swelling, energy, mood, mobility. Empty or absent means all of them. A surgery can ask for fewer, never more.",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "checkin_slots": {
-      "description": "How many times a day this surgery checks in, and when. Empty or absent means the built-in four.",
-      "items": {
-        "properties": {
-          "label": {
-            "description": "Chip shown on the check-in form, e.g. 'Waking'.",
-            "type": "string"
-          },
-          "time": {
-            "description": "When this check-in is due, HH:MM. Picks the slot for you when the form opens.",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "type": "array"
-    },
     "fever_threshold": {
       "type": "number"
     },
@@ -108,30 +84,9 @@
     "patient_id",
     "label"
   ],
-  "type": "object",
   "rls": {
-    "read": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
-    },
     "create": {
       "data.patient_id": "{{user.data.patient_id}}"
-    },
-    "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
     },
     "delete": {
       "$or": [
@@ -142,6 +97,27 @@
           "data.patient_id": "{{user.data.patient_id}}"
         }
       ]
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
     }
-  }
+  },
+  "type": "object"
 }
