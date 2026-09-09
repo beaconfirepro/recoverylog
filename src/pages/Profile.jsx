@@ -3,10 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { Check, Plus, X } from "lucide-react";
 import { todayStr, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
-import { usePatient, displayName, trackedTypes, sameEmail } from "@/lib/PatientContext";
-import { useCareTeam } from "@/lib/careTeam";
+import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
 import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
-import { THEMES, useTheme } from "@/lib/theme";
 import {
   TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, checkinSlots,
   NUTRIENTS, BODYWORK_GOAL, nutrientUnit
@@ -18,51 +16,12 @@ import TimeInput from "@/components/recovery/TimeInput";
 
 export default function Profile() {
   const { user, logout } = useAuth();
-  const { theme, choose } = useTheme();
   const { me, patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
-  const { team, reload: loadTeam } = useCareTeam();
-  const [removing, setRemoving] = useState(null);
-  const [invite, setInvite] = useState({ email: "", first_name: "", last_name: "" });
-  const [inviteError, setInviteError] = useState("");
   const [from, setFrom] = useState(todayStr());
   const [to, setTo] = useState(todayStr());
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
-
-  const addMember = async () => {
-    const email = invite.email.trim().toLowerCase();
-    if (!email || !invite.first_name.trim() || !invite.last_name.trim()) {
-      setInviteError("Email, first name and last name are all needed.");
-      return;
-    }
-    if (team.some((m) => sameEmail(m.email, email))) {
-      setInviteError("That email is already on the care team.");
-      return;
-    }
-    setInviteError("");
-    await base44.entities.AppUser.create({
-      patient_id: patientId,
-      kind: "team_member",
-      email,
-      first_name: invite.first_name.trim(),
-      last_name: invite.last_name.trim(),
-      can_write: true,
-      // Copied onto their row so they can match against it. Row security does
-      // not let an unlinked account read the patient's own row.
-      match_first_name: patient.first_name || "",
-      match_last_name: patient.last_name || "",
-      match_dob: patient.dob || null
-    });
-    setInvite({ email: "", first_name: "", last_name: "" });
-    loadTeam();
-  };
-
-  const removeMember = async (id) => {
-    await base44.entities.AppUser.delete(id);
-    setRemoving(null);
-    loadTeam();
-  };
 
   // Tracking settings belong to a surgery, not the person: a knee and a tummy
   // tuck do not want the same buttons.
@@ -393,112 +352,6 @@ export default function Profile() {
 
       {isOwner && <MedGroupLibrary />}
 
-      {isOwner && (
-        <div className="nb-card overflow-hidden">
-          <div className="px-4 py-3 border-b-2 bg-muted">
-            <div className="font-display text-xl uppercase leading-tight break-words">Care team</div>
-            <div className="text-sm font-semibold break-words">
-              They sign in with this email, then confirm your name and date of birth.
-            </div>
-          </div>
-
-          <div className="p-4 space-y-3">
-            {team.length === 0 && (
-              <p className="text-sm text-muted-foreground break-words">
-                Nobody else can see this log. Add someone below and they get in once they confirm your
-                name and date of birth.
-              </p>
-            )}
-            {team.map((m) => (
-              <div key={m.id} className="min-w-0 border-b-2 last:border-b-0 pb-2 last:pb-0 space-y-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold truncate">{displayName(m) || m.email}</div>
-                    <div className="text-[11px] font-semibold text-muted-foreground truncate">
-                      {m.email}{m.can_write === false ? " · read only" : ""}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setRemoving(m.id)}
-                    className="nb-btn h-11 w-11 shrink-0 bg-card"
-                    aria-label={`Remove ${displayName(m) || m.email}`}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Taking someone off ends their access to the whole log. The
-                    two other destructive things here both ask first; this is
-                    the one that affects another person. */}
-                {removing === m.id && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold break-words">
-                      {displayName(m) || m.email} loses access to your log straight away. You can add them
-                      again later.
-                    </p>
-                    <div className="flex gap-2 min-w-0">
-                      <button
-                        type="button"
-                        className="nb-btn flex-1 min-w-0 h-11 bg-destructive text-destructive-foreground"
-                        onClick={() => removeMember(m.id)}
-                      >
-                        Remove for good
-                      </button>
-                      <button
-                        type="button"
-                        className="nb-btn h-11 px-4 shrink-0 bg-card"
-                        onClick={() => setRemoving(null)}
-                      >
-                        Keep them
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            <div className="grid grid-cols-2 gap-3 min-w-0 pt-1">
-              <Field label="Their email" span>
-                <input
-                  type="email"
-                  value={invite.email}
-                  onChange={(e) => setInvite({ ...invite, email: e.target.value })}
-                  placeholder="name@example.com"
-                  className="nb-input"
-                />
-              </Field>
-              <Field label="Their first name">
-                <input
-                  type="text"
-                  value={invite.first_name}
-                  onChange={(e) => setInvite({ ...invite, first_name: e.target.value })}
-                  className="nb-input"
-                />
-              </Field>
-              <Field label="Their last name">
-                <input
-                  type="text"
-                  value={invite.last_name}
-                  onChange={(e) => setInvite({ ...invite, last_name: e.target.value })}
-                  className="nb-input"
-                />
-              </Field>
-              {inviteError && (
-                <p className="col-span-2 text-sm font-bold text-destructive break-words">{inviteError}</p>
-              )}
-              <button
-                className="col-span-2 nb-btn w-full h-12 bg-accent text-accent-foreground flex items-center justify-center gap-2"
-                onClick={addMember}
-              >
-                <Plus className="w-4 h-4" />
-                Add to care team
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
           <div className="font-display text-xl uppercase leading-tight break-words">Download a PDF</div>
@@ -531,26 +384,6 @@ export default function Profile() {
             {busy ? "Building PDF…" : "Download PDF"}
           </button>
           {done && !busy && <p className="col-span-2 text-sm font-bold text-center">PDF downloaded ✔</p>}
-        </div>
-      </div>
-
-      <div className="nb-card overflow-hidden">
-        <div className="px-4 py-3 border-b-2 bg-muted">
-          <div className="font-display text-xl uppercase leading-tight break-words">Appearance</div>
-                  </div>
-        <div className="p-4 flex gap-1.5">
-          {THEMES.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => choose(t)}
-              aria-pressed={theme === t}
-              className="nb-chip flex-1 justify-center capitalize"
-              style={theme === t ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
-            >
-              {t}
-            </button>
-          ))}
         </div>
       </div>
 
