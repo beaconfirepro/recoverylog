@@ -63,8 +63,6 @@ export default function EntryForm({ type, entry, onSave, onCancel, onDelete, sav
           setField={setField}
           time={time}
           setTime={setTime}
-          note={note}
-          setNote={setNote}
           onSave={onSave}
           onCancel={onCancel}
           onDelete={onDelete}
