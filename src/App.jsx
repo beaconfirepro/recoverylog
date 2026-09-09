@@ -9,6 +9,7 @@ import { PatientProvider, usePatient } from '@/lib/PatientContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ClaimAccess from '@/components/ClaimAccess';
 import ConsentGate from '@/components/legal/ConsentGate';
+import SessionDisclaimer from '@/components/legal/SessionDisclaimer';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import Login from './pages/Login';
@@ -40,7 +41,11 @@ const PatientGate = () => {
       </div>
     );
   }
-  return <ConsentGate>{!linked ? <ClaimAccess /> : <Layout />}</ConsentGate>;
+  return (
+    <ConsentGate>
+      <SessionDisclaimer>{!linked ? <ClaimAccess /> : <Layout />}</SessionDisclaimer>
+    </ConsentGate>
+  );
 };
 
 // A care team member starts on their care page rather than in a log: which
