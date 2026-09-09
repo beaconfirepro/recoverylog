@@ -120,9 +120,10 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
 }
 
 // The check-in asks one thing per screen: the slot and time, then each measure
-// the surgery records, then a note. Everything else in the app stays a form.
-export default function CheckinStack({ cfg, data, setField, time, setTime, note, setNote, onSave, onCancel, onDelete, saving }) {
-  const steps = [...cfg.fields, { key: "note", kind: "note", label: "Note" }];
+// the surgery records. There is no note screen at the end: every measure
+// carries its own note, so a note with nothing attached to it has no place.
+export default function CheckinStack({ cfg, data, setField, time, setTime, onSave, onCancel, onDelete, saving }) {
+  const steps = cfg.fields;
   const [step, setStep] = useState(0);
   const swipeX = useRef(null);
   const current = steps[step];
@@ -180,17 +181,6 @@ export default function CheckinStack({ cfg, data, setField, time, setTime, note,
             <TextField field={current} value={data[current.key]} onChange={(v) => setField(current.key, v)} />
           </div>
         )}
-
-        {current.kind === "note" && (
-          <Field label="Note" span>
-            <textarea
-              className="nb-textarea min-h-[8rem]"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Anything the numbers miss"
-            />
-          </Field>
-        )}
       </div>
 
       <div className="flex gap-2 mt-4 min-w-0">
@@ -200,7 +190,7 @@ export default function CheckinStack({ cfg, data, setField, time, setTime, note,
         {last ? (
           <button
             className="nb-btn flex-1 min-w-0 h-14 bg-primary text-primary-foreground"
-            onClick={() => onSave({ entry_time: time, data, note })}
+            onClick={() => onSave({ entry_time: time, data })}
             disabled={saving}
           >
             {saving ? "Saving…" : "Save"}
