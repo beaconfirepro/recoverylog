@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { CalendarDays, History as HistoryIcon, TrendingUp, UserRound, Users } from "lucide-react";
+import { CalendarDays, History as HistoryIcon, SlidersHorizontal, TrendingUp, UserRound, Users } from "lucide-react";
 import { usePatient, displayName } from "@/lib/PatientContext";
 
 const NAV = [
@@ -9,7 +9,9 @@ const NAV = [
   { to: "/trends", label: "Trends", icon: TrendingUp, match: (p) => p.startsWith("/trends") },
   // Care holds both lists: who is on the team, and the surgeries.
   { to: "/care", label: "Care", icon: Users, match: (p) => p.startsWith("/care") },
-  { to: "/profile", label: "Profile", icon: UserRound, match: (p) => p.startsWith("/profile") }
+  // Setup is how the log is configured. Who you are lives behind the button
+  // in the header, because it is about the person rather than the log.
+  { to: "/profile", label: "Setup", icon: SlidersHorizontal, match: (p) => p.startsWith("/profile") }
 ];
 
 // A tab keeps where you left it. Coming back to History and landing at the top
@@ -42,6 +44,7 @@ export default function Layout() {
       >
         <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center justify-between">
           <span className="font-display uppercase tracking-widest text-sm shrink-0">LipNode</span>
+          <span className="flex items-center gap-2 min-w-0">
           {isOwner ? (
             <span className="text-[10px] font-body opacity-60">one day at a time</span>
           ) : (
@@ -57,6 +60,20 @@ export default function Layout() {
               </span>
             </span>
           )}
+          <Link
+            to="/me"
+            aria-label="You"
+            aria-current={pathname.startsWith("/me") ? "page" : undefined}
+            className="shrink-0 flex items-center justify-center w-8 h-8 border-2 rounded-lg"
+            style={
+              pathname.startsWith("/me")
+                ? { backgroundColor: "hsl(var(--primary))", color: "#fff", borderColor: "hsl(var(--background))" }
+                : { borderColor: "hsl(var(--background))" }
+            }
+          >
+            <UserRound className="w-4 h-4" />
+          </Link>
+          </span>
         </div>
       </header>
 
