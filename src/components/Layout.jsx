@@ -32,6 +32,9 @@ export default function Layout() {
   const navigate = useNavigate();
   const { patient, isOwner } = usePatient();
   const who = displayName(patient);
+  // Her own log greets her. A blank name would leave "Hi !", so it says nothing
+  // rather than something half-written.
+  const greeting = patient?.first_name ? `Hi ${patient.first_name}!` : "";
   useTabScroll(pathname);
 
   return (
@@ -46,7 +49,7 @@ export default function Layout() {
           <span className="font-display uppercase tracking-widest text-sm shrink-0">LipNode</span>
           <span className="flex items-center gap-2 min-w-0">
           {isOwner ? (
-            <span className="text-[10px] font-body opacity-60">one day at a time</span>
+            <span className="text-[10px] font-body opacity-60 truncate">{greeting}</span>
           ) : (
             // A care-team member can be in more than one person's log. Whose it
             // is has to be on screen, not something they infer.
