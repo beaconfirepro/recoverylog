@@ -17,6 +17,7 @@ import {
 import { asRows } from "@/lib/recoveryUtils";
 import { buildRecoveryPdf } from "@/lib/recoveryPdf";
 import Field from "@/components/Field";
+import TimeInput from "@/components/recovery/TimeInput";
 
 const Row = ({ label, value }) => (
   <div className="flex items-baseline justify-between gap-3 py-1.5 border-b-2 last:border-b-0 min-w-0">
@@ -123,18 +124,29 @@ export default function Profile() {
   };
 
   // The check-in is not one of the buttons you turn off, so it is configured
-  // rather than toggled: how often it asks, and what it asks for.
-  const slots = checkinSlots(activeSurgery);
-  const measures = activeSurgery?.checkin_measures?.length
-    ? activeSurgery.checkin_measures
+  // rather than toggled: how often it asks, and what it asks for. It belongs to
+  // the patient rather than a surgery, because how often you are asked how you
+  // feel does not change because a second operation was added.
+  const [savingCheckin, setSavingCheckin] = useState(false);
+  const slots = checkinSlots(patient);
+  const measures = patient?.checkin_measures?.length
+    ? patient.checkin_measures
     : CHECKIN_MEASURES.map((m) => m.key);
 
-  const setSlots = (next) => patchSurgery({ checkin_slots: next });
+  const patchPatient = async (fields) => {
+    if (!patient) return;
+    setSavingCheckin(true);
+    await base44.entities.AppUser.update(patient.id, fields);
+    await refreshPatient();
+    setSavingCheckin(false);
+  };
+
+  const setSlots = (next) => patchPatient({ checkin_slots: next });
 
   const toggleMeasure = (key) => {
     const next = measures.includes(key) ? measures.filter((k) => k !== key) : [...measures, key];
     // Stored in the order the check-in asks, so the form never reshuffles.
-    patchSurgery({ checkin_measures: CHECKIN_MEASURES.filter((m) => next.includes(m.key)).map((m) => m.key) });
+    patchPatient({ checkin_measures: CHECKIN_MEASURES.filter((m) => next.includes(m.key)).map((m) => m.key) });
   };
 
   // A goal turns that tracker's pill into a bar on the day page. Only the three
@@ -244,11 +256,11 @@ export default function Profile() {
 
       <MyLogs />
 
-      {isOwner && activeSurgery && (
+      {isOwner && (
         <div className="nb-card overflow-hidden">
           <div className="px-4 py-3 border-b-2" style={{ backgroundColor: TYPES[PINNED].color, color: "#fff" }}>
             <div className="font-display text-xl uppercase leading-tight break-words">Check-in</div>
-            <div className="text-sm font-semibold break-words">For {activeSurgery.label}.</div>
+            <div className="text-sm font-semibold break-words">The same for every surgery.</div>
           </div>
 
           <div className="p-4 space-y-4">
@@ -265,17 +277,16 @@ export default function Profile() {
                     }
                     className="nb-input flex-1 min-w-0"
                   />
-                  <input
-                    type="time"
+                  <TimeInput
+                    small
                     value={slot.time || ""}
-                    onChange={(e) => setSlots(slots.map((x, j) => (j === i ? { ...x, time: e.target.value } : x)))}
-                    className="nb-input w-32 shrink-0"
+                    onChange={(t) => setSlots(slots.map((x, j) => (j === i ? { ...x, time: t } : x)))}
                   />
                   <button
                     type="button"
                     aria-label={`Remove ${slot.label || "this time"}`}
                     onClick={() => setSlots(slots.filter((_, j) => j !== i))}
-                    disabled={savingTracking || slots.length === 1}
+                    disabled={savingCheckin || slots.length === 1}
                     className="nb-btn w-11 shrink-0 bg-card"
                   >
                     <X className="w-4 h-4" />
@@ -285,7 +296,7 @@ export default function Profile() {
               <button
                 type="button"
                 onClick={() => setSlots([...slots, { label: "", time: "" }])}
-                disabled={savingTracking}
+                disabled={savingCheckin}
                 className="nb-btn w-full h-11 bg-accent text-accent-foreground flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
@@ -304,7 +315,7 @@ export default function Profile() {
                     key={m.key}
                     type="button"
                     onClick={() => toggleMeasure(m.key)}
-                    disabled={savingTracking || (measures.length === 1 && measures.includes(m.key))}
+                    disabled={savingCheckin || (measures.length === 1 && measures.includes(m.key))}
                     className="nb-chip"
                     style={measures.includes(m.key) ? { backgroundColor: TYPES[PINNED].color, color: "#fff" } : {}}
                   >

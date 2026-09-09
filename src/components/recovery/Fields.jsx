@@ -3,6 +3,7 @@ import { Image } from "@/components/ui/image";
 import { Loader2, Minus, Plus, Upload, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import Field from "@/components/Field";
+import TimeInput from "@/components/recovery/TimeInput";
 import DrugLookup from "./DrugLookup";
 import {
   BRISTOL, HUNGER_COLORS, HUNGER_LEVELS, INCISION_LEVELS, INCISION_SYMPTOMS,
@@ -201,18 +202,12 @@ export const showTime = (v) => {
   return `${H % 12 === 0 ? 12 : H % 12}:${pad(M)} ${H < 12 ? "AM" : "PM"}`;
 };
 
-// The browser's own time field: type it, or use the keypad it puts up. It opens
-// on now because that is what almost every entry wants, and there is nothing
-// else to press.
+// Hour, minutes, AM or PM. It starts on now, because that is what almost every
+// entry wants.
 export function TimeField({ label, value, onChange, span }) {
   return (
     <Field label={label} span={span}>
-      <input
-        type="time"
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="nb-input"
-      />
+      <TimeInput value={value} onChange={onChange} />
     </Field>
   );
 }
