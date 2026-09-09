@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { TYPES, PINNED, checkinConfig, checkinSlots, defaultSlot } from "@/lib/recovery";
+import { TYPES, PINNED, checkinConfig, checkinSlots, defaultSlot, measurementSpots } from "@/lib/recovery";
 import { usePatient } from "@/lib/PatientContext";
 import { useLibrary } from "@/lib/library";
 import { nowTime } from "@/lib/dates";
@@ -109,7 +109,15 @@ export default function EntryForm({ type, entry, onSave, onCancel, onDelete, sav
           case "incisions":
             return <IncisionsField key={f.key} field={f} areas={areas} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "measurements":
-            return <MeasurementsField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
+            return (
+              <MeasurementsField
+                key={f.key}
+                field={f}
+                value={data[f.key]}
+                onChange={(v) => setField(f.key, v)}
+                spots={measurementSpots(patient)}
+              />
+            );
           case "nutrients":
             return <NutrientsField key={f.key} field={f} value={data[f.key]} onChange={(v) => setField(f.key, v)} />;
           case "garment":
