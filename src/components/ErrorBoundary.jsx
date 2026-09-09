@@ -11,7 +11,7 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error("Recovery Log crashed:", error, info?.componentStack);
+    console.error("LipNode crashed:", error, info?.componentStack);
   }
 
   render() {

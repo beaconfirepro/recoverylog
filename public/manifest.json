@@ -1,6 +1,6 @@
 {
-  "name": "Recovery Log",
-  "short_name": "Recovery",
+  "name": "LipNode",
+  "short_name": "LipNode",
   "description": "A post-surgery log: what you tracked, day by day, in a form a surgeon can read.",
   "start_url": "/",
   "scope": "/",
