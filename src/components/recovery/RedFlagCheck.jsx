@@ -3,6 +3,7 @@ import { AlertTriangle, Check, Sparkles } from "lucide-react";
 import { RED_FLAG_ITEMS } from "@/lib/recovery";
 import { nowTime } from "@/lib/dates";
 import { base44 } from "@/api/base44Client";
+import TimeInput from "@/components/recovery/TimeInput";
 
 export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
   // A suggestion fills a question she has not answered herself. Once she
@@ -129,11 +130,10 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
               {ans === "yes" && (
                 <div className="mt-1.5 pl-2 space-y-1.5">
                   <div className="flex items-center gap-2 min-w-0">
-                    <input
-                      type="time"
+                    <TimeInput
+                      small
                       value={det?.time || ""}
-                      onChange={(e) => patch(item.key, { time: e.target.value })}
-                      className="nb-input w-32 h-9 shrink-0"
+                      onChange={(t) => patch(item.key, { time: t })}
                     />
                     <button
                       className="nb-chip h-9 text-xs"

@@ -4,6 +4,7 @@ import { usePatient } from "@/lib/PatientContext";
 import { todayStr, postOpLabel, fullDate } from "@/lib/dates";
 import { Plus } from "lucide-react";
 import Field from "@/components/Field";
+import TimeInput from "@/components/recovery/TimeInput";
 
 const BLANK = {
   label: "",
@@ -145,7 +146,7 @@ export default function SurgeryInfo() {
               <input type="date" value={editing.surgery_date ?? ""} onChange={text("surgery_date")} className="nb-input" />
             </Field>
             <Field label="Surgery time">
-              <input type="time" value={editing.surgery_time ?? ""} onChange={text("surgery_time")} className="nb-input" />
+              <TimeInput value={editing.surgery_time ?? ""} onChange={(t) => set("surgery_time", t)} />
             </Field>
 
             <Field label="Procedure" span>

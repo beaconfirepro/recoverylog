@@ -17,6 +17,7 @@ import {
 import { asRows } from "@/lib/recoveryUtils";
 import { buildRecoveryPdf } from "@/lib/recoveryPdf";
 import Field from "@/components/Field";
+import TimeInput from "@/components/recovery/TimeInput";
 
 const Row = ({ label, value }) => (
   <div className="flex items-baseline justify-between gap-3 py-1.5 border-b-2 last:border-b-0 min-w-0">
@@ -265,11 +266,10 @@ export default function Profile() {
                     }
                     className="nb-input flex-1 min-w-0"
                   />
-                  <input
-                    type="time"
+                  <TimeInput
+                    small
                     value={slot.time || ""}
-                    onChange={(e) => setSlots(slots.map((x, j) => (j === i ? { ...x, time: e.target.value } : x)))}
-                    className="nb-input w-32 shrink-0"
+                    onChange={(t) => setSlots(slots.map((x, j) => (j === i ? { ...x, time: t } : x)))}
                   />
                   <button
                     type="button"
