@@ -5,7 +5,7 @@ import { nowTime } from "@/lib/dates";
 import { base44 } from "@/api/base44Client";
 import TimeInput from "@/components/recovery/TimeInput";
 
-export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
+export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite = true }) {
   // A suggestion fills a question she has not answered herself. Once she
   // answers one, hers is the answer: the day's entries never overwrite it.
   const [answers, setAnswers] = useState(() => {
@@ -115,6 +115,7 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
                     className="nb-chip h-9 text-xs"
                     style={ans === "no" ? { backgroundColor: "#06D6A0" } : {}}
                     onClick={() => setAns(item.key, "no")}
+                    disabled={!canWrite}
                   >
                     No
                   </button>
@@ -122,6 +123,7 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
                     className="nb-chip h-9 text-xs"
                     style={ans === "yes" ? { backgroundColor: "hsl(var(--destructive))", color: "#fff" } : {}}
                     onClick={() => setAns(item.key, "yes")}
+                    disabled={!canWrite}
                   >
                     Yes
                   </button>
@@ -139,6 +141,7 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
                       className="nb-chip h-9 text-xs"
                       style={det?.office_called ? { backgroundColor: "hsl(var(--secondary))", color: "#fff" } : {}}
                       onClick={() => patch(item.key, { office_called: !det?.office_called })}
+                      disabled={!canWrite}
                     >
                       Office called
                     </button>
@@ -150,6 +153,7 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
                     value={det?.note || ""}
                     onChange={(e) => patch(item.key, { note: e.target.value })}
                     placeholder="What happens next"
+                    readOnly={!canWrite}
                   />
                 </div>
               )}
@@ -158,9 +162,11 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved }) {
         })}
       </div>
 
-      <button className="nb-btn w-full h-14 bg-primary text-primary-foreground mt-4" onClick={save} disabled={saving}>
-        {saving ? "Saving…" : "Save red flag check"}
-      </button>
+      {canWrite && (
+        <button className="nb-btn w-full h-14 bg-primary text-primary-foreground mt-4" onClick={save} disabled={saving}>
+          {saving ? "Saving…" : "Save red flag check"}
+        </button>
+      )}
     </div>
   );
 }

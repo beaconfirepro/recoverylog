@@ -33,7 +33,8 @@ export default function ClaimAccess() {
       setBusy(false);
       return;
     }
-    await base44.auth.updateMe({ patient_id: invite.patient_id });
+    // Read only: a care team member never carries a write claim.
+    await base44.auth.updateMe({ patient_id: invite.patient_id, write_patient_id: null });
     // The link lives on the account, not on the row, so re-read the account.
     // Without this the write lands but the screen keeps its old copy of the
     // user, reads patient_id as unset, and sits here as if nothing happened.
@@ -53,8 +54,7 @@ export default function ClaimAccess() {
       kind: "patient",
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
-      dob: form.dob,
-      can_write: true
+      dob: form.dob
     });
     // A patient row points at itself, and the id does not exist until the row
     // does. PatientContext links the account on the reload.

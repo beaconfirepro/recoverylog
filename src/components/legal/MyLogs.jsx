@@ -39,7 +39,7 @@ export default function MyLogs() {
                 <span className="flex-1 min-w-0">
                   <span className="block nb-label truncate">{labelFor(g)}</span>
                   <span className="block text-xs font-semibold text-muted-foreground truncate">
-                    {g.own ? "Patient" : g.row.can_write === false ? "Read only" : "Can edit"}
+                    {g.own ? "Patient" : "Read only"}
                   </span>
                 </span>
                 {open ? (

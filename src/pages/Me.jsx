@@ -23,7 +23,7 @@ const Row = ({ label, value }) => (
 // the person reading it.
 export default function Me() {
   const { user, logout } = useAuth();
-  const { me, patient, isOwner, canWrite, refreshPatient } = usePatient();
+  const { me, patient, isOwner, refreshPatient } = usePatient();
   const { team } = useCareTeam();
   const { theme, choose } = useTheme();
 
@@ -93,7 +93,7 @@ export default function Me() {
           <Row label="Signed in as" value={user?.email} />
           <Row
             label="Your access"
-            value={isOwner ? "Patient, full access" : canWrite ? "Care team, can edit" : "Care team, read only"}
+            value={isOwner ? "Patient, full access" : "Care team, read only"}
           />
         </div>
         <div className="px-4 pb-4">
