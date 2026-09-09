@@ -30,7 +30,11 @@ export function GarmentLibrary() {
 
   return (
     <Card title="My garments" blurb="Offered on the Compression tracker.">
-      {rows.length === 0 && <p className="text-sm text-muted-foreground">Nothing here yet.</p>}
+      {rows.length === 0 && (
+        <p className="text-sm text-muted-foreground break-words">
+          No garments saved. Add one and it is offered on the Compression tracker.
+        </p>
+      )}
       <div className="space-y-1.5">
         {rows.map((g) => (
           <div key={g.id} className="flex items-center gap-2 min-w-0">
@@ -189,7 +193,11 @@ export function MedGroupLibrary() {
       title="My med groups"
       blurb="Offered on the Med tracker, with everything in the group already ticked."
     >
-      {rows.length === 0 && <p className="text-sm text-muted-foreground">Nothing here yet.</p>}
+      {rows.length === 0 && (
+        <p className="text-sm text-muted-foreground break-words">
+          No med groups yet. Add one and it is offered on the Med tracker, with everything in it ticked.
+        </p>
+      )}
       <div className="space-y-2">
         {rows.map((g) => (
           <Group key={g.id} group={g} update={update} remove={remove} />

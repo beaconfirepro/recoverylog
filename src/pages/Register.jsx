@@ -21,7 +21,7 @@ export default function Register() {
     e.preventDefault();
     setError("");
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("The two passwords are different. Retype them so they match.");
       return;
     }
     setLoading(true);
@@ -29,7 +29,7 @@ export default function Register() {
       await base44.auth.register({ email, password });
       setShowOtp(true);
     } catch (err) {
-      setError(err.message || "Registration failed");
+      setError(err.message || "We couldn't create the account. If you already have one, log in instead.");
     } finally {
       setLoading(false);
     }
@@ -45,7 +45,7 @@ export default function Register() {
       }
       window.location.href = safeReturnTo();
     } catch (err) {
-      setError(err.message || "Invalid verification code");
+      setError(err.message || "That code isn't right. Check the six digits, or ask for a new code.");
     } finally {
       setLoading(false);
     }
@@ -60,7 +60,7 @@ export default function Register() {
         description: "Check your email for the new code.",
       });
     } catch (err) {
-      setError(err.message || "Failed to resend code");
+      setError(err.message || "We couldn't send another code. Try again in a moment.");
     }
   };
 
@@ -106,7 +106,7 @@ export default function Register() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Verifying...
+              Verifying…
             </>
           ) : (
             "Verify"
@@ -126,7 +126,7 @@ export default function Register() {
     <AuthLayout
       icon={UserPlus}
       title="Create your account"
-      subtitle="Sign up to get started"
+      subtitle="Takes about a minute."
       footer={
         <>
           Already have an account?{" "}
@@ -216,7 +216,7 @@ export default function Register() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating account...
+              Creating account…
             </>
           ) : (
             "Create account"

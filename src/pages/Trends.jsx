@@ -70,7 +70,7 @@ export default function Trends() {
       <h1 className="font-display text-2xl uppercase">Trends</h1>
       {rows.length === 0 && (
         <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card">
-          Not enough check-ins yet.
+          Trends need a few days of check-ins. Keep logging and the lines appear here.
         </p>
       )}
 

@@ -32,6 +32,7 @@ export default function Profile() {
   const { theme, choose } = useTheme();
   const { me, patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const { team, reload: loadTeam } = useCareTeam();
+  const [removing, setRemoving] = useState(null);
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
   const [dob, setDob] = useState("");
@@ -100,6 +101,7 @@ export default function Profile() {
 
   const removeMember = async (id) => {
     await base44.entities.AppUser.delete(id);
+    setRemoving(null);
     loadTeam();
   };
 
@@ -222,7 +224,7 @@ export default function Profile() {
               <Field label="Patient last name">
                 <input type="text" value={last} onChange={(e) => setLast(e.target.value)} className="nb-input" />
               </Field>
-              <Field label="Date of birth" span hint="your care team confirm this">
+              <Field label="Date of birth" span hint="your care team confirms this to get in">
                 <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="nb-input" />
               </Field>
               <button
@@ -230,7 +232,7 @@ export default function Profile() {
                 onClick={savePatient}
                 disabled={savingPatient || !first.trim() || !last.trim()}
               >
-                {savingPatient ? "Saving…" : "Save patient"}
+                {savingPatient ? "Saving…" : "Save my details"}
               </button>
             </div>
           ) : (
@@ -487,23 +489,58 @@ export default function Profile() {
           </div>
 
           <div className="p-4 space-y-3">
-            {team.length === 0 && <p className="text-sm text-muted-foreground">No one else has access yet.</p>}
+            {team.length === 0 && (
+              <p className="text-sm text-muted-foreground break-words">
+                Nobody else can see this log. Add someone below and they get in once they confirm your
+                name and date of birth.
+              </p>
+            )}
             {team.map((m) => (
-              <div key={m.id} className="flex items-center gap-2 min-w-0 border-b-2 last:border-b-0 pb-2 last:pb-0">
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold truncate">{displayName(m) || m.email}</div>
-                  <div className="text-[11px] font-semibold text-muted-foreground truncate">
-                    {m.email}{m.can_write === false ? " · read only" : ""}
+              <div key={m.id} className="min-w-0 border-b-2 last:border-b-0 pb-2 last:pb-0 space-y-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold truncate">{displayName(m) || m.email}</div>
+                    <div className="text-[11px] font-semibold text-muted-foreground truncate">
+                      {m.email}{m.can_write === false ? " · read only" : ""}
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setRemoving(m.id)}
+                    className="nb-btn h-11 w-11 shrink-0 bg-card"
+                    aria-label={`Remove ${displayName(m) || m.email}`}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeMember(m.id)}
-                  className="nb-btn h-11 w-11 shrink-0 bg-card"
-                  aria-label={`Remove ${displayName(m) || m.email}`}
-                >
-                  <X className="w-4 h-4" />
-                </button>
+
+                {/* Taking someone off ends their access to the whole log. The
+                    two other destructive things here both ask first; this is
+                    the one that affects another person. */}
+                {removing === m.id && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold break-words">
+                      {displayName(m) || m.email} loses access to your log straight away. You can add them
+                      again later.
+                    </p>
+                    <div className="flex gap-2 min-w-0">
+                      <button
+                        type="button"
+                        className="nb-btn flex-1 min-w-0 h-11 bg-destructive text-destructive-foreground"
+                        onClick={() => removeMember(m.id)}
+                      >
+                        Remove for good
+                      </button>
+                      <button
+                        type="button"
+                        className="nb-btn h-11 px-4 shrink-0 bg-card"
+                        onClick={() => setRemoving(null)}
+                      >
+                        Keep them
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
 

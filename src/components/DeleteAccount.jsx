@@ -24,7 +24,7 @@ export default function DeleteAccount({ isOwner }) {
       if (res?.error) throw new Error(res.error);
       logout();
     } catch (e) {
-      setError(e.message || "The account could not be deleted. Try again, or contact support.");
+      setError(e.message || "We couldn't delete the account. Try again in a moment.");
       setBusy(false);
     }
   };

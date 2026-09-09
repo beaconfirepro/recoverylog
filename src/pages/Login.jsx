@@ -23,7 +23,7 @@ export default function Login() {
       await base44.auth.loginViaEmailPassword(email, password);
       window.location.href = returnTo;
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError(err.message || "That email and password don't match. Check for a typo, or reset your password.");
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export default function Login() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Logging in...
+              Logging in…
             </>
           ) : (
             "Log in"

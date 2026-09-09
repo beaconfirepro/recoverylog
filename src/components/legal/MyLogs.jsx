@@ -15,13 +15,19 @@ export default function MyLogs() {
   const [leaving, setLeaving] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  if (groups.length < 2) return null;
+  // Shown whenever this account is on someone's care team, not only when there
+  // are two logs to choose between. The leave control lives in here, and access
+  // someone gave you has to be yours to hand back from the first log onwards.
+  const onATeam = groups.some((g) => !g.own);
+  if (!onATeam) return null;
 
   return (
     <div className="nb-card overflow-hidden">
       <div className="px-4 py-3 border-b-2 bg-muted">
-        <div className="font-display text-xl uppercase leading-tight break-words">Logs you can open</div>
-        <div className="text-sm font-semibold break-words">{groups.length} logs. One is open at a time.</div>
+        <div className="font-display text-xl uppercase leading-tight break-words">Logs you help with</div>
+        <div className="text-sm font-semibold break-words">
+          {groups.length === 1 ? "One log." : `${groups.length} logs. One is open at a time.`}
+        </div>
       </div>
 
       <div className="p-4 space-y-2">

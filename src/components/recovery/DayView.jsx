@@ -157,7 +157,7 @@ export default function DayView({ date, startCollapsed }) {
         <h2 className="font-heading text-sm uppercase tracking-wider">The page</h2>
         {sorted.length === 0 && (
           <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card">
-            Nothing logged yet.
+            Nothing logged today. Tap a tracker above to start.
           </p>
         )}
         {sorted.length > 0 && (

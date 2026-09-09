@@ -26,11 +26,33 @@ export const hasPicked = () => {
   }
 };
 
-// An invite that has never been opened says nothing about the patient. Whoever
-// holds the email should not learn a name and a date of birth from it: they
-// should have to already know them.
 const nameOf = (row) =>
   [row.match_first_name, row.match_last_name].filter(Boolean).join(" ").trim() || "This patient";
+
+// An invitation you have not opened yet shows enough to recognise the one you
+// were expecting, and not enough to learn a name and a date of birth from an
+// email you should not have. First initial, the last name's first and last
+// letter, and the year's last two digits: "D. D___e · ··/··/74".
+const maskedName = (row) => {
+  const first = String(row.match_first_name ?? "").trim();
+  const last = String(row.match_last_name ?? "").trim();
+  const initial = first ? `${first[0].toUpperCase()}.` : "";
+  // A two-letter surname would otherwise print in full, which is the whole
+  // name given away.
+  const surname =
+    last.length > 2
+      ? `${last[0]}${"_".repeat(last.length - 2)}${last[last.length - 1]}`
+      : last.length === 2
+        ? `${last[0]}_`
+        : last;
+  return [initial, surname].filter(Boolean).join(" ") || "A patient";
+};
+
+const maskedDob = (row) => {
+  const dob = String(row.match_dob ?? "").trim();
+  // Stored as YYYY-MM-DD. Only the last two digits of the year survive.
+  return dob.length >= 4 ? `··/··/${dob.slice(2, 4)}` : "";
+};
 
 function Claim({ row, onDone, onCancel }) {
   const { claimMembership } = usePatient();
@@ -44,7 +66,7 @@ function Claim({ row, onDone, onCancel }) {
     setError("");
     const ok = await claimMembership(row, form);
     if (!ok) {
-      setError("Those patient details do not match this invitation.");
+      setError("Those details don't match the invitation. Check the spelling and the date of birth with the patient.");
       setBusy(false);
       return;
     }
@@ -165,7 +187,10 @@ export default function Care() {
                     className="w-full text-left border-2 rounded-xl bg-background p-3 flex items-center gap-2 min-w-0"
                   >
                     <span className="flex-1 min-w-0">
-                      <span className="block nb-label truncate">Patient invite</span>
+                      <span className="block nb-label truncate">
+                        {maskedName(g.row)}
+                        {maskedDob(g.row) ? ` · ${maskedDob(g.row)}` : ""}
+                      </span>
                       <span className="block text-xs font-semibold text-muted-foreground break-words">
                         Confirm the patient's name and date of birth to open it
                       </span>

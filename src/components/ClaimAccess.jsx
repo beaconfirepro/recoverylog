@@ -29,7 +29,7 @@ export default function ClaimAccess() {
       String(invite.match_dob ?? "") === String(form.dob);
 
     if (!matches) {
-      setError("Those patient details do not match your invitation.");
+      setError("Those details don't match your invitation. Check the spelling and the date of birth with the patient.");
       setBusy(false);
       return;
     }
