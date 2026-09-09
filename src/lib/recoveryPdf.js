@@ -36,10 +36,30 @@ const safe = (v) =>
 const R_CARD = 2.5;
 const R_CHIP = 1.5;
 
+// The goal keys a surgery stores, in words a surgeon reads.
+const GOAL_LABELS = {
+  water: "Water (oz)",
+  protein: "Protein (g)",
+  bodywork: "Body work (min)"
+};
+
 const M = 40;
 const LEGEND_H = 30;
 
-export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patientName }) {
+export function buildRecoveryPdf({
+  from,
+  to,
+  days,
+  entries,
+  patientName,
+  // One or many. A single-surgery export passes one; groupBy decides whether
+  // several are printed one after another or interleaved by date.
+  surgeries = [],
+  team = [],
+  garments = [],
+  medGroups = [],
+  groupBy = "surgery"
+}) {
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -126,7 +146,112 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
     doc.text(safe(s), x, y, opts.align ? { align: opts.align } : undefined);
   };
 
+  // A ruled heading. Sections are what make a twenty-page export navigable.
+  const section = (title) => {
+    ensure(34);
+    y += 6;
+    doc.setDrawColor(...INK);
+    doc.setLineWidth(1.2);
+    doc.line(L, y, R, y);
+    y += 14;
+    text(title.toUpperCase(), L, { bold: true, size: 12 });
+    y += 12;
+  };
+
+  const kv = (label, value) => {
+    if (value == null || value === "") return;
+    ensure(14);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...GREY);
+    doc.text(safe(label.toUpperCase()), L + 4, y);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...INK);
+    const lines = doc.splitTextToSize(safe(String(value)), R - L - 130);
+    lines.forEach((ln, i) => {
+      if (i) ensure(11);
+      doc.text(ln, L + 126, y);
+      if (i < lines.length - 1) y += 11;
+    });
+    y += 13;
+  };
+
+  const bullets = (items) => {
+    if (!items.length) {
+      ensure(13);
+      text("None recorded.", L + 4, { size: 9, color: GREY });
+      y += 12;
+      return;
+    }
+    items.forEach((line) => {
+      ensure(13);
+      text(`\u2022  ${line}`, L + 6, { size: 9.5 });
+      y += 12;
+    });
+  };
+
+  // A plain line chart. One scale, ticks that name values the data reaches, and
+  // every series drawn inside the box.
+  const chart = (title, labels, series, max) => {
+    const h = 96;
+    ensure(h + 40);
+    text(title, L, { bold: true, size: 9.5 });
+    y += 8;
+    const x0 = L + 26;
+    const x1 = R - 8;
+    const y0 = y;
+    const y1 = y + h;
+    const span = Math.max(labels.length - 1, 1);
+    const px = (i) => x0 + (i * (x1 - x0)) / span;
+    const py = (v) => y1 - (Math.max(0, Math.min(v, max)) / max) * h;
+
+    doc.setDrawColor(...GREY);
+    doc.setLineWidth(0.4);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(...GREY);
+    [0, max / 2, max].forEach((v) => {
+      doc.line(x0, py(v), x1, py(v));
+      doc.text(String(Math.round(v)), L + 20, py(v) + 2, { align: "right" });
+    });
+
+    series.forEach((sr) => {
+      doc.setDrawColor(...sr.color);
+      doc.setLineWidth(1.2);
+      let prev = null;
+      sr.values.forEach((v, i) => {
+        if (v == null) {
+          prev = null;
+          return;
+        }
+        const cur = [px(i), py(v)];
+        if (prev) doc.line(prev[0], prev[1], cur[0], cur[1]);
+        prev = cur;
+      });
+    });
+
+    y = y1 + 10;
+    doc.setFontSize(6.5);
+    doc.setTextColor(...GREY);
+    doc.text(safe(labels[0] || ""), x0, y);
+    if (labels.length > 1) doc.text(safe(labels[labels.length - 1]), x1, y, { align: "right" });
+    y += 10;
+
+    let lx = L + 2;
+    series.forEach((sr) => {
+      lx += chip(lx, y, sr.name.toUpperCase(), sr.color, sr.dark);
+    });
+    y += 16;
+  };
+
   startPage(true);
+
+  const surgeryById = {};
+  surgeries.forEach((sx) => {
+    surgeryById[sx.id] = sx;
+  });
+  const dateOf = (surgeryId) => surgeryById[surgeryId]?.surgery_date || null;
 
   const dayMap = {};
   days.forEach((d) => {
@@ -137,14 +262,127 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
     (byDate[e.date] = byDate[e.date] || []).push(e);
   });
 
+  // ---- Reference: the standing facts a surgeon needs beside the days ----
+
+  if (surgeries.length) {
+    section(surgeries.length === 1 ? "Surgery" : "Surgeries");
+    surgeries.forEach((sx, i) => {
+      if (i) y += 4;
+      ensure(16);
+      text(sx.label || "Unnamed surgery", L, { bold: true, size: 10.5 });
+      y += 13;
+      kv("Date", sx.surgery_date ? `${fullDate(sx.surgery_date)}${sx.surgery_time ? ` at ${sx.surgery_time}` : ""}` : "not set");
+      kv("Procedure", sx.procedure);
+      kv("Surgeon", sx.surgeon);
+      kv("Office", sx.office_phone);
+      kv("Call if fever over", sx.fever_threshold != null ? `${sx.fever_threshold} F` : null);
+      kv("Notes", sx.notes);
+
+      const goals = sx.goals || {};
+      const goalLines = Object.entries(goals)
+        .filter(([, v]) => v != null && v !== "")
+        .map(([k, v]) => `${GOAL_LABELS[k] || k}: ${v}`);
+      if (goalLines.length) kv("Goals", goalLines.join("   ·   "));
+    });
+  }
+
+  if (team.length) {
+    section("Care team");
+    bullets(
+      team.map((m) => {
+        const name = [m.first_name, m.last_name].filter(Boolean).join(" ").trim();
+        return `${name || m.email}${name ? `  ${m.email}` : ""}${m.can_write === false ? "  (read only)" : ""}`;
+      })
+    );
+  }
+
+  if (garments.length) {
+    section("Garments");
+    bullets(garments.map((g) => `${g.name}${g.size ? `  ${g.size}` : ""}`));
+  }
+
+  if (medGroups.length) {
+    section("Med groups");
+    medGroups.forEach((g) => {
+      ensure(14);
+      text(g.name, L + 2, { bold: true, size: 9.5 });
+      y += 12;
+      bullets(
+        (g.medicines || []).map((m) =>
+          [m.name, m.dose, m.reason].filter(Boolean).join("  ·  ")
+        )
+      );
+    });
+  }
+
+  // ---- Trends: the same three lines and two totals the app plots ----
+
+  const trendDates = dateRange(from, to).filter((d) => (byDate[d] || []).length);
+  if (trendDates.length > 1) {
+    const avg = (date, key) => {
+      const vals = (byDate[date] || [])
+        .filter((e) => e.type === "checkin" && Number.isFinite(e.data?.[key]))
+        .map((e) => e.data[key]);
+      return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    };
+    const labels = trendDates.map((d) => fullDate(d));
+
+    section("Trends");
+    chart(
+      "Check-in scores, daily average",
+      labels,
+      [
+        { name: "Pain", color: RED, dark: false, values: trendDates.map((d) => avg(d, "pain")) },
+        { name: "Energy", color: LIME, dark: true, values: trendDates.map((d) => avg(d, "energy")) },
+        { name: "Mood", color: PURPLE, dark: false, values: trendDates.map((d) => avg(d, "mood")) }
+      ],
+      10
+    );
+
+    const totalsFor = (d) => computeTotals(sortEntries(byDate[d] || []), d);
+    chart(
+      "Water and protein against a 100 target",
+      labels,
+      [
+        { name: "Water oz", color: PINK, dark: false, values: trendDates.map((d) => totalsFor(d).water) },
+        { name: "Protein g", color: PURPLE, dark: false, values: trendDates.map((d) => totalsFor(d).protein) }
+      ],
+      100
+    );
+  }
+
+  if (surgeries.length || team.length || garments.length || medGroups.length || trendDates.length > 1) {
+    section("Day by day");
+  }
+
   let printed = 0;
 
-  dateRange(from, to).forEach((date) => {
-    const day = dayMap[date];
-    const dayEntries = sortEntries(byDate[date] || []);
+  // Grouped, each surgery gets its own run of days. Interleaved, every day is in
+  // date order and the band says which surgery it belongs to. With one surgery
+  // the two are the same thing.
+  const groups =
+    groupBy === "surgery" && surgeries.length > 1
+      ? surgeries.map((sx) => ({ surgery: sx, ids: new Set([sx.id]) }))
+      : [{ surgery: null, ids: null }];
+
+  groups.forEach((group, gi) => {
+    if (group.surgery) {
+      if (gi) y += 6;
+      section(group.surgery.label || "Unnamed surgery");
+    }
+
+    dateRange(from, to).forEach((date) => {
+    const inGroup = (r) => !group.ids || group.ids.has(r.surgery_id);
+    const day = dayMap[date] && inGroup(dayMap[date]) ? dayMap[date] : null;
+    const dayEntries = sortEntries((byDate[date] || []).filter(inGroup));
     if (!day && dayEntries.length === 0) return;
     printed += 1;
     const totals = computeTotals(dayEntries, date);
+
+    // Which surgery this day counts from. In a group it is the group's; in a
+    // timeline it is whatever the day itself is filed under.
+    const sxId = group.surgery?.id || day?.surgery_id || dayEntries[0]?.surgery_id || null;
+    const sx = surgeryById[sxId] || null;
 
     ensure(46);
     doc.setFillColor(...PINK);
@@ -152,12 +390,18 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
     doc.setLineWidth(1.4);
     doc.roundedRect(L, y, R - L, 24, R_CARD, R_CARD, "FD");
     y += 16;
-    text((postOpLabel(surgeryDate, date) || "Surgery date not set").toUpperCase(), L + 12, {
+    text((postOpLabel(dateOf(sxId), date) || "Surgery date not set").toUpperCase(), L + 12, {
       bold: true,
       size: 11.5,
       color: [255, 255, 255]
     });
-    text(fullDate(date), R - 12, { bold: true, size: 8.5, color: [255, 255, 255], align: "right" });
+    text(
+      surgeries.length > 1 && !group.surgery && sx?.label
+        ? `${sx.label}  ·  ${fullDate(date)}`
+        : fullDate(date),
+      R - 12,
+      { bold: true, size: 8.5, color: [255, 255, 255], align: "right" }
+    );
     y += 19;
 
     const vitals = [
@@ -275,6 +519,7 @@ export function buildRecoveryPdf({ from, to, surgeryDate, days, entries, patient
     });
 
     y += 8;
+    });
   });
 
   if (printed === 0) {

@@ -26,6 +26,8 @@ export default function Profile() {
   const { me, patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const [from, setFrom] = useState(todayStr());
   const [to, setTo] = useState(todayStr());
+  const [scope, setScope] = useState("surgery");
+  const [groupBy, setGroupBy] = useState("surgery");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -123,17 +125,34 @@ export default function Profile() {
   const generate = async () => {
     setBusy(true);
     setDone(false);
-    const [days, entries] = await Promise.all([
-      base44.entities.RecoveryDay.filter({ surgery_id: activeSurgeryId }, "date", 500),
-      base44.entities.RecoveryEntry.filter({ surgery_id: activeSurgeryId }, "created_date", 3000)
+    const wanted = scope === "all" ? surgeries : surgeries.filter((sx) => sx.id === activeSurgeryId);
+    // One read per surgery rather than a filter the backend cannot express as
+    // "any of these".
+    const per = await Promise.all(
+      wanted.map((sx) =>
+        Promise.all([
+          base44.entities.RecoveryDay.filter({ surgery_id: sx.id }, "date", 500),
+          base44.entities.RecoveryEntry.filter({ surgery_id: sx.id }, "created_date", 3000)
+        ])
+      )
+    );
+    const [team, garments, medGroups] = await Promise.all([
+      base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 50),
+      base44.entities.Garment.list("sort_order", 100),
+      base44.entities.MedGroup.list("sort_order", 100)
     ]);
+
     const doc = buildRecoveryPdf({
       from,
       to,
-      surgeryDate: activeSurgery?.surgery_date || null,
-      days,
-      entries,
-      patientName: displayName(patient)
+      days: per.flatMap(([d]) => asRows(d)),
+      entries: per.flatMap(([, e]) => asRows(e)),
+      patientName: displayName(patient),
+      surgeries: wanted,
+      team: asRows(team),
+      garments: asRows(garments),
+      medGroups: asRows(medGroups),
+      groupBy
     });
     doc.save(`lipnode-${from}_to_${to}.pdf`);
     setBusy(false);
@@ -375,7 +394,10 @@ export default function Profile() {
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
           <div className="font-display text-xl uppercase leading-tight break-words">Download a PDF</div>
-          <div className="text-sm font-semibold break-words">A day or a range.</div>
+          <div className="text-sm font-semibold break-words">
+            A day or a range. Carries the surgery, goals, care team, garments, med groups, trends,
+            red flags and questions.
+          </div>
         </div>
 
         <div className="p-4 grid grid-cols-2 gap-3 min-w-0">
@@ -385,6 +407,58 @@ export default function Profile() {
           <Field label="To">
             <input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} className="nb-input" />
           </Field>
+
+          {surgeries.length > 1 && (
+            <>
+              <div className="col-span-2 space-y-1.5">
+                <div className="nb-label">Which surgery</div>
+                <div className="flex gap-1.5">
+                  {[
+                    ["surgery", "This one"],
+                    ["all", "All of them"]
+                  ].map(([k, label]) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setScope(k)}
+                      aria-pressed={scope === k}
+                      className="nb-chip flex-1 justify-center"
+                      style={scope === k ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {scope === "all" && (
+                <div className="col-span-2 space-y-1.5">
+                  <div className="nb-label">How to lay them out</div>
+                  <div className="flex gap-1.5">
+                    {[
+                      ["surgery", "By surgery"],
+                      ["timeline", "One timeline"]
+                    ].map(([k, label]) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setGroupBy(k)}
+                        aria-pressed={groupBy === k}
+                        className="nb-chip flex-1 justify-center"
+                        style={groupBy === k ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs font-semibold text-muted-foreground break-words">
+                    By surgery runs each one end to end. One timeline puts every day in date order and
+                    names the surgery on each.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
 
           <p className="col-span-2 text-sm font-semibold text-center break-words">
             {tooWide ? (
