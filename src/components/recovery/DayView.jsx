@@ -177,7 +177,13 @@ export default function DayView({ date, startCollapsed }) {
       <QuestionsCard key={day.id + JSON.stringify(day.questions || [])} day={day} onSaved={load} />
 
       <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
-        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
+        {/* Radix focuses the first field when the dialog opens, which throws the
+            phone keyboard up over the form before you have read it. Focusing the
+            panel instead keeps the trap and leaves the form alone. */}
+        <DialogContent
+          className="max-w-lg max-h-[92vh] overflow-y-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           {dialog && (
             <EntryForm
               type={dialog.entry ? dialog.entry.type : dialog.type}
