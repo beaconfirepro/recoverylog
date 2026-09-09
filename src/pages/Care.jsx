@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, LogOut, Users } from "lucide-react";
+import { ChevronRight, Plus, Users, X } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
-import { usePatient, displayName } from "@/lib/PatientContext";
+import { usePatient, displayName, sameEmail } from "@/lib/PatientContext";
+import { base44 } from "@/api/base44Client";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Field from "@/components/Field";
 import { useCareTeam } from "@/lib/careTeam";
 import Surgeries from "@/components/care/Surgeries";
@@ -112,14 +114,102 @@ function Claim({ row, onDone, onCancel }) {
   );
 }
 
+// Adding someone is a small form, so it opens over the list rather than sending
+// you to another page to do it.
+function AddMember({ patient, patientId, team, onDone, onCancel }) {
+  const [form, setForm] = useState({ email: "", first_name: "", last_name: "" });
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const set = (k) => (e) => {
+    setForm({ ...form, [k]: e.target.value });
+    setError("");
+  };
+
+  const submit = async () => {
+    const email = form.email.trim().toLowerCase();
+    if (!email || !form.first_name.trim() || !form.last_name.trim()) {
+      setError("Email, first name and last name are all needed.");
+      return;
+    }
+    if (team.some((m) => sameEmail(m.email, email))) {
+      setError("That email is already on the care team.");
+      return;
+    }
+    setBusy(true);
+    await base44.entities.AppUser.create({
+      patient_id: patientId,
+      kind: "team_member",
+      email,
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+      can_write: true,
+      // Copied onto their row so they can match against it. Row security does
+      // not let an unlinked account read the patient's own row.
+      match_first_name: patient?.first_name || "",
+      match_last_name: patient?.last_name || "",
+      match_dob: patient?.dob || null
+    });
+    setBusy(false);
+    onDone();
+  };
+
+  return (
+    <div className="min-w-0 space-y-3">
+      <div>
+        <h2 className="font-display text-xl uppercase leading-tight break-words">Add to care team</h2>
+        <p className="text-sm font-semibold break-words">
+          They sign in with this email, then confirm your name and date of birth.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 min-w-0">
+        <Field label="Their email" span>
+          <input
+            type="email"
+            value={form.email}
+            onChange={set("email")}
+            placeholder="name@example.com"
+            className="nb-input"
+          />
+        </Field>
+        <Field label="Their first name">
+          <input type="text" value={form.first_name} onChange={set("first_name")} className="nb-input" />
+        </Field>
+        <Field label="Their last name">
+          <input type="text" value={form.last_name} onChange={set("last_name")} className="nb-input" />
+        </Field>
+      </div>
+
+      {error && <p className="text-sm font-bold text-destructive break-words">{error}</p>}
+
+      <div className="flex gap-2 min-w-0">
+        <button
+          type="button"
+          className="nb-btn flex-1 min-w-0 h-12 bg-primary text-primary-foreground"
+          onClick={submit}
+          disabled={busy}
+        >
+          {busy ? "Adding…" : "Add them"}
+        </button>
+        <button type="button" className="nb-btn h-12 px-4 shrink-0 bg-card" onClick={onCancel} disabled={busy}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Where a care team member starts: the logs they have opened before, and the
 // invites they have not. Everything else in the app is one patient's log, so
 // this is the only screen that shows more than one.
 export default function Care() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const { me, patient, groups, isOwner, switchPatient } = usePatient();
-  const { team } = useCareTeam();
+  const { user } = useAuth();
+  const { me, patient, patientId, groups, isOwner, switchPatient } = usePatient();
+  const { team, reload: loadTeam } = useCareTeam();
+  const [adding, setAdding] = useState(false);
+  const [removing, setRemoving] = useState(null);
   const [claiming, setClaiming] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -212,44 +302,91 @@ export default function Care() {
 
       )}
 
-      {/* Who else can see this log. A patient manages the list in Profile; a
-          care team member is shown it so they know who they are working with. */}
+      {/* Where the care team is managed. It is not in Setup: Setup is how the
+          log is configured, and this is who can see it. */}
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
           <div className="font-display text-xl uppercase leading-tight break-words flex items-center gap-2">
             <Users className="w-5 h-5 shrink-0" /> Care team
           </div>
           <div className="text-sm font-semibold break-words">
-            {isOwner ? "Who can see your log." : `Who else helps ${displayName(patient) || "this patient"}.`}
+            {isOwner
+              ? "They sign in with this email, then confirm your name and date of birth."
+              : `Who else helps ${displayName(patient) || "this patient"}.`}
           </div>
         </div>
 
-        <div className="p-4 space-y-2">
+        <div className="p-4 space-y-3">
           {team.length === 0 && (
             <p className="text-sm text-muted-foreground break-words">
               {isOwner
-                ? "Nobody else can see this log. Add someone in Profile and they get in once they confirm your name and date of birth."
+                ? "Nobody else can see this log. Add someone and they get in once they confirm your name and date of birth."
                 : "Nobody else is on this care team."}
             </p>
           )}
 
           {team.map((m) => (
-            <div key={m.id} className="border-2 rounded-xl bg-background p-3 min-w-0">
-              <div className="nb-label truncate">{displayName(m) || m.email}</div>
-              <div className="text-xs font-semibold text-muted-foreground truncate">{m.email}</div>
-              <div className="text-xs font-semibold text-muted-foreground truncate">
-                {m.can_write === false ? "Read only" : "Can edit"}
+            <div key={m.id} className="min-w-0 border-b-2 last:border-b-0 pb-3 last:pb-0 space-y-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold truncate">{displayName(m) || m.email}</div>
+                  <div className="text-[11px] font-semibold text-muted-foreground truncate">
+                    {m.email}
+                    {m.can_write === false ? " · read only" : ""}
+                  </div>
+                </div>
+                {isOwner && (
+                  <button
+                    type="button"
+                    onClick={() => setRemoving(m.id)}
+                    className="nb-btn h-11 w-11 shrink-0 bg-card"
+                    aria-label={`Remove ${displayName(m) || m.email}`}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
+
+              {/* Taking someone off ends their access to the whole log, so it
+                  asks, the way leaving a team does. */}
+              {removing === m.id && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold break-words">
+                    {displayName(m) || m.email} loses access to your log straight away. You can add them again
+                    later.
+                  </p>
+                  <div className="flex gap-2 min-w-0">
+                    <button
+                      type="button"
+                      className="nb-btn flex-1 min-w-0 h-11 bg-destructive text-destructive-foreground"
+                      onClick={async () => {
+                        await base44.entities.AppUser.delete(m.id);
+                        setRemoving(null);
+                        loadTeam();
+                      }}
+                    >
+                      Remove for good
+                    </button>
+                    <button
+                      type="button"
+                      className="nb-btn h-11 px-4 shrink-0 bg-card"
+                      onClick={() => setRemoving(null)}
+                    >
+                      Keep them
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
 
           {isOwner && (
             <button
               type="button"
-              className="nb-btn w-full h-12 bg-card"
-              onClick={() => navigate("/profile")}
+              className="nb-btn w-full h-12 bg-accent text-accent-foreground flex items-center justify-center gap-2"
+              onClick={() => setAdding(true)}
             >
-              Add or remove people
+              <Plus className="w-4 h-4" /> Add someone
             </button>
           )}
         </div>
@@ -257,18 +394,23 @@ export default function Care() {
 
       <Surgeries />
 
-      <div className="nb-card overflow-hidden">
-        <div className="px-4 py-3 border-b-2 bg-muted">
-          <div className="font-display text-xl uppercase leading-tight break-words">You</div>
-        </div>
-        <div className="p-4 space-y-3">
-          <div className="text-sm font-bold break-words">{displayName(me) || user?.email}</div>
-          <div className="text-xs font-semibold text-muted-foreground break-words">{user?.email}</div>
-          <button className="nb-btn w-full h-12 bg-card flex items-center justify-center gap-2" onClick={() => logout()}>
-            <LogOut className="w-4 h-4" /> Sign out
-          </button>
-        </div>
-      </div>
+      <Dialog open={adding} onOpenChange={(o) => !o && setAdding(false)}>
+        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
+          {adding && (
+            <AddMember
+              patient={patient}
+              patientId={patientId}
+              team={team}
+              onDone={() => {
+                setAdding(false);
+                loadTeam();
+              }}
+              onCancel={() => setAdding(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

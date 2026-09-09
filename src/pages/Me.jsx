@@ -9,6 +9,7 @@ import SignInMethod from "@/components/legal/SignInMethod";
 import LegalSection from "@/components/legal/LegalSection";
 import DeleteAccount from "@/components/DeleteAccount";
 import Field from "@/components/Field";
+import { THEMES, useTheme } from "@/lib/theme";
 
 const Row = ({ label, value }) => (
   <div className="flex items-baseline gap-3 py-1.5 border-b-2 last:border-b-0 min-w-0">
@@ -24,6 +25,7 @@ export default function Me() {
   const { user, logout } = useAuth();
   const { me, patient, isOwner, canWrite, refreshPatient } = usePatient();
   const { team } = useCareTeam();
+  const { theme, choose } = useTheme();
 
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -103,6 +105,27 @@ export default function Me() {
       </div>
 
       <MyLogs />
+
+      <div className="nb-card overflow-hidden">
+        <div className="px-4 py-3 border-b-2 bg-muted">
+          <div className="font-display text-xl uppercase leading-tight break-words">Appearance</div>
+          <div className="text-sm font-semibold break-words">How the app looks on this device.</div>
+        </div>
+        <div className="p-4 flex gap-1.5">
+          {THEMES.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => choose(t)}
+              aria-pressed={theme === t}
+              className="nb-chip flex-1 justify-center capitalize"
+              style={theme === t ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <SignInMethod />
 

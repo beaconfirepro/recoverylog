@@ -126,14 +126,13 @@ export default function Surgeries() {
         <div className="nb-card overflow-hidden">
           <div className={`px-4 py-3 border-b-2 ${editing.surgery_date ? "bg-accent text-accent-foreground" : "bg-muted"}`}>
             <div className="font-display text-xl uppercase leading-tight break-words">
-              {editing.id ? status : "New surgery"}
+              {editing.id ? editing.label || "Unnamed surgery" : "New surgery"}
             </div>
-            {editing.surgery_date && (
-              <div className="text-sm font-semibold break-words">
-                {fullDate(editing.surgery_date)}
-                {editing.surgery_time ? ` · ${editing.surgery_time}` : ""}
-              </div>
-            )}
+            <div className="text-sm font-semibold break-words">
+              {editing.surgery_date
+                ? `${status} · ${fullDate(editing.surgery_date)}${editing.surgery_time ? ` · ${editing.surgery_time}` : ""}`
+                : "Surgery date not set"}
+            </div>
           </div>
 
           <div className="p-4 grid grid-cols-2 gap-3 min-w-0">
