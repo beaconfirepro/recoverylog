@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Image } from "@/components/ui/image";
 import { Loader2, Minus, Plus, Upload, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import Field from "@/components/Field";
@@ -230,7 +229,14 @@ export function FileField({ field, value, onChange }) {
         <input type="file" accept="image/*" className="hidden" onChange={handle} />
       </label>
       {value && (
-        <Image src={value} alt="photo preview" fittingType="fit" className="h-32 w-full border-2 rounded-xl mt-1.5" />
+        // A plain img so the photo keeps its own shape. The transforming Image
+        // needs both box dimensions, and forcing a height on a portrait photo
+        // is what squashed it.
+        <img
+          src={value}
+          alt="photo preview"
+          className="w-full max-h-72 object-contain border-2 rounded-xl mt-1.5 bg-muted"
+        />
       )}
     </Field>
   );
