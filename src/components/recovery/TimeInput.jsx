@@ -47,11 +47,11 @@ export default function TimeInput({ value, onChange, small, className = "" }) {
     if (next !== (value || "")) onChange(next);
   };
 
-  const box = small ? "h-9 w-11 text-sm" : "h-12 w-12";
-  const chip = small ? "h-9 px-2 text-xs" : "h-12 px-3 text-sm";
+  const box = small ? "h-9 w-11 text-sm" : "h-12 w-12 text-base";
+  const chip = small ? "h-9 px-2 text-xs" : "h-12 px-2.5 text-sm";
 
   return (
-    <div className={`flex items-center gap-1.5 min-w-0 ${className}`}>
+    <div className={`flex items-center gap-1.5 min-w-0 max-w-full overflow-hidden ${className}`}>
       <input
         type="text"
         inputMode="numeric"

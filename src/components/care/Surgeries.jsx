@@ -146,10 +146,12 @@ export default function Surgeries() {
               />
             </Field>
 
-            <Field label="Surgery date">
+            <Field label="Surgery date" span>
               <input type="date" value={editing.surgery_date ?? ""} onChange={text("surgery_date")} className="nb-input" />
             </Field>
-            <Field label="Surgery time">
+            {/* Its own row. Hour, minutes and AM/PM do not fit in half of a
+                phone's width, and the AM/PM chips were running off the card. */}
+            <Field label="Surgery time" span>
               <TimeInput value={editing.surgery_time ?? ""} onChange={(t) => set("surgery_time", t)} />
             </Field>
 
