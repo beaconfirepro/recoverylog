@@ -7,7 +7,7 @@ import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
 import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
 import {
   TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, DEFAULT_CHECKIN_SLOTS,
-  NUTRIENTS, BODYWORK_GOAL, nutrientUnit
+  MEASUREMENTS, NUTRIENTS, BODYWORK_GOAL, nutrientUnit
 } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
 import { buildRecoveryPdf } from "@/lib/recoveryPdf";
@@ -26,6 +26,7 @@ export default function Profile() {
   const { me, patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const [from, setFrom] = useState(todayStr());
   const [to, setTo] = useState(todayStr());
+  const [newSpot, setNewSpot] = useState("");
   const [scope, setScope] = useState("surgery");
   const [groupBy, setGroupBy] = useState("surgery");
   const [busy, setBusy] = useState(false);
@@ -76,6 +77,25 @@ export default function Profile() {
   const setSlots = (next) => {
     setSlotsLocal(next);
     patchPatient({ checkin_slots: next });
+  };
+
+  // Empty means the built-in set, the same way the check-in slots work.
+  const spots = patient?.measurements?.length
+    ? patient.measurements.filter(Boolean)
+    : MEASUREMENTS.map((m) => m.name);
+  const custom = spots.filter((name) => !MEASUREMENTS.some((m) => m.name === name));
+
+  const toggleSpot = (name) => {
+    const next = spots.includes(name) ? spots.filter((s) => s !== name) : [...spots, name];
+    if (!next.length) return;
+    patchPatient({ measurements: next });
+  };
+
+  const addSpot = () => {
+    const name = newSpot.trim();
+    if (!name || spots.includes(name)) return;
+    setNewSpot("");
+    patchPatient({ measurements: [...spots, name] });
   };
 
   const toggleMeasure = (key) => {
@@ -383,6 +403,80 @@ export default function Profile() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {isOwner && (
+        <div className="nb-card overflow-hidden">
+          <div className="px-4 py-3 border-b-2 bg-muted">
+            <div className="font-display text-xl uppercase leading-tight break-words">Measurements</div>
+            <div className="text-sm font-semibold break-words">
+              What the measurements tracker asks for, in this order.
+            </div>
+          </div>
+
+          <div className="p-4 space-y-3">
+            <div className="flex flex-wrap gap-1.5">
+              {MEASUREMENTS.map((m) => {
+                const on = spots.includes(m.name);
+                return (
+                  <button
+                    key={m.name}
+                    type="button"
+                    onClick={() => toggleSpot(m.name)}
+                    aria-pressed={on}
+                    disabled={savingCheckin || (on && spots.length === 1)}
+                    className="nb-chip"
+                    style={on ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
+                  >
+                    {m.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Anything she measures that the built-in list does not name. Single
+                figure: nothing else knows a spot she invented has two sides. */}
+            {custom.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {custom.map((name) => (
+                  <span key={name} className="nb-chip gap-1.5" style={{ backgroundColor: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}>
+                    {name}
+                    <button
+                      type="button"
+                      aria-label={`Remove ${name}`}
+                      onClick={() => toggleSpot(name)}
+                      disabled={savingCheckin}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2 min-w-0">
+              <input
+                type="text"
+                value={newSpot}
+                onChange={(e) => setNewSpot(e.target.value)}
+                placeholder="e.g. Left ankle bone"
+                className="nb-input flex-1 min-w-0"
+              />
+              <button
+                type="button"
+                className="nb-btn h-11 px-4 shrink-0 bg-accent text-accent-foreground flex items-center gap-1.5"
+                onClick={addSpot}
+                disabled={savingCheckin || !newSpot.trim()}
+              >
+                <Plus className="w-4 h-4" /> Add
+              </button>
+            </div>
+
+            <p className="text-xs font-semibold text-muted-foreground break-words">
+              Turning one off keeps what is already recorded.
+            </p>
           </div>
         </div>
       )}

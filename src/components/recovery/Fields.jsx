@@ -495,7 +495,7 @@ export function IncisionsField({ field, areas, value, onChange }) {
 
 // The tape-measure sheet. Written as text rather than a number because these
 // come off a tape in eighths: "16 3/8" is the reading, not 16.375.
-export function MeasurementsField({ field, value, onChange }) {
+export function MeasurementsField({ field, value, onChange, spots = MEASUREMENTS }) {
   const vals = value || {};
   const setPair = (name, side, v) =>
     onChange({ ...vals, [name]: { ...(vals[name] || {}), [side]: v } });
@@ -508,7 +508,7 @@ export function MeasurementsField({ field, value, onChange }) {
         <span className="nb-label w-24 shrink-0 text-center text-muted-foreground">Left</span>
       </div>
       <div className="space-y-1.5">
-        {MEASUREMENTS.map((m) => (
+        {spots.map((m) => (
           <div key={m.name} className="flex items-center gap-2 min-w-0">
             <span className="flex-1 min-w-0 truncate text-sm font-semibold">{m.name}</span>
             {m.pair ? (

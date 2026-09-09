@@ -529,6 +529,17 @@ export const DEFAULT_CHECKIN_SLOTS = [
   { label: "Bedtime", time: "22:00" }
 ];
 
+// Which spots this patient measures, in the order she chose. A name from the
+// built-in list keeps its left-and-right pair; one she typed herself is a single
+// figure, because nothing else knows it has two sides. Empty means the built-in
+// set: a list nobody has narrowed is not a list of nothing.
+export const measurementSpots = (patient) => {
+  const saved = (Array.isArray(patient?.measurements) ? patient.measurements : []).filter(Boolean);
+  if (!saved.length) return MEASUREMENTS;
+  const known = Object.fromEntries(MEASUREMENTS.map((m) => [m.name, m]));
+  return saved.map((name) => known[name] || { name });
+};
+
 const namedSlots = (slots) => (slots || []).filter((s) => s && s.label && String(s.label).trim());
 
 export const checkinSlots = (patient) => {
