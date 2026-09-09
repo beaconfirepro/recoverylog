@@ -1,4 +1,4 @@
-import { BODY_PARTS } from "@/lib/recovery";
+import { BODY_PARTS } from "@/lib/bodyMap";
 
 // The day's entries, read against the red-flag list. Only "yes" is ever
 // suggested: an entry that says something worrying is evidence, but the absence

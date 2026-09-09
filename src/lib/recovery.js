@@ -91,10 +91,6 @@ const LEVELS = {
 // The parts a body map offers, front and back on the same list: a finding is
 // recorded against a named part, not against a pair of coordinates, so it can
 // be counted and compared across days.
-export const BODY_PARTS = [
-  "Neck", "Chest", "Abdomen", "Left flank", "Right flank", "Upper back", "Lower back",
-  "Hips", "Left thigh", "Right thigh", "Left calf", "Right calf", "Left arm", "Right arm"
-];
 
 export const SKIN_SYMPTOMS = ["Bruising", "Edema", "Numbness", "Flaking", "Pale or cold", "Rash / hives"];
 
