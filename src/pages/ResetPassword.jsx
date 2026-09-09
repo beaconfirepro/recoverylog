@@ -33,7 +33,7 @@ export default function ResetPassword() {
     e.preventDefault();
     setError("");
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("The two passwords are different. Retype them so they match.");
       return;
     }
     setLoading(true);
@@ -41,7 +41,7 @@ export default function ResetPassword() {
       await base44.auth.resetPassword({ resetToken, newPassword });
       window.location.href = "/login";
     } catch (err) {
-      setError(err.message || "Failed to reset password");
+      setError(err.message || "We couldn't reset your password. The link may have expired — request a new one.");
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ export default function ResetPassword() {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="password" className="nb-label">New Password</label>
+          <label htmlFor="password" className="nb-label">New password</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <input
@@ -96,7 +96,7 @@ export default function ResetPassword() {
           </div>
         </div>
         <div className="space-y-2">
-          <label htmlFor="confirm" className="nb-label">Confirm Password</label>
+          <label htmlFor="confirm" className="nb-label">Confirm password</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <input
@@ -115,7 +115,7 @@ export default function ResetPassword() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Resetting...
+              Resetting…
             </>
           ) : (
             "Reset password"

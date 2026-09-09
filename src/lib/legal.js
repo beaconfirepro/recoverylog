@@ -51,7 +51,7 @@ export function useLegal() {
       // the reason away left "could not load" and nothing to act on.
       setDocs([]);
       setMine([]);
-      setError(e.message || "The terms could not be loaded.");
+      setError(e.message || "We couldn't load the terms. Try again in a moment.");
     }
     setLoading(false);
   }, [isAuthenticated, user]);
