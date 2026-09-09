@@ -32,3 +32,30 @@ npx skills add base44/skills
 - Prefer the existing Base44 CLI workflow over adding new npm scripts for Base44-specific tasks.
 - Reuse the existing SDK client and Vite plugin patterns before adding new Base44 integration paths.
 - Run the relevant checks from `package.json` before finishing code changes.
+
+## Shipping (read this before saying anything is done)
+
+Merging is not shipping. `create_checkpoint` records the commit and does not
+reliably publish: on 9 September 2026 nine checkpoints across two and a half
+hours left the site on a bundle from before any of them.
+
+What publishes is the platform's own build, kicked with
+`mcp__Base44__edit_base44_app`. Use an instruction that changes nothing:
+
+> Rebuild and publish the app from the current main branch. Do not change any
+> code, styling, entities or copy — the repository is already correct and every
+> change is merged. Just build and deploy what is in the repo now.
+
+After every merge, without being asked:
+
+1. Sync the sandbox: `git merge --ff-only origin/main`.
+2. Create a checkpoint.
+3. Kick the build with `edit_base44_app`.
+4. **Verify it is live.** Fetch `https://lipnode.app/` and check that the
+   `/assets/index-*.js` hash has changed from the one before the merge. The
+   served `index.html` is small and changes immediately when anything
+   publishes, so a stale hash there means nothing shipped.
+5. Still stale after the builder reports finished → kick it again. Do not
+   report the work as done, and do not hand the publish back to the user.
+
+Never tell the user a change is on the site without step 4.
