@@ -261,7 +261,29 @@
      under it. It fades in from the left to match the heading's entrance. */
   .orient-backdrop {
     box-shadow: 0 0 0 3px hsl(var(--accent)), 0 0 0 100vmax hsl(0 0% 55% / 0.7);
-    animation: orient-backdrop-in 280ms ease-out, orient-ring 1s ease-in-out 5;
+    animation: orient-backdrop-in 280ms ease-out, orient-ring 1s ease-in-out 3.75;
+  }
+  /* The highlight runs 3750ms and spends the back half of that leaving. A
+     fraction of an iteration is deliberate: the breathing stays at one second,
+     which is the rhythm, and the ring is already fading when it stops
+     mid-breath, so where it stops cannot be seen.
+
+     The fade is asked for under no-preference rather than left to the global
+     reduced-motion rule, which cuts every duration to 0.01ms. With `forwards`
+     that would snap the whole highlight to invisible at 1875ms and halve the
+     time it is readable for the people least well served by losing it. They
+     get the steady ring for the full 3750ms instead, and it goes when the
+     element does. */
+  @media (prefers-reduced-motion: no-preference) {
+    .orient-backdrop {
+      animation:
+        orient-backdrop-in 280ms ease-out,
+        orient-ring 1s ease-in-out 3.75,
+        orient-out 1875ms ease-in 1875ms forwards;
+    }
+  }
+  @keyframes orient-out {
+    to { opacity: 0; }
   }
   /* Breathes between two widths rather than in and out of nothing. The old
      ring spent a third of every second fully transparent, so the thing meant

@@ -3,12 +3,18 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 // The orientation checklist passes an `orient` key in navigation state when a
 // step sends the patient to another page. This finds the matching [data-orient]
-// heading, scrolls it into view, then for about five seconds lays a light gray
-// screen over everything else and pulses a lime ring around the edge of what is
-// left lit, so it stands out.
+// heading, scrolls it into view, then lays a light gray screen over everything
+// else and pulses a lime ring around the edge of what is left lit, so it stands
+// out. It holds for under four seconds and spends the back half of that fading.
 // It polls briefly because some targets (the day page) only mount after a data
 // load, and clears the navigation state when it is done so a back/forward does
 // not replay it.
+
+// How long the highlight stays up. The CSS fade in `.orient-backdrop` is timed
+// off this number — it starts at the halfway mark and runs to the end — so the
+// two have to move together.
+const HIGHLIGHT_MS = 3750;
+
 export function useOrientationHighlight() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -54,7 +60,7 @@ export function useOrientationHighlight() {
         el?.classList.remove("orient-target", "orient-enter");
         removeBackdrop();
         clearState();
-      }, 5000);
+      }, HIGHLIGHT_MS);
     };
 
     const run = () => {
