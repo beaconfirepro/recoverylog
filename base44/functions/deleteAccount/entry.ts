@@ -47,11 +47,9 @@ export default async function (req: Request): Promise<Response> {
     // of it and is only leaving.
     const mine = (await admin.entities.AppUser.filter({ email: user.email }, "created_date", 20)) || [];
     const patientRow = mine.find((r: { kind?: string }) => r.kind === "patient");
-    // Null unless she is the patient. It used to fall back to user.patient_id,
-    // which on a care team member's account is someone else's log.
-    const patientId = patientRow?.id || null;
+    const patientId = patientRow?.id || user.patient_id || null;
 
-    if (patientId) {
+    if (patientRow && patientId) {
       for (const entity of PATIENT_OWNED) {
         deleted[entity] = await purge(admin, entity, { patient_id: patientId });
       }
@@ -60,11 +58,7 @@ export default async function (req: Request): Promise<Response> {
       deleted.AppUser = await purge(admin, "AppUser", { patient_id: patientId });
     }
 
-    // Her own row was in the group purge above, and deleting it twice is a 404.
-    // That throw landed after the log was already gone but before the login was
-    // deleted, so the screen said it failed while most of it had succeeded.
-    // What is left here is any team she is on besides her own.
-    for (const row of mine.filter((r: { patient_id?: string }) => r.patient_id !== patientId)) {
+    for (const row of mine) {
       await admin.entities.AppUser.delete(row.id);
       deleted.AppUser = (deleted.AppUser || 0) + 1;
     }
