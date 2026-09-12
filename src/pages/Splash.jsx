@@ -1,0 +1,161 @@
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
+import { Mail, Lock, Loader2, ChevronDown } from "lucide-react";
+import GoogleIcon from "@/components/GoogleIcon";
+import { safeReturnTo } from "@/lib/authReturnTo";
+import PhoneFrame from "@/components/splash/PhoneFrame";
+import DayMockup from "@/components/splash/DayMockup";
+import CheckinMockup from "@/components/splash/CheckinMockup";
+import HistoryMockup from "@/components/splash/HistoryMockup";
+import TrendsMockup from "@/components/splash/TrendsMockup";
+
+// The public face of the log. Anyone can land here, read what it is, see how it
+// works, and sign in at the bottom — without a token being asked for first.
+export default function Splash() {
+  const returnTo = safeReturnTo();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await base44.auth.loginViaEmailPassword(email, password);
+      window.location.href = returnTo;
+    } catch (err) {
+      setError(err.message || "That email and password don't match.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = () => base44.auth.loginWithProvider("google", returnTo);
+  const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+
+  const steps = [
+    { title: "Tap, don't type", body: "Big tiles for water, meds, meals, pain and more. One tap opens a form tuned for one hand.", mockup: <DayMockup /> },
+    { title: "One question at a time", body: "The check-in asks how you feel one measure at a time, so a rough morning is still four taps.", mockup: <CheckinMockup /> },
+    { title: "The day writes itself", body: "Every entry lands on a timeline. Daily totals and red flags are drawn from what you logged.", mockup: <HistoryMockup /> },
+    { title: "Show your surgeon", body: "Trends turn into charts, and days turn into a PDF ready for the follow-up visit.", mockup: <TrendsMockup /> }
+  ];
+
+  const features = [
+    "Day zero is the anchor. Every label counts from surgery.",
+    "Red flags watch the log for you and say what to do next.",
+    "Your care team can read along — invite them from the app.",
+    "Export a day or a range as a PDF for the visit."
+  ];
+
+  return (
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      {/* Top bar */}
+      <header className="sticky top-0 z-20 border-b-2 bg-background" style={{ paddingTop: "var(--safe-t)" }}>
+        <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center justify-between">
+          <span className="font-display uppercase tracking-widest text-sm">LipNode</span>
+          <button className="nb-btn h-9 px-4 bg-primary text-primary-foreground text-xs" onClick={() => scrollTo("login")}>
+            Sign in
+          </button>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="max-w-lg mx-auto px-4 pt-8 pb-10 text-center space-y-4">
+        <h1 className="font-display text-4xl uppercase leading-none break-words">
+          A recovery log<br />that reads like a diary.
+        </h1>
+        <p className="text-sm font-semibold text-muted-foreground break-words max-w-md mx-auto">
+          LipNode is a post-surgery log: what you tracked, day by day, in a form a surgeon can read.
+          One tap to log. One page a day. One PDF for the visit.
+        </p>
+        <div className="flex flex-col items-center gap-3 pt-2">
+          <button className="nb-btn h-14 px-8 bg-primary text-primary-foreground" onClick={() => scrollTo("login")}>
+            Get started
+          </button>
+          <button className="flex items-center gap-1 text-xs font-semibold text-muted-foreground" onClick={() => scrollTo("how")}>
+            See how it works <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how" className="max-w-lg mx-auto px-4 py-8 space-y-10">
+        <h2 className="font-display text-2xl uppercase text-center">How it works</h2>
+        {steps.map((s, i) => (
+          <div key={s.title} className="space-y-4">
+            <PhoneFrame label={s.title}>{s.mockup}</PhoneFrame>
+            <p className="text-sm font-semibold text-center break-words max-w-md mx-auto">{s.body}</p>
+            {i < steps.length - 1 && <div className="flex justify-center"><ChevronDown className="w-5 h-5 text-muted-foreground" /></div>}
+          </div>
+        ))}
+      </section>
+
+      {/* Features */}
+      <section className="max-w-lg mx-auto px-4 py-8 space-y-3">
+        <h2 className="font-display text-2xl uppercase text-center">What it keeps track of</h2>
+        <div className="nb-card p-4 space-y-2">
+          {features.map((f) => (
+            <div key={f} className="flex items-start gap-2">
+              <span className="shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-bold" style={{ backgroundColor: "hsl(var(--accent))", borderColor: "hsl(var(--foreground))" }}>✓</span>
+              <p className="text-sm font-semibold break-words">{f}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Login */}
+      <section id="login" className="max-w-lg mx-auto px-4 py-10 space-y-4">
+        <div className="text-center space-y-1">
+          <h2 className="font-display text-2xl uppercase">Sign in</h2>
+          <p className="text-sm font-semibold text-muted-foreground">Open your log.</p>
+        </div>
+        <div className="nb-card p-6 min-w-0 space-y-4">
+          <button className="nb-btn w-full h-14 bg-card" onClick={handleGoogle}>
+            <GoogleIcon className="w-5 h-5 mr-2" />
+            Continue with Google
+          </button>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-3 text-muted-foreground">or</span></div>
+          </div>
+          {error && <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm break-words">{error}</div>}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="sp-email" className="nb-label">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                <input id="sp-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="nb-input pl-10" required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="sp-password" className="nb-label">Password</label>
+                <Link to="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                <input id="sp-password" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="nb-input pl-10" required />
+              </div>
+            </div>
+            <button type="submit" className="nb-btn w-full h-14 bg-primary text-primary-foreground" disabled={loading}>
+              {loading ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Logging in…</>) : "Log in"}
+            </button>
+          </form>
+          <p className="text-center text-sm text-muted-foreground">
+            New here?{" "}
+            <Link to={"/register" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")} className="text-primary font-medium hover:underline">Create an account</Link>
+          </p>
+        </div>
+      </section>
+
+      <footer className="max-w-lg mx-auto px-4 pb-10 pt-4 text-center">
+        <p className="text-xs text-muted-foreground break-words">
+          LipNode is a personal log, not a medical record. Nothing here is sent to your surgeon.
+        </p>
+      </footer>
+    </div>
+  );
+}

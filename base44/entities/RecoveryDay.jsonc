@@ -50,27 +50,12 @@
   "required": [
     "date"
   ],
-  "type": "object",
   "rls": {
     "create": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
+      "data.patient_id": "{{user.data.write_patient_id}}"
     },
     "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
+      "data.patient_id": "{{user.data.write_patient_id}}"
     },
     "read": {
       "$or": [
@@ -83,14 +68,8 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
+      "data.patient_id": "{{user.data.write_patient_id}}"
     }
-  }
+  },
+  "type": "object"
 }

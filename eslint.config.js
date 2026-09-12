@@ -15,7 +15,11 @@ export default [
     ...pluginJs.configs.recommended,
     ...pluginReact.configs.flat.recommended,
     languageOptions: {
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        __BUILD_COMMIT__: "readonly",
+        __BUILD_TIME__: "readonly",
+      },
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: "module",

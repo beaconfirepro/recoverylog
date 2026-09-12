@@ -24,6 +24,7 @@ import Trends from './pages/Trends';
 import Profile from './pages/Profile';
 import Me from './pages/Me';
 import Care, { hasPicked } from './pages/Care';
+import Splash from './pages/Splash';
 
 // A signed-in account still has to resolve to a patient before the log opens:
 // the owner's own record, or one an invite linked it to. The terms come first,
@@ -34,7 +35,7 @@ const PatientGate = () => {
   const { linked, loadingPatient } = usePatient();
   // No token is not an error the app raises, so without this a signed-out
   // visitor fell through to an app route instead of the login screen.
-  if (authChecked && !isAuthenticated) return <Navigate to="/login" replace />;
+  if (authChecked && !isAuthenticated) return <Navigate to="/splash" replace />;
   if (loadingPatient) {
     return (
       <div className="fixed inset-0 flex items-center justify-center">
@@ -43,9 +44,9 @@ const PatientGate = () => {
     );
   }
   return (
-    <ConsentGate>
-      <SessionDisclaimer>{!linked ? <ClaimAccess /> : <Layout />}</SessionDisclaimer>
-    </ConsentGate>
+    <SessionDisclaimer>
+      <ConsentGate>{!linked ? <ClaimAccess /> : <Layout />}</ConsentGate>
+    </SessionDisclaimer>
   );
 };
 
@@ -84,6 +85,7 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
+      <Route path="/splash" element={<Splash />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

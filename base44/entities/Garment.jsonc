@@ -1,46 +1,31 @@
 {
   "name": "Garment",
-  "type": "object",
-  "required": [
-    "name"
-  ],
   "properties": {
     "name": {
       "description": "What she calls it, e.g. 'Marena stage 1' or 'Faja'.",
-      "type": "string"
-    },
-    "size": {
-      "description": "The size as printed on the garment, e.g. '2XL'.",
       "type": "string"
     },
     "patient_id": {
       "description": "Patient this garment belongs to.",
       "type": "string"
     },
+    "size": {
+      "description": "The size as printed on the garment, e.g. '2XL'.",
+      "type": "string"
+    },
     "sort_order": {
       "type": "number"
     }
   },
+  "required": [
+    "name"
+  ],
   "rls": {
     "create": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
+      "data.patient_id": "{{user.data.write_patient_id}}"
     },
     "delete": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
+      "data.patient_id": "{{user.data.write_patient_id}}"
     },
     "read": {
       "$or": [
@@ -53,14 +38,8 @@
       ]
     },
     "update": {
-      "$or": [
-        {
-          "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.patient_id": "{{user.data.patient_id}}"
-        }
-      ]
+      "data.patient_id": "{{user.data.write_patient_id}}"
     }
-  }
+  },
+  "type": "object"
 }

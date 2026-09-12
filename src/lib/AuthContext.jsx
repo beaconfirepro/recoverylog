@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
     // logout() clears the token and then goes wherever it is pointed. Pointing
     // it at the current page reloaded an app route with no token, which lands
     // you signed out but still inside the app. Send it to the login screen.
-    base44.auth.logout(`${window.location.origin}/login`);
+    base44.auth.logout(`${window.location.origin}/splash`);
   };
 
   const navigateToLogin = () => {
