@@ -18,7 +18,8 @@ import { save } from "@/lib/saving";
 import Field from "@/components/Field";
 import TimeInput from "@/components/recovery/TimeInput";
 import Surgeries from "@/components/care/Surgeries";
-import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
+import { useOrientationHighlight, useOrientationTour } from "@/lib/useOrientationHighlight";
+import TourOverlay from "@/components/orientation/TourOverlay";
 import { useDismissKeyboard } from "@/lib/dismissKeyboard";
 
 // What the patient actually has saved, blank rows and all. The check-in form
@@ -31,6 +32,8 @@ const savedSlots = (patient) => {
 export default function Profile() {
   const navigate = useNavigate();
   useOrientationHighlight();
+  // Setup is where the checklist sends people, so it is where the tours run.
+  const { tour, clear: clearTour } = useOrientationTour();
   // Setup is the one screen that is mostly numeric fields.
   useDismissKeyboard();
   const { user, logout } = useAuth();
@@ -237,6 +240,8 @@ export default function Profile() {
 
   return (
     <div className="space-y-4">
+      {tour && <TourOverlay tour={tour} onDone={clearTour} />}
+
       <h1 className="font-display text-2xl uppercase">Setup</h1>
 
       {/* Care is about people. This is about records, and it sits here because
@@ -266,14 +271,23 @@ export default function Profile() {
 
       {isOwner && (
         <div className="nb-card overflow-hidden">
-          <div className="px-4 py-3 border-b-2" style={{ backgroundColor: TYPES[PINNED].color, color: "#fff" }}>
+          {/* The tour lights the header, title and subtitle together: "the same
+              for every surgery" is the half that answers what the card is. */}
+          <div
+            data-tour="checkin-card"
+            className="px-4 py-3 border-b-2"
+            style={{ backgroundColor: TYPES[PINNED].color, color: "#fff" }}
+          >
             <div className="font-display text-xl uppercase leading-tight break-words" data-orient="checkins">Check-in</div>
             <div className="text-sm font-semibold break-words">The same for every surgery.</div>
           </div>
 
           <div className="p-4 space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-2" data-tour="checkin-times">
               <div className="nb-label">How often, and when</div>
+              {/* Only the first row carries checkin-remove. The tour circles one
+                  of these and one is the point: the line says "delete any you
+                  don't need", not all of them. */}
               {slots.map((slot, i) => (
                 <div key={i} className="flex gap-2 min-w-0">
                   <input
@@ -295,6 +309,7 @@ export default function Profile() {
                     aria-label={`Remove ${slot.label || "this time"}`}
                     onClick={() => setSlots(slots.filter((_, j) => j !== i))}
                     disabled={savingCheckin || slots.length === 1}
+                    data-tour={i === 0 ? "checkin-remove" : undefined}
                     className="nb-btn w-11 shrink-0 bg-card"
                   >
                     <X className="w-4 h-4" />
@@ -305,6 +320,7 @@ export default function Profile() {
                 type="button"
                 onClick={() => setSlots([...slots, { label: "", time: "" }])}
                 disabled={savingCheckin}
+                data-tour="checkin-add"
                 className="nb-btn w-full h-11 bg-accent text-accent-foreground flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
@@ -315,7 +331,7 @@ export default function Profile() {
               </p>
             </div>
 
-            <div className="border-t-2 pt-3 space-y-2">
+            <div className="border-t-2 pt-3 space-y-2" data-tour="checkin-records">
               <div className="nb-label">What it records</div>
               <div className="flex flex-wrap gap-1.5">
                 {CHECKIN_MEASURES.map((m) => (

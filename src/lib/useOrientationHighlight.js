@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { hasTour, tourFor } from "@/lib/tour";
 
 // The orientation checklist passes an `orient` key in navigation state when a
 // step sends the patient to another page. This finds the matching [data-orient]
@@ -22,7 +23,11 @@ export function useOrientationHighlight() {
   const fired = useRef(null);
 
   useEffect(() => {
-    if (!key || fired.current === key) return;
+    // An item with a tour is not highlighted: the tour lights its own targets,
+    // and a ring round the heading underneath it would be a second answer to
+    // the same question. It also leaves the navigation state alone, because the
+    // tour is what clears it when it finishes.
+    if (!key || hasTour(key) || fired.current === key) return;
     let el = null;
     let pollTimer = null;
     let startTimer = null;
@@ -126,4 +131,19 @@ export function useOrientationHighlight() {
       removeBackdrop();
     };
   }, [key, navigate, location.pathname]);
+}
+
+// The tour the current navigation asked for, if there is one, and the way to
+// put the navigation state back afterwards. Separate from the highlight above
+// because the two are alternatives: a key has a tour or it has a ring, never
+// both.
+export function useOrientationTour() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const key = location.state?.orient;
+  const clear = useCallback(
+    () => navigate(location.pathname, { replace: true, state: null }),
+    [navigate, location.pathname]
+  );
+  return { tour: key ? tourFor(key) : null, clear };
 }
