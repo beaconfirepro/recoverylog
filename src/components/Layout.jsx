@@ -4,6 +4,7 @@ import { CalendarDays, History as HistoryIcon, SlidersHorizontal, TrendingUp, Us
 import { usePatient, displayName } from "@/lib/PatientContext";
 import { announceNow, currentAnnouncements, subscribeAnnouncements } from "@/lib/announce";
 import { RESTORE_TIMEOUT_MS, canRestore, worthRestoring } from "@/lib/tabScroll";
+import { useOffline } from "@/lib/offline";
 
 const NAV = [
   { to: "/", label: "Today", icon: CalendarDays, match: (p) => p === "/" || p.startsWith("/day") },
@@ -79,6 +80,7 @@ export default function Layout() {
   // rather than something half-written.
   const greeting = patient?.first_name ? `Hi ${patient.first_name}!` : "";
   useTabScroll(pathname);
+  const offline = useOffline();
 
   // What the app just did, in words, for a screen reader that was told none of
   // it before. Anything in the tree can write here through @/lib/announce. A
@@ -158,6 +160,23 @@ export default function Layout() {
           </span>
         </div>
       </header>
+
+      {/* Said once, at the top, rather than left for her to infer from a save
+          that did not land. The app still tries every write — this explains a
+          failure, it does not pre-empt one. */}
+      {offline && (
+        <div
+          role="status"
+          className="sticky z-20 border-b-2 px-4 py-1.5 text-center text-2xs font-heading uppercase tracking-wider"
+          style={{
+            top: "calc(var(--safe-t) + 3.375rem)",
+            backgroundColor: "hsl(var(--destructive))",
+            color: "hsl(var(--destructive-foreground))"
+          }}
+        >
+          No connection — anything you log now may not save
+        </div>
+      )}
 
       <main
         key={pathname}
