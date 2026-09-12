@@ -12,6 +12,51 @@ import {
 import BodyMap from "./BodyMap";
 import CheckinStack from "./CheckinStack";
 
+// The same ask-first pattern Care already uses to remove a care team member,
+// rather than a new one invented here.
+function DeleteEntry({ onDelete, saving }) {
+  const [asking, setAsking] = useState(false);
+
+  if (!asking) {
+    return (
+      <button
+        type="button"
+        className="col-span-2 h-11 font-heading text-xs uppercase tracking-wider text-destructive"
+        onClick={() => setAsking(true)}
+        disabled={saving}
+      >
+        Delete this entry
+      </button>
+    );
+  }
+
+  return (
+    <div className="col-span-2 space-y-2">
+      <p className="text-sm font-semibold break-words">
+        This entry goes for good, and it cannot be brought back.
+      </p>
+      <div className="flex gap-2 min-w-0">
+        <button
+          type="button"
+          className="nb-btn flex-1 min-w-0 h-12 bg-destructive text-destructive-foreground"
+          onClick={onDelete}
+          disabled={saving}
+        >
+          {saving ? "Deleting…" : "Delete for good"}
+        </button>
+        <button
+          type="button"
+          className="nb-btn h-12 px-4 shrink-0 bg-card"
+          onClick={() => setAsking(false)}
+          disabled={saving}
+        >
+          Keep it
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function EntryForm({ type, entry, onSave, onCancel, onDelete, saving }) {
   const { patient } = usePatient();
   const garments = useLibrary("Garment");
@@ -178,16 +223,12 @@ export default function EntryForm({ type, entry, onSave, onCancel, onDelete, sav
         <button className="nb-btn h-14 px-4 shrink-0 bg-card" onClick={onCancel} disabled={saving}>
           Cancel
         </button>
-        {onDelete && (
-          <button
-            className="nb-btn h-14 px-4 shrink-0 bg-destructive text-destructive-foreground"
-            onClick={onDelete}
-            disabled={saving}
-          >
-            Delete
-          </button>
-        )}
       </div>
+
+      {/* Out of the row that holds Save, and it asks. You reach this form by
+          tapping an entry you meant to read, and the old layout put an
+          irreversible button one mis-tap from the one you came for. */}
+      {onDelete && <DeleteEntry onDelete={onDelete} saving={saving} />}
     </div>
   );
 }

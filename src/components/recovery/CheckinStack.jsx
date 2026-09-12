@@ -203,6 +203,7 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
 export default function CheckinStack({ cfg, data, setField, time, setTime, onSave, onCancel, onDelete, saving }) {
   const steps = cfg.fields;
   const [step, setStep] = useState(0);
+  const [asking, setAsking] = useState(false);
   const swipeX = useRef(null);
   const current = steps[step];
   const last = step === steps.length - 1;
@@ -289,16 +290,46 @@ export default function CheckinStack({ cfg, data, setField, time, setTime, onSav
             Next
           </button>
         )}
-        {onDelete && (
+      </div>
+
+      {/* Out of the row that holds Save. At the end of a swipe flow an
+          irreversible button beside the one you are reaching for is the worst
+          place it could be. */}
+      {onDelete &&
+        (asking ? (
+          <div className="mt-3 space-y-2">
+            <p className="text-sm font-semibold break-words">
+              This check-in goes for good, and it cannot be brought back.
+            </p>
+            <div className="flex gap-2 min-w-0">
+              <button
+                type="button"
+                className="nb-btn flex-1 min-w-0 h-12 bg-destructive text-destructive-foreground"
+                onClick={onDelete}
+                disabled={saving}
+              >
+                {saving ? "Deleting…" : "Delete for good"}
+              </button>
+              <button
+                type="button"
+                className="nb-btn h-12 px-4 shrink-0 bg-card"
+                onClick={() => setAsking(false)}
+                disabled={saving}
+              >
+                Keep it
+              </button>
+            </div>
+          </div>
+        ) : (
           <button
-            className="nb-btn h-14 px-4 shrink-0 bg-destructive text-destructive-foreground"
-            onClick={onDelete}
+            type="button"
+            className="w-full h-11 mt-3 font-heading text-xs uppercase tracking-wider text-destructive"
+            onClick={() => setAsking(true)}
             disabled={saving}
           >
-            Delete
+            Delete this check-in
           </button>
-        )}
-      </div>
+        ))}
     </div>
   );
 }

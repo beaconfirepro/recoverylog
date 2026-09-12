@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Check, Plus, X } from "lucide-react";
+import { Check, ChevronRight, Plus, X } from "lucide-react";
 import { todayStr, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
@@ -666,6 +666,19 @@ export default function Profile() {
           {done && !busy && <p className="col-span-2 text-sm font-bold text-center">PDF downloaded ✔</p>}
         </div>
       </div>
+
+      {/* Setup is the log, You is the person. The rule is sound and was
+          invisible — and You is the only destination not in the tab bar, so
+          somebody looking for it has nothing to follow. */}
+      <Link to="/me" className="nb-card block p-4 flex items-center gap-2 min-w-0">
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm font-semibold break-words">
+            Looking for your account, how the app looks, or the documents you agreed to?
+          </span>
+          <span className="block nb-label text-muted-foreground mt-0.5">You</span>
+        </span>
+        <ChevronRight className="w-5 h-5 shrink-0" />
+      </Link>
 
     </div>
   );
