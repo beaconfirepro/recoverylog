@@ -1,5 +1,3 @@
-import { base44 } from "@/api/base44Client";
-
 // What an invited person receives. Base44 sends it; there is no mail provider
 // to configure and no key to hold.
 //
@@ -30,10 +28,16 @@ If you were not expecting this, you can ignore it. Nothing opens without the cod
 
 export const inviteSubject = (patientName) => `${patientName} added you to their recovery log`;
 
-export const sendInviteEmail = async ({ to, memberFirstName, patientName, appUrl }) =>
-  base44.integrations.Core.SendEmail({
-    to,
-    subject: inviteSubject(patientName),
-    body: inviteBody({ memberFirstName, patientName, appUrl }),
-    from_name: "LipNode"
-  });
+// SendEmail is a Core method the platform only runs server-side, so the send
+// lives in the sendInvite backend function. Imported lazily so the unit test,
+// which only exercises the body and subject strings, never has to resolve the
+// function module. The body and subject are built there too, so the patient
+// cannot put words in the platform's mouth.
+export const sendInviteEmail = async ({ to, memberFirstName, patientName }) => {
+  const { sendInvite } = await import("@/functions/sendInvite");
+  const res = await sendInvite({ to, memberFirstName, patientName });
+  const data = res?.data || {};
+  if (data.error || (res.status && res.status >= 400)) {
+    throw new Error(data.error || "The invitation email did not send.");
+  }
+};
