@@ -5,6 +5,7 @@ import { Mail, Lock, Loader2, ChevronDown, ArrowRight } from "lucide-react";
 import GoogleIcon from "@/components/GoogleIcon";
 import { Image } from "@/components/ui/image";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import InstallHint from "@/components/InstallHint";
 import PhoneFrame from "@/components/splash/PhoneFrame";
 import DayMockup from "@/components/splash/DayMockup";
 import CheckinMockup from "@/components/splash/CheckinMockup";
@@ -62,6 +63,10 @@ export default function Splash() {
           </button>
         </div>
       </header>
+
+      <div className="max-w-lg mx-auto px-4 pt-4">
+        <InstallHint />
+      </div>
 
       {/* Welcome hero */}
       <section className="max-w-lg mx-auto px-4 pt-8 pb-6 space-y-5">

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DayView from "@/components/recovery/DayView";
 import PatientCard from "@/components/recovery/PatientCard";
+import InstallHint from "@/components/InstallHint";
 import { todayStr } from "@/lib/dates";
 import { usePatient } from "@/lib/PatientContext";
 import { loadOrientation, saveOrientation, allDone } from "@/lib/orientation";
@@ -84,6 +85,12 @@ export default function Home() {
   return (
     <div className="space-y-4">
       {!isOwner && <PatientCard />}
+
+      {/* The whole layout is built for standalone — safe-area insets, a fixed
+          tab bar, a translucent status bar — and iOS Safari never offers the
+          install itself, so most people would only ever see the version with a
+          browser bar sitting over the tabs. */}
+      <InstallHint />
 
       {expanded ? (
         <OrientationChecklist

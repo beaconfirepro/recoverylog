@@ -7,6 +7,77 @@ import HelpHint from "@/components/help/HelpHint";
 import { codeMatches, dobMatches } from "@/lib/joinCode";
 import { WRONG_ANSWER } from "@/pages/Care";
 
+// What the care page holds for somebody who is not on a log yet: the address
+// the patient has to add, and a way to hand it over. The care page itself is
+// three cards, two of which are about a log she does not have, so this is that
+// page's useful half rather than a route to it.
+//
+// The old version showed her own email address back to her and told her to
+// leave, with Sign out as the only other button on the screen.
+function Waiting({ email, onCheck }) {
+  const [copied, setCopied] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  const message = `Please add me to your LipNode care team: ${email}`;
+  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopied(true);
+    } catch {
+      // No clipboard. The address is on screen and can be read off it.
+      setCopied(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3 min-w-0">
+      <p className="text-sm font-semibold break-words">
+        Only the patient can add you, and there is nothing to open until she has. Send her this address — it has
+        to be the one you just signed in with.
+      </p>
+
+      <div className="border-2 rounded-xl bg-muted p-3 text-center">
+        <div className="font-heading text-sm break-all">{email}</div>
+      </div>
+
+      <div className="flex gap-2 min-w-0">
+        <button type="button" className="nb-btn flex-1 min-w-0 h-12 bg-card" onClick={copy}>
+          {copied ? "Copied" : "Copy address"}
+        </button>
+        {canShare && (
+          <button
+            type="button"
+            className="nb-btn flex-1 min-w-0 h-12 bg-card"
+            onClick={() => navigator.share({ text: message }).catch(() => {})}
+          >
+            Send it
+          </button>
+        )}
+      </div>
+
+      <p className="text-xs font-semibold text-muted-foreground break-words">
+        Once she adds you, your invitation turns up here. She also has to read you a six-character code and tell
+        you her date of birth — the email carries neither.
+      </p>
+
+      <button
+        type="button"
+        className="nb-btn w-full h-12 bg-primary text-primary-foreground"
+        disabled={checking}
+        onClick={async () => {
+          setChecking(true);
+          await onCheck();
+          setChecking(false);
+        }}
+      >
+        {checking ? "Checking…" : "Check again"}
+      </button>
+    </div>
+  );
+}
+
 // Shown to a signed-in account not yet linked to a patient, in one of three
 // states: someone the patient has already invited, someone starting their own
 // log, or someone who has to be invited before there is anything to open.
@@ -158,8 +229,8 @@ export default function ClaimAccess() {
     heading = "Start your log";
     blurb = "Your date of birth is the second thing your care team confirms to get in, alongside a code you read out to them.";
   } else if (!me && role === "team_member") {
-    heading = "Ask to be added";
-    blurb = `Signed in as ${user?.email}.`;
+    heading = "Waiting to be added";
+    blurb = "Nothing opens until the patient adds you.";
   }
 
   return (
@@ -197,11 +268,7 @@ export default function ClaimAccess() {
 
           {!me && role === "patient" && details("Your", startLog, "Start my log")}
 
-          {!me && role === "team_member" && (
-            <p className="text-sm font-semibold break-words">
-              Only the patient can add you. Ask them to add {user?.email} to their care team, then sign in again.
-            </p>
-          )}
+          {!me && role === "team_member" && <Waiting email={user?.email} onCheck={refreshPatient} />}
 
           {!me && role && (
             <button className="nb-btn w-full h-12 bg-card" onClick={() => setRole(null)}>
