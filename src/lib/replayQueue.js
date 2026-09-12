@@ -17,12 +17,24 @@ const io = {
   }
 };
 
+// Said whenever the queue changes, so a screen showing what is waiting can
+// stop showing it the moment it lands. An event rather than a subscriber list:
+// the queue is already global state in localStorage, and two copies of that
+// truth is one more than the app needs.
+export const QUEUE_EVENT = "recoverylog:queuechange";
+
+const changed = () => {
+  window.dispatchEvent(new Event(QUEUE_EVENT));
+};
+
 // Put a failed write by for later. Called from the save wrapper, so nothing has
 // to remember to do it.
 export const hold = (descriptor) => {
   if (!isQueueable(descriptor)) return false;
   const next = enqueue(readQueue(), makeItem(descriptor));
-  return writeQueue(next);
+  const ok = writeQueue(next);
+  changed();
+  return ok;
 };
 
 export const queuedCount = () => readQueue().length;
@@ -40,6 +52,7 @@ export const drain = async () => {
   try {
     const out = await replay(queue, io);
     writeQueue(out.queue);
+    changed();
     if (out.done.length) {
       announce(
         out.done.length === 1
