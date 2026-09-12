@@ -3,8 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 // The orientation checklist passes an `orient` key in navigation state when a
 // step sends the patient to another page. This finds the matching [data-orient]
-// heading, scrolls it into view, then for about five seconds pulses a green ring
-// around it and lays a light gray screen over everything else so it stands out.
+// heading, scrolls it into view, then for about five seconds lays a light gray
+// screen over everything else and pulses a lime ring around the edge of what is
+// left lit, so it stands out.
 // It polls briefly because some targets (the day page) only mount after a data
 // load, and clears the navigation state when it is done so a back/forward does
 // not replay it.
@@ -48,9 +49,9 @@ export function useOrientationHighlight() {
         `position:fixed;z-index:40;left:${rect.left - pad}px;top:${rect.top - pad}px;` +
         `width:${rect.width + pad * 2}px;height:${rect.height + pad * 2}px;pointer-events:none;`;
       document.body.appendChild(backdrop);
-      el.classList.add("orient-pulse", "orient-enter");
+      el.classList.add("orient-target", "orient-enter");
       pulseTimer = setTimeout(() => {
-        el?.classList.remove("orient-pulse", "orient-enter");
+        el?.classList.remove("orient-target", "orient-enter");
         removeBackdrop();
         clearState();
       }, 5000);
@@ -113,7 +114,7 @@ export function useOrientationHighlight() {
       if (pulseTimer) clearTimeout(pulseTimer);
       if (rafId) cancelAnimationFrame(rafId);
       if (el) {
-        el.classList.remove("orient-pulse", "orient-enter");
+        el.classList.remove("orient-target", "orient-enter");
         if (el.style.scrollMarginTop) el.style.scrollMarginTop = "";
       }
       removeBackdrop();
