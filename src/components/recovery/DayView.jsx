@@ -282,8 +282,8 @@ export default function DayView({ date, startCollapsed }) {
         ) : (
           <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card break-words">
             {beforeSurgery
-              ? "Not tracking days before this surgery. Turn that on in Profile."
-              : "Not tracking days from this surgery onwards. Turn that on in Profile."}
+              ? "Not tracking days before this surgery. Turn that on in Setup."
+              : "Not tracking days from this surgery onwards. Turn that on in Setup."}
           </p>
         )}
       </div>

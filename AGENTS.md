@@ -61,24 +61,38 @@ request.
 ## Joining a care team
 
 The patient adds someone by email on Care. That writes a `team_member` AppUser
-row carrying a six-character `join_code` and a copy of the patient's name, and
-sends an invitation through `base44.integrations.Core.SendEmail` (Base44's own
-sender, no key and no provider to configure).
+row carrying a six-character `join_code`, a `dob_check`, and a copy of the
+patient's name, and sends an invitation through
+`base44.integrations.Core.SendEmail` (Base44's own sender, no key and no
+provider to configure).
 
-**The email never carries the code.** Holding the address is what identifies
-you; the code is what proves the patient meant you. Put both in one message and
-a single mistyped letter hands over the whole thing. The patient reads the code
-out. The code stays visible to her on the care team list until the invitation is
-opened.
+**It takes two things to open a log: the code, and the patient's date of
+birth.** Neither is enough alone. The date of birth is not a secret — a sister
+knows it — so the code is what proves the patient meant you; the code can be
+overheard or forwarded, so the date of birth is what proves you are the person
+she meant to read it to.
 
-The code replaced the patient's name and date of birth, which were never a
-secret: a sister knows both. Rows written before this have no code and cannot be
-opened; the patient removes the person and adds them again.
+**The email carries neither.** Holding the address is what identifies you. Put
+any of it in the same message and one mistyped letter hands over the lot. She
+passes both on herself, and the code stays visible to her on the care team list
+until the invitation is opened.
 
-**The check is still in the browser**, so it is only as strong as what came
-before it: RLS lets the invited account read its own row, `join_code` included.
-Making it real needs the comparison done in a backend function under the service
-role, which is the same API key that blocks #40 and #48.
+**The date is checked against a digest, never a stored copy.** `dob_check` is
+SHA-256 of `` `${code}|${dob}` ``. RLS lets an invited account read its own row,
+so a date sitting there in the clear would hand over the thing it is meant to
+prove, and an invitation delivered to the wrong address would leak the patient's
+date of birth to a stranger. Salting with the code means neither factor gives up
+the other. `src/lib/joinCode.js`, with tests.
+
+Rows written before codes have neither and cannot be opened. Rows written before
+the second factor carry no `dob_check` and still open on the code alone, so a
+care team that is already helping is not locked out.
+
+**Both checks are still in the browser**, so they are only as strong as what
+came before them: two browser-side checks are still two browser-side checks.
+`linkPatient` does it properly — it reads the patient's own row under the
+service role and compares the real date, ignoring the digest — and it is blocked
+on the same API key as #40 and #48.
 
 ## Backend functions, and the one key that blocks them
 
@@ -108,9 +122,9 @@ honest default that stops accidents; it is not a boundary until this runs.
 3. Three edits, all replacing an `updateMe` with a function call:
    - `src/components/ClaimAccess.jsx` → `startLog` becomes
      `base44.functions.invoke("linkPatient", { action: "start", first_name, last_name, dob })`,
-     and `claim` becomes `{ action: "claim", join_code: code }`.
+     and `claim` becomes `{ action: "claim", join_code: code, dob }`.
    - `src/lib/PatientContext.jsx` → `claimMembership` calls
-     `{ action: "claim", join_code: code }`; `switchPatient` calls
+     `{ action: "claim", join_code: code, dob }`; `switchPatient` calls
      `{ action: "switch", patient_id: id }`; the `updateMe` in `load()` goes.
    - `src/pages/Care.jsx` needs no change: it already goes through
      `claimMembership` and `switchPatient`.
@@ -130,10 +144,10 @@ hour. A stale bundle shortly after a checkpoint is not a fault and is not a
 reason to reach for the builder.
 
 **How to tell what is actually deployed.** Every build stamps its commit into
-the bundle (`vite.config.js` → `__BUILD_COMMIT__`), and the front page prints it
-in small type under the day. Two ways to read it:
+the bundle (`vite.config.js` → `__BUILD_COMMIT__`), and You prints it in small
+type at the foot of the page. Two ways to read it:
 
-- Open the app and read the line at the bottom of Today.
+- Open the app and read the line at the bottom of You.
 - Fetch the served `/assets/index-*.js` and grep it for
   `git rev-parse --short HEAD`.
 

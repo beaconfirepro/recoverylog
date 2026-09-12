@@ -644,7 +644,7 @@ export function MedGroupField({ field, value, onChange, groups, color, darkText 
   return (
     <Field label={field.label} span>
       {groups.length === 0 && (
-        <p className="text-sm text-muted-foreground">No med groups yet. Add one in Profile.</p>
+        <p className="text-sm text-muted-foreground">No med groups yet. Add one in Setup.</p>
       )}
       <div className="flex flex-wrap gap-1.5">
         {groups.map((g) => (

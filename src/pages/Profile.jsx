@@ -154,7 +154,7 @@ export default function Profile() {
     });
   };
 
-  // Which trackers are summarised on the History card. A tracker turned off
+  // Which trackers are summarised on the day card. A tracker turned off
   // cannot be on the card, so switching it off drops it from here too.
   const onHistory = activeSurgery?.history_types || [];
   const toggleHistory = (t) => {
