@@ -288,10 +288,12 @@
 
   /* Tour. The spotlight is the same trick as the single highlight — a
      transparent box whose huge shadow washes everything outside it — but
-     positioned in document coordinates so it scrolls with the page rather than
-     needing a scroll handler to chase it. */
+     fixed, and re-measured every frame while a step is up. Document
+     coordinates were tried and shipped a grey screen with the hole stranded
+     below the fold: they assume the window is the scroller, which is not true
+     inside the preview iframe. See TourOverlay. */
   .tour-spot {
-    position: absolute;
+    position: fixed;
     border-radius: 0.75rem;
     box-shadow: 0 0 0 3px hsl(var(--accent)), 0 0 0 100vmax hsl(0 0% 55% / 0.7);
     animation: tour-spot-in 260ms ease-out;
@@ -304,7 +306,7 @@
   /* Drawn round one control among several. It grows inward rather than fading
      in flat, which reads as being pointed at rather than appearing. */
   .tour-circle {
-    position: absolute;
+    position: fixed;
     border: 3px solid currentColor;
     border-radius: 999px;
     animation: tour-circle-in 320ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
@@ -316,7 +318,7 @@
   }
   /* Above the thing it points at, nosing down towards it. */
   .tour-arrow {
-    position: absolute;
+    position: fixed;
     animation: tour-arrow-in 360ms ease-out;
     pointer-events: none;
   }

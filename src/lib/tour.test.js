@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MARKS, TOURS, buttonLabel, hasTour, isLastStep, movesTo, stepAt, tourFor } from "@/lib/tour";
+import { MARKS, TONES, TOURS, buttonLabel, hasTour, isLastStep, movesTo, stepAt, toneClass, tourFor } from "@/lib/tour";
 
 describe("the check-in tour", () => {
   const t = TOURS.checkins;
@@ -94,5 +94,23 @@ describe("buttonLabel", () => {
   it("closes it on the last step", () => {
     expect(buttonLabel(t, 1)).toBe("Done");
     expect(isLastStep(t, 1)).toBe(true);
+  });
+});
+
+describe("tone classes", () => {
+  it("names every tone a step actually uses", () => {
+    for (const s of TOURS.checkins) {
+      if (s.tone) expect(TONES[s.tone]).toBeDefined();
+    }
+  });
+
+  it("writes the class out in full, because Tailwind reads source text", () => {
+    expect(toneClass("pink")).toBe("tour-pink");
+    expect(toneClass("purple")).toBe("tour-purple");
+  });
+
+  it("falls back to a real class rather than undefined", () => {
+    expect(toneClass(undefined)).toBe("tour-pink");
+    expect(toneClass("chartreuse")).toBe("tour-pink");
   });
 });

@@ -15,6 +15,20 @@
 // on screen is skipped rather than guessed at — see the renderer — so a tour
 // stays honest when a screen changes under it.
 
+// Tone classes are written out in full, and must be. Tailwind tree-shakes
+// hand-written `@layer components` rules against what it can find in the
+// source, and it reads text — not runtime strings. `tour-${tone}` built in a
+// template literal is invisible to it, so the rules were emitted into
+// index.css and then dropped from the bundle: the circle and the arrow shipped
+// with no colour at all. Naming them here keeps them literal, and the test
+// pins that every tone a step can carry has an entry.
+export const TONES = {
+  pink: "tour-pink",
+  purple: "tour-purple"
+};
+
+export const toneClass = (tone) => TONES[tone] || TONES.pink;
+
 // How a step marks its target.
 //   spot   — light it and grey everything else. The default.
 //   circle — spot, plus a ring drawn round it. For one control among many.

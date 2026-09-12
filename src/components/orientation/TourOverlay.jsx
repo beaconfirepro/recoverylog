@@ -1,19 +1,31 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import NoteBar from "@/components/NoteBar";
-import { buttonLabel, movesTo, stepAt } from "@/lib/tour";
+import { buttonLabel, movesTo, stepAt, toneClass } from "@/lib/tour";
 
 // Draws a tour: greys the screen, leaves one thing lit, marks it, and lets
 // NoteBar say the line.
 //
-// The whole layer is positioned in DOCUMENT coordinates, not viewport ones, so
-// it scrolls with the page it is describing. A fixed layer would need the
-// scroll handler nobody gets right — every frame, on a phone, behind a smooth
-// scroll that is already animating. Absolute boxes just move, because the page
-// moves them.
+// Everything is placed in VIEWPORT coordinates and re-measured every frame
+// while a step is up.
 //
-// NoteBar is the exception and is fixed on purpose: the words stay still while
-// the thing they are about scrolls under them.
+// It was written the other way first — document coordinates, measured once
+// after the scroll settled — and shipped a grey screen with the spotlight
+// stranded below the fold. That depends on two things being true: that the
+// window is the scroller, and that the scroll actually took. Neither holds
+// inside the Base44 preview, where the app sits in an iframe and something
+// outside it does the scrolling. `window.scrollY` stayed 0, so a box measured
+// at document y≈900 was drawn 900px down a viewport that had never moved,
+// while the shadow greyed everything regardless.
+//
+// getBoundingClientRect is the one measurement that cannot lie about where a
+// thing visually is, whoever scrolled. Reading it every frame costs a rAF for
+// the few seconds a tour runs and removes the assumption entirely, which is
+// also what makes the marks track a smooth scroll live rather than jumping to
+// where it ended.
+//
+// NoteBar is fixed too, and stays still on purpose: the words hold while the
+// thing they are about moves under them.
 //
 // A step whose target is not in the DOM is skipped rather than drawn somewhere
 // plausible. Screens change; a tour that points confidently at the wrong place
@@ -29,32 +41,26 @@ import { buttonLabel, movesTo, stepAt } from "@/lib/tour";
 // steps outside both.
 
 const PAD = 8;
-// Long enough for a smooth scroll to land before the spotlight is measured. The
-// alternative is watching scrollY settle, which the single highlight does and
-// which is more machinery than a tour needs — it is already waiting seconds.
-const SETTLE_MS = 420;
 
 const boxOf = (el) => {
   const r = el.getBoundingClientRect();
-  return {
-    top: r.top + window.scrollY - PAD,
-    left: r.left + window.scrollX - PAD,
-    width: r.width + PAD * 2,
-    height: r.height + PAD * 2
-  };
+  return { top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 };
 };
+
+const same = (a, b) =>
+  !!a && !!b && a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height;
 
 export default function TourOverlay({ tour, onDone }) {
   const [i, setI] = useState(0);
   const [box, setBox] = useState(null);
   const stepTimer = useRef(null);
-  const settleTimer = useRef(null);
+  const rafId = useRef(null);
 
   const step = stepAt(tour, i);
 
   const finish = useCallback(() => {
     clearTimeout(stepTimer.current);
-    clearTimeout(settleTimer.current);
+    cancelAnimationFrame(rafId.current);
     onDone();
   }, [onDone]);
 
@@ -73,37 +79,32 @@ export default function TourOverlay({ tour, onDone }) {
       return () => clearTimeout(stepTimer.current);
     }
 
-    const place = () => {
-      setBox(boxOf(el));
-      stepTimer.current = setTimeout(() => setI((n) => n + 1), step.ms);
-    };
+    // Asked for, not relied on. When the window is the scroller this brings the
+    // target into view; when something else is, the frame loop below still
+    // draws in the right place.
+    if (movesTo(tour, i)) el.scrollIntoView({ behavior: "smooth", block: "center" });
 
-    if (movesTo(tour, i)) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      // Measured after the scroll, because the box is wanted where the thing
-      // ends up rather than where it started.
-      settleTimer.current = setTimeout(place, SETTLE_MS);
-    } else {
-      place();
-    }
+    // One loop, running for as long as the step is up. It covers the smooth
+    // scroll, a reflow when a font lands, a rotation, and the keyboard opening
+    // — every reason the box moves, without a listener for each.
+    let last = null;
+    const follow = () => {
+      const next = boxOf(el);
+      if (!same(next, last)) {
+        last = next;
+        setBox(next);
+      }
+      rafId.current = requestAnimationFrame(follow);
+    };
+    follow();
+
+    stepTimer.current = setTimeout(() => setI((n) => n + 1), step.ms);
 
     return () => {
       clearTimeout(stepTimer.current);
-      clearTimeout(settleTimer.current);
+      cancelAnimationFrame(rafId.current);
     };
   }, [tour, i, step, finish]);
-
-  // The page reflows under a tour — a font lands, an image sizes — and a
-  // spotlight measured before that is then over the wrong place.
-  useEffect(() => {
-    if (!step) return undefined;
-    const remeasure = () => {
-      const el = document.querySelector(`[data-tour="${CSS.escape(step.target)}"]`);
-      if (el) setBox(boxOf(el));
-    };
-    window.addEventListener("resize", remeasure);
-    return () => window.removeEventListener("resize", remeasure);
-  }, [step]);
 
   if (!step || !box) return null;
 
@@ -111,14 +112,14 @@ export default function TourOverlay({ tour, onDone }) {
 
   return createPortal(
     <>
-      {/* Absolute, in a layer pinned to the document's top-left, so everything
-          inside is in page coordinates and scrolls with the page. */}
-      <div className="absolute top-0 left-0 w-0 h-0 z-50" aria-hidden="true">
+      {/* A bare stacking context. Each mark inside is fixed and carries its own
+          viewport coordinates, so this only has to sit above the page. */}
+      <div className="fixed top-0 left-0 w-0 h-0 z-50" aria-hidden="true">
         <div className="tour-spot" style={style} />
-        {step.mark === "circle" && <div className={`tour-circle tour-${step.tone || "pink"}`} style={style} />}
+        {step.mark === "circle" && <div className={`tour-circle ${toneClass(step.tone)}`} style={style} />}
         {step.mark === "arrow" && (
           <div
-            className={`tour-arrow tour-${step.tone || "purple"}`}
+            className={`tour-arrow ${toneClass(step.tone)}`}
             style={{ top: box.top - 44, left: box.left + box.width / 2 - 18 }}
           >
             <svg viewBox="0 0 36 40" width="36" height="40" fill="none">
