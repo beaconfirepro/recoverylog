@@ -40,16 +40,16 @@ the red flag card using the question-mark-and-tooltip pattern settled in #118.
 
 ### 1. Fever over your surgeon's number
 
-**Look for:** A temperature at or above the number on your discharge papers,
-taken when you have not just had a hot drink or a hot shower. The app uses
-101.5 °F until you enter your own.
+**Look for:** A temperature at or above the baseline set in Setup, taken when
+you have not just had a hot drink or a hot shower. Put your surgeon's number in
+that field.
 
-**When it counts:** One reading at or over the number is enough to call. A
+**When it counts:** One reading at or over the baseline is enough to call. A
 low-grade rise in the first day or two is common; a fever that arrives later, or
 climbs, is the one that matters.
 
-**The app will raise this for you** from your temperature entries. You can
-override it.
+**The app will raise this for you** when a temperature you log comes in over the
+baseline set in Setup. You can override it.
 
 ---
 
@@ -222,10 +222,12 @@ that it is on the list.
    made — so the disclaimer has to carry the "do not wait for the office" weight
    for these two. Worth checking the disclaimer wording against these two
    explanations so they say the same thing.
-2. **Item 1 names 101.5 °F.** That is the app's fallback per #106. If a patient
-   has entered her own number, this text should name hers instead of the
-   fallback, which means the body needs to be a function of the record rather
-   than a fixed string for this one item.
+2. ~~**Item 1 names 101.5 °F.**~~ **Settled.** The explanation points at the
+   baseline in Setup and names no number at all, so it stays a fixed string like
+   the other eleven and cannot go stale against a patient who set her own. The
+   number still appears where it is actionable — the red flag question itself
+   reads it off the record through `flagLabel` (#106), so she always knows what
+   she is answering against.
 
 ## Sources
 
