@@ -12,10 +12,14 @@ import {
   MEASUREMENTS, NUTRIENTS, BODYWORK_GOAL, nutrientUnit
 } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
+import { fetchAllRows } from "@/lib/paging";
 import { buildRecoveryPdf } from "@/lib/recoveryPdf";
+import { save } from "@/lib/saving";
 import Field from "@/components/Field";
 import TimeInput from "@/components/recovery/TimeInput";
+import Surgeries from "@/components/care/Surgeries";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
+import { useDismissKeyboard } from "@/lib/dismissKeyboard";
 
 // What the patient actually has saved, blank rows and all. The check-in form
 // reads through checkinSlots(), which drops the blanks; the editor must not.
@@ -27,6 +31,8 @@ const savedSlots = (patient) => {
 export default function Profile() {
   const navigate = useNavigate();
   useOrientationHighlight();
+  // Setup is the one screen that is mostly numeric fields.
+  useDismissKeyboard();
   const { user, logout } = useAuth();
   const { me, patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const [from, setFrom] = useState(todayStr());
@@ -43,12 +49,22 @@ export default function Profile() {
   const [savingTracking, setSavingTracking] = useState(false);
   const selected = trackedTypes(activeSurgery);
 
-  const patchSurgery = async (fields) => {
-    if (!activeSurgery) return;
+  // Every toggle on this page is a write, and none of them said a word when
+  // one failed: the switch flicked back on the next read and that was the whole
+  // report. The retry defaults to sending the same fields again, and a caller
+  // holding its own copy of the value passes its own so the retry puts that
+  // copy back too.
+  const patchSurgery = async (fields, retry) => {
+    if (!activeSurgery) return false;
     setSavingTracking(true);
-    await base44.entities.Surgery.update(activeSurgery.id, fields);
+    const res = await save(() => base44.entities.Surgery.update(activeSurgery.id, fields), {
+      what: "Your tracking",
+      saved: "This surgery keeps the change.",
+      retry: retry || (() => patchSurgery(fields))
+    });
     await refreshSurgeries();
     setSavingTracking(false);
+    return res.ok;
   };
 
   // The check-in is not one of the buttons you turn off, so it is configured
@@ -71,17 +87,31 @@ export default function Profile() {
     ? patient.checkin_measures
     : CHECKIN_MEASURES.map((m) => m.key);
 
-  const patchPatient = async (fields) => {
-    if (!patient) return;
+  const patchPatient = async (fields, retry) => {
+    if (!patient) return false;
     setSavingCheckin(true);
-    await base44.entities.AppUser.update(patient.id, fields);
+    const res = await save(() => base44.entities.AppUser.update(patient.id, fields), {
+      what: "Your setup",
+      saved: "The change is saved.",
+      retry: retry || (() => patchPatient(fields))
+    });
     await refreshPatient();
     setSavingCheckin(false);
+    return res.ok;
   };
 
+  // The editor holds the times itself, so a failed write has to put the rows
+  // back: leaving a time on screen that was never saved is how a check-in ends
+  // up asking at an hour nothing is stored against. The retry re-applies the
+  // new rows first, so a save that works on the second try leaves the editor
+  // agreeing with the record again.
   const setSlots = (next) => {
-    setSlotsLocal(next);
-    patchPatient({ checkin_slots: next });
+    const previous = slots;
+    const attempt = async () => {
+      setSlotsLocal(next);
+      if (!(await patchPatient({ checkin_slots: next }, attempt))) setSlotsLocal(previous);
+    };
+    attempt();
   };
 
   // Empty means the built-in set, the same way the check-in slots work.
@@ -96,11 +126,12 @@ export default function Profile() {
     patchPatient({ measurements: next });
   };
 
-  const addSpot = () => {
+  // The box keeps what was typed until the write lands: clearing it first and
+  // then failing loses the name as well as the spot.
+  const addSpot = async () => {
     const name = newSpot.trim();
     if (!name || spots.includes(name)) return;
-    setNewSpot("");
-    patchPatient({ measurements: [...spots, name] });
+    if (await patchPatient({ measurements: [...spots, name] })) setNewSpot("");
   };
 
   const toggleMeasure = (key) => {
@@ -123,7 +154,7 @@ export default function Profile() {
     });
   };
 
-  // Which trackers are summarised on the History card. A tracker turned off
+  // Which trackers are summarised on the day card. A tracker turned off
   // cannot be on the card, so switching it off drops it from here too.
   const onHistory = activeSurgery?.history_types || [];
   const toggleHistory = (t) => {
@@ -150,43 +181,68 @@ export default function Profile() {
   const generate = async () => {
     setBusy(true);
     setDone(false);
-    const wanted = scope === "all" ? surgeries : surgeries.filter((sx) => sx.id === activeSurgeryId);
-    // One read per surgery rather than a filter the backend cannot express as
-    // "any of these".
-    const per = await Promise.all(
-      wanted.map((sx) =>
-        Promise.all([
-          base44.entities.RecoveryDay.filter({ surgery_id: sx.id }, "date", 500),
-          base44.entities.RecoveryEntry.filter({ surgery_id: sx.id }, "created_date", 3000)
-        ])
-      )
-    );
-    const [team, garments, medGroups] = await Promise.all([
-      base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 50),
-      base44.entities.Garment.list("sort_order", 100),
-      base44.entities.MedGroup.list("sort_order", 100)
-    ]);
+    const build = async () => {
+      const wanted = scope === "all" ? surgeries : surgeries.filter((sx) => sx.id === activeSurgeryId);
+      // One read per surgery rather than a filter the backend cannot express as
+      // "any of these".
+      // Paged, not capped. A single filter() answers with one page, so 500
+      // days and 3,000 entries were a silent ceiling: past it the PDF built,
+      // looked complete, and went to a surgeon with days missing out of the
+      // middle. MAX_RANGE_DAYS below refuses a wide date range for exactly
+      // that reason and could not see this, because a few months of heavy
+      // logging passes 3,000 entries inside a narrow one.
+      const per = await Promise.all(
+        wanted.map((sx) =>
+          Promise.all([
+            fetchAllRows(base44.entities.RecoveryDay, { surgery_id: sx.id }, "date", 500),
+            fetchAllRows(base44.entities.RecoveryEntry, { surgery_id: sx.id }, "created_date", 2000)
+          ])
+        )
+      );
+      const [team, garments, medGroups] = await Promise.all([
+        base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 50),
+        base44.entities.Garment.list("sort_order", 100),
+        base44.entities.MedGroup.list("sort_order", 100)
+      ]);
 
-    const doc = buildRecoveryPdf({
-      from,
-      to,
-      days: per.flatMap(([d]) => asRows(d)),
-      entries: per.flatMap(([, e]) => asRows(e)),
-      patientName: displayName(patient),
-      surgeries: wanted,
-      team: asRows(team),
-      garments: asRows(garments),
-      medGroups: asRows(medGroups),
-      groupBy
+      const doc = buildRecoveryPdf({
+        from,
+        to,
+        days: per.flatMap(([d]) => d),
+        entries: per.flatMap(([, e]) => e),
+        patientName: displayName(patient),
+        surgeries: wanted,
+        team: asRows(team),
+        garments: asRows(garments),
+        medGroups: asRows(medGroups),
+        groupBy
+      });
+      doc.save(`lipnode-${from}_to_${to}.pdf`);
+    };
+    // Quiet on success: the line under the button already says it arrived, so
+    // this only announces it for a screen reader, which cannot see that line.
+    // On failure it is the same toast as everything else — a PDF that silently
+    // never appeared looked identical to one still being built.
+    const res = await save(build, {
+      what: "The PDF",
+      saved: "The PDF is downloaded.",
+      quiet: true,
+      title: "The PDF didn't build",
+      advice: "Tap Retry to build it again.",
+      retry: generate
     });
-    doc.save(`lipnode-${from}_to_${to}.pdf`);
     setBusy(false);
-    setDone(true);
+    setDone(res.ok);
   };
 
   return (
     <div className="space-y-4">
       <h1 className="font-display text-2xl uppercase">Setup</h1>
+
+      {/* Care is about people. This is about records, and it sits here because
+          everything below configures one of them — a patient with no care team
+          should not have to go to a tab about other people to add a surgery. */}
+      <Surgeries />
 
       {isOwner && (
         <div className="nb-card overflow-hidden">
@@ -254,7 +310,7 @@ export default function Profile() {
                 <Plus className="w-4 h-4" />
                 Add a time
               </button>
-              <p className="text-[11px] font-semibold text-muted-foreground break-words">
+              <p className="text-2xs font-semibold text-muted-foreground break-words">
                 The time picks the slot when you open the form.
               </p>
             </div>
@@ -275,7 +331,7 @@ export default function Profile() {
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] font-semibold text-muted-foreground break-words">
+              <p className="text-2xs font-semibold text-muted-foreground break-words">
                 Turning one off keeps what is already recorded.
               </p>
             </div>
@@ -310,14 +366,22 @@ export default function Profile() {
           </div>
 
           <div className="p-4 space-y-3">
-            <p className="text-[11px] font-semibold text-muted-foreground break-words">
-              History shows a tracker on each day's card. Turning one off keeps what is already logged.
+            <p className="text-2xs font-semibold text-muted-foreground break-words">
+              Day by Day shows a tracker on each day's card. Turning one off keeps what is already logged.
             </p>
             <div className="flex items-center gap-2 min-w-0 pb-1 border-b-2">
               <span className="flex-1 min-w-0" />
               <span className="nb-label w-14 shrink-0 text-center text-muted-foreground">Track</span>
-              <span className="nb-label w-14 shrink-0 text-center text-muted-foreground">History</span>
+              <span className="nb-label w-14 shrink-0 text-center text-muted-foreground">Card</span>
             </div>
+            {/* The two controls are a switch and a checkbox — different things,
+                and correctly different roles — but they are the same size and
+                sit side by side, and one gates the other with nothing on screen
+                saying so. A greyed box with no reason is a control that looks
+                broken. */}
+            <p id="track-gate" className="text-xs font-semibold text-muted-foreground break-words">
+              A tracker has to be on before it can show on the day card.
+            </p>
             <div className="divide-y-2">
               {QUICK_ORDER.map((t) => {
                 const cfg = TYPES[t];
@@ -345,7 +409,8 @@ export default function Profile() {
                       type="button"
                       role="checkbox"
                       aria-checked={onHistory.includes(t)}
-                      aria-label={`Show ${cfg.label} on history card`}
+                      aria-label={`Show ${cfg.label} on the day card`}
+                      aria-describedby={on ? undefined : "track-gate"}
                       onClick={() => toggleHistory(t)}
                       disabled={savingTracking || !on}
                       className="w-14 h-8 shrink-0 grid place-items-center disabled:opacity-30"
@@ -364,7 +429,7 @@ export default function Profile() {
 
             <div className="border-t-2 pt-3 space-y-2">
               <div className="nb-label">Goals</div>
-              <p className="text-[11px] font-semibold text-muted-foreground break-words">
+              <p className="text-2xs font-semibold text-muted-foreground break-words">
                 Leave one blank for no target.
               </p>
               {[TYPES.water.goal, BODYWORK_GOAL].map((g) => (
@@ -421,7 +486,7 @@ export default function Profile() {
                 >
                   <span className="min-w-0">
                     <span className="block truncate">{label}</span>
-                    <span className="block text-[10px] font-semibold opacity-70 truncate">{hint}</span>
+                    <span className="block text-2xs font-semibold opacity-70 truncate">{hint}</span>
                   </span>
                   <span className="font-heading text-xs shrink-0">
                     {activeSurgery[key] !== false ? "ON" : "OFF"}

@@ -14,12 +14,21 @@ describe("the invitation", () => {
     expect(inviteSubject("Deborah")).toBe("Deborah added you to their recovery log");
   });
 
-  it("never carries the join code", () => {
-    // The whole point. An address and a code in one message is one secret, not
-    // two, and a mistyped address then hands over both.
-    const body = inviteBody({ ...args, joinCode: "7K2QM4" });
+  it("never carries either of the two things that open the log", () => {
+    // The whole point. An address and a credential in one message is one
+    // secret rather than two, and a mistyped address then hands over both.
+    // Now three: the date of birth is the second factor and must not travel
+    // here either.
+    const body = inviteBody({ ...args, joinCode: "7K2QM4", dob: "1974-03-09" });
     expect(body).not.toContain("7K2QM4");
-    expect(body).toContain("Ask them for it");
+    expect(body).not.toContain("1974");
+    expect(body).toContain("Ask them for both");
+  });
+
+  it("says the date of birth is needed, so the next screen is not a surprise", () => {
+    // Somebody told only about a code, who then meets a form asking for two
+    // things, concludes she has been sent the wrong invitation.
+    expect(inviteBody(args)).toContain("date of birth");
   });
 
   it("is plain about read access, because that is the promise", () => {

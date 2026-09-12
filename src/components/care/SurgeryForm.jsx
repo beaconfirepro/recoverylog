@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { usePatient } from "@/lib/PatientContext";
 import { todayStr, postOpLabel, fullDate } from "@/lib/dates";
+import { FEVER_DEFAULT } from "@/lib/recovery";
 import Field from "@/components/Field";
 import TimeInput from "@/components/recovery/TimeInput";
 
@@ -117,27 +118,6 @@ export default function SurgeryForm({ surgery, prefillTrack, onSaved, onCancel }
             <Field label="Surgeon" span>
               <input type="text" value={draft.surgeon ?? ""} placeholder="e.g. Dr. Vega" onChange={text("surgeon")} className="nb-input" />
             </Field>
-            <Field label="Office phone">
-              <input
-                type="tel"
-                inputMode="tel"
-                value={draft.office_phone ?? ""}
-                placeholder="(555) 123-4567"
-                onChange={text("office_phone")}
-                className="nb-input"
-              />
-            </Field>
-            <Field label="Call if fever over °F">
-              <input
-                type="number"
-                inputMode="decimal"
-                step="0.1"
-                value={draft.fever_threshold ?? ""}
-                placeholder="101.5"
-                onChange={num("fever_threshold")}
-                className="nb-input"
-              />
-            </Field>
             <div className="col-span-2 grid grid-cols-2 gap-2">
               {[
                 ["track_before", "Track before", "Baseline run-up"],
@@ -151,12 +131,49 @@ export default function SurgeryForm({ surgery, prefillTrack, onSaved, onCancel }
                   style={draft[key] !== false ? { backgroundColor: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" } : {}}
                 >
                   <span className="block text-xs truncate">{label}</span>
-                  <span className="block text-[10px] font-semibold opacity-80 truncate">{hint} · {draft[key] !== false ? "ON" : "OFF"}</span>
+                  <span className="block text-2xs font-semibold opacity-80 truncate">{hint} · {draft[key] !== false ? "ON" : "OFF"}</span>
                 </button>
               ))}
             </div>
           </>
         )}
+        {/* Both of these belong to a maintenance log as much as to a surgery.
+            The red flag check measures against the fever number either way,
+            and it offers a tap-to-call on this number either way — so keeping
+            them behind the surgery-only block meant a maintenance patient got
+            the fallback she could not change and a call button that could
+            never appear. */}
+        <Field
+          label={maintenance ? "Doctor's phone" : "Office phone"}
+          span
+          hint="tap to call from a red flag"
+        >
+          <input
+            type="tel"
+            inputMode="tel"
+            value={draft.office_phone ?? ""}
+            placeholder="(555) 123-4567"
+            onChange={text("office_phone")}
+            className="nb-input"
+          />
+        </Field>
+
+        {/* A maintenance log has no surgeon's office, but it still has a
+            temperature worth calling about, and the red flag check measures
+            against this number either way. Hiding it here meant a maintenance
+            patient silently got the fallback with no way to change it. */}
+        <Field label="Call if fever over °F" span hint={`${FEVER_DEFAULT} if left blank`}>
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            value={draft.fever_threshold ?? ""}
+            placeholder={String(FEVER_DEFAULT)}
+            onChange={num("fever_threshold")}
+            className="nb-input"
+          />
+        </Field>
+
         <Field label="Notes" span>
           <textarea
             rows={4}

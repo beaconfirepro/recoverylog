@@ -1,6 +1,7 @@
 import React from "react";
 import { Check } from "lucide-react";
 import SurgeryChoice from "@/components/orientation/SurgeryChoice";
+import { isDone } from "@/lib/orientation";
 
 function YesNo({ onYes, onNo, yesCta }) {
   return (
@@ -19,8 +20,13 @@ function YesNo({ onYes, onNo, yesCta }) {
   );
 }
 
-export default function OrientationItem({ item, state, setState, onNavigate }) {
-  const done = !!state.items[item.key];
+export default function OrientationItem({ item, state, derived = {}, setState, onNavigate }) {
+  const done = isDone(item.key, state, derived);
+  // Ticked because the app can see it, rather than because she said so. The box
+  // cannot be unticked in that case: you do not un-add a garment by tapping a
+  // checkbox, and a box that swallows taps is worse than one that will not take
+  // them.
+  const bySelf = !!derived[item.key];
 
   const mark = (val) => setState({ ...state, items: { ...state.items, [item.key]: val } });
 
@@ -31,8 +37,12 @@ export default function OrientationItem({ item, state, setState, onNavigate }) {
           type="button"
           role="checkbox"
           aria-checked={done}
-          aria-label={`Mark step ${item.n} complete`}
-          onClick={() => mark(!done)}
+          aria-label={
+            bySelf ? `Step ${item.n} is done` : `Mark step ${item.n} complete`
+          }
+          aria-disabled={bySelf}
+          title={bySelf ? "Already done — the app can see this one." : undefined}
+          onClick={() => !bySelf && mark(!done)}
           className="w-7 h-7 shrink-0 border-2 rounded-md grid place-items-center mt-0.5"
           style={done ? { backgroundColor: "hsl(var(--accent))" } : {}}
         >

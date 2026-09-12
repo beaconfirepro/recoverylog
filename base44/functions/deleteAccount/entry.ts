@@ -58,7 +58,18 @@ export default async function (req: Request): Promise<Response> {
       deleted.AppUser = await purge(admin, "AppUser", { patient_id: patientId });
     }
 
-    for (const row of mine) {
+    // The group purge above already took every AppUser row carrying this
+    // patient_id, her own row included: a patient row points at itself. Asking
+    // for it again is a delete of a row that is not there, which throws, and
+    // the catch below turned that into a 500 after the log was already gone.
+    // What is left here is only what sits outside her group — her rows on other
+    // people's care teams.
+    const elsewhere =
+      patientRow && patientId
+        ? mine.filter((r: { patient_id?: string }) => r.patient_id !== patientId)
+        : mine;
+
+    for (const row of elsewhere) {
       await admin.entities.AppUser.delete(row.id);
       deleted.AppUser = (deleted.AppUser || 0) + 1;
     }

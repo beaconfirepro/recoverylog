@@ -4,6 +4,13 @@ module.exports = {
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
   	extend: {
+  		fontSize: {
+  			// Apple's floor is 11pt, and the app had real content — the name of
+  			// the tracker you are about to tap, whose log is on screen — at 9px.
+  			// Named in rem so the text-size setting in You moves it with
+  			// everything else.
+  			'2xs': ['0.6875rem', { lineHeight: '1rem' }]
+  		},
   		opacity: Object.fromEntries(Array.from({ length: 101 }, (_, i) => [i, `${i / 100}`])),
   		borderRadius: {
   			lg: 'var(--radius)',

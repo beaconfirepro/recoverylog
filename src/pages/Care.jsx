@@ -8,9 +8,9 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Field from "@/components/Field";
 import { useCareTeam } from "@/lib/careTeam";
 import { maskedName } from "@/lib/invite";
-import { formatJoinCode, generateJoinCode } from "@/lib/joinCode";
+import { dobDigest, formatJoinCode, generateJoinCode } from "@/lib/joinCode";
 import { sendInviteEmail } from "@/lib/inviteEmail";
-import Surgeries from "@/components/care/Surgeries";
+import HelpHint from "@/components/help/HelpHint";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
 
 // Set when a log is opened, so a member is asked which patient once a session
@@ -32,21 +32,32 @@ export const hasPicked = () => {
   }
 };
 
+// One string, one place. Both claim screens say this and neither says which
+// factor failed. The two hints are the two things that actually go wrong:
+// people type the code in lower case with the dash, and people guess the year.
+export const WRONG_ANSWER =
+  "That does not match this invitation. Case and the dash in the code don't matter, so check the " +
+  "characters and the date — or ask the patient to read them out again.";
+
 const nameOf = (row) =>
   [row.match_first_name, row.match_last_name].filter(Boolean).join(" ").trim() || "This patient";
 
 function Claim({ row, onDone, onCancel }) {
   const { claimMembership } = usePatient();
   const [code, setCode] = useState("");
+  const [dob, setDob] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
     setBusy(true);
     setError("");
-    const ok = await claimMembership(row, code);
+    const ok = await claimMembership(row, code, dob);
     if (!ok) {
-      setError("That code doesn't match this invitation. Ask the patient to read it out again.");
+      // Deliberately one message for both factors. Saying which one was wrong
+      // would tell someone holding a forwarded code that the code is right,
+      // which turns two factors back into one.
+      setError(WRONG_ANSWER);
       setBusy(false);
       return;
     }
@@ -56,8 +67,18 @@ function Claim({ row, onDone, onCancel }) {
 
   return (
     <div className="border-2 rounded-xl bg-background p-3 space-y-3">
-      <p className="text-sm font-semibold break-words">
-        Enter the join code the patient gave you.
+      <p className="text-sm font-semibold break-words flex items-center gap-1.5">
+        <span className="min-w-0">Enter the code the patient read out to you, and their date of birth.</span>
+        <HelpHint label="Why a code and a date of birth">
+          <p>
+            The email tells you the log exists. The code proves the patient meant you. Their date of birth
+            proves you are the person she meant to read it to.
+          </p>
+          <p>
+            The invitation email carries neither, so an invitation that reaches the wrong inbox opens nothing.
+            Case and the dash in the code do not matter.
+          </p>
+        </HelpHint>
       </p>
       <Field label="Join code">
         <input
@@ -74,12 +95,23 @@ function Claim({ row, onDone, onCancel }) {
           className="nb-input tracking-[0.3em] text-center uppercase"
         />
       </Field>
+      <Field label="Their date of birth">
+        <input
+          type="date"
+          value={dob}
+          onChange={(e) => {
+            setDob(e.target.value);
+            setError("");
+          }}
+          className="nb-input"
+        />
+      </Field>
       {error && <p className="text-sm font-bold text-destructive break-words">{error}</p>}
       <div className="flex gap-2 min-w-0">
         <button
           className="nb-btn flex-1 min-w-0 h-12 bg-primary text-primary-foreground disabled:opacity-40"
           onClick={submit}
-          disabled={busy || !code.trim()}
+          disabled={busy || !code.trim() || !dob}
         >
           {busy ? "Checking…" : "Open the log"}
         </button>
@@ -116,6 +148,13 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
       setError("That email is already on the care team.");
       return;
     }
+    // The date of birth is the second factor, so an invitation cannot be made
+    // without one. Writing the row anyway would issue an invitation that opens
+    // on the code alone, which is the thing the second factor exists to stop.
+    if (!patient?.dob) {
+      setError("Add your date of birth on the You page first — your care team confirms it to get in.");
+      return;
+    }
     setBusy(true);
     const join_code = generateJoinCode();
     await base44.entities.AppUser.create({
@@ -125,6 +164,8 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
       join_code,
+      // Salted with the code, so the row gives up neither factor on its own.
+      dob_check: await dobDigest(join_code, patient.dob),
       // Copied onto their row so an unopened invitation can say who it is from.
       // Row security does not let an unlinked account read the patient's own
       // row.
@@ -155,7 +196,7 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
           <h2 className="font-display text-xl uppercase leading-tight break-words">Read them this code</h2>
           <p className="text-sm font-semibold break-words">
             {added.emailed
-              ? `${added.email} has been sent an invitation. It does not contain the code.`
+              ? `${added.email} has been sent an invitation. It carries neither the code nor your date of birth.`
               : `The invitation email to ${added.email} did not send. Tell them to sign in at this address.`}
           </p>
         </div>
@@ -165,8 +206,9 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
         </div>
 
         <p className="text-xs font-semibold text-muted-foreground break-words">
-          Text it, say it, write it down. Without it nothing opens, so anyone who receives the email by mistake
-          still cannot see your log. It stays on the care team list until they use it.
+          Text it, say it, write it down. They need this <strong>and</strong> your date of birth, and the email
+          carries neither — so anyone who receives it by mistake still cannot see your log. The code stays on
+          the care team list until they use it.
         </p>
 
         <button type="button" className="nb-btn w-full h-12 bg-primary text-primary-foreground" onClick={onDone}>
@@ -181,7 +223,8 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
       <div>
         <h2 className="font-display text-xl uppercase leading-tight break-words">Add to care team</h2>
         <p className="text-sm font-semibold break-words">
-          They get an invitation at this address. You get a code to read out to them.
+          They get an invitation at this address. To open your log they need a code you read out to them, and
+          your date of birth.
         </p>
       </div>
 
@@ -253,7 +296,8 @@ function PendingInvite({ member, patient }) {
         <>
           <div className="font-display text-2xl tracking-[0.2em] break-words">{formatJoinCode(member.join_code)}</div>
           <p className="text-xs font-semibold text-muted-foreground break-words">
-            Read this out to them. It is not in the invitation email.
+            Read this out to them, along with your date of birth. They need both, and the invitation email
+            carries neither.
           </p>
         </>
       ) : (
@@ -356,7 +400,7 @@ export default function Care() {
                         {maskedName(g.row)}
                       </span>
                       <span className="block text-xs font-semibold text-muted-foreground break-words">
-                        Enter the join code they gave you to open it
+                        Enter the code they read out and their date of birth to open it
                       </span>
                     </span>
                     <ChevronRight className="w-5 h-5 shrink-0" />
@@ -385,7 +429,7 @@ export default function Care() {
             <div className="font-display text-xl uppercase leading-tight break-words" data-orient="careteam">Care team</div>
             <div className="text-sm font-semibold break-words">
               {isOwner
-                ? "They sign in with this email, enter the code you read out to them, and can read your log."
+                ? "They sign in with this email, enter the code you read out plus your date of birth, and can read your log."
                 : `Who else helps ${displayName(patient) || "this patient"}.`}
             </div>
           </div>
@@ -405,7 +449,7 @@ export default function Care() {
           {team.length === 0 && (
             <p className="text-sm text-muted-foreground break-words">
               {isOwner
-                ? "Nobody else can see this log. Tap + to add someone — they get in with a code you read out."
+                ? "Nobody else can see this log. Tap + to add someone — they get in with a code you read out and your date of birth."
                 : "Nobody else is on this care team."}
             </p>
           )}
@@ -421,7 +465,15 @@ export default function Care() {
                 >
                   <span className="flex-1 min-w-0">
                     <span className="block text-sm font-bold truncate">{displayName(m) || m.email}</span>
-                    <span className="block text-[11px] font-semibold text-muted-foreground truncate">{m.email}</span>
+                    <span className="block text-2xs font-semibold text-muted-foreground truncate">{m.email}</span>
+                    {/* The one thing standing between an invitation and the
+                        whole log used to be three taps deep, with nothing on
+                        this row to say it was there. */}
+                    {isOwner && !m.claimed_at && m.join_code && (
+                      <span className="block text-2xs font-semibold text-muted-foreground truncate">
+                        Waiting — code {formatJoinCode(m.join_code)}
+                      </span>
+                    )}
                   </span>
                   {m.claimed_at && <Check className="w-4 h-4 shrink-0 text-muted-foreground" aria-label="Has opened your log" />}
                   <ChevronDown className={`w-5 h-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -485,8 +537,6 @@ export default function Care() {
           })}
         </div>
       </div>
-
-      <Surgeries />
 
       <Dialog open={adding} onOpenChange={(o) => !o && setAdding(false)}>
         <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">

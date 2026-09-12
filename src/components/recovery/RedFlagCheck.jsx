@@ -1,10 +1,17 @@
-import React, { useState } from "react";
-import { AlertTriangle, Check, Sparkles } from "lucide-react";
-import { RED_FLAG_ITEMS } from "@/lib/recovery";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { AlertTriangle, Check, Phone, Sparkles } from "lucide-react";
+import { RED_FLAG_ITEMS, flagLabel } from "@/lib/recovery";
 import { nowTime } from "@/lib/dates";
 import { base44 } from "@/api/base44Client";
 import { isMaintenance } from "@/lib/scope";
+import { telHref } from "@/lib/phone";
 import TimeInput from "@/components/recovery/TimeInput";
+import HelpHint from "@/components/help/HelpHint";
+
+// How long a note sits unsent before it is written. Long enough that typing a
+// sentence is one write rather than forty, short enough that putting the phone
+// down mid-sentence still saves it.
+const NOTE_DEBOUNCE_MS = 900;
 
 export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite = true, record = null }) {
   // A suggestion fills a question she has not answered herself. Once she
@@ -41,53 +48,128 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
     });
     return merged;
   });
-  const [saving, setSaving] = useState(false);
+  // "saving" | "saved" | "failed". This card used to hold twelve answers behind
+  // one button, so a phone call in the middle of it lost the lot. Now each
+  // answer is written as it is given and this says where that write got to.
+  const [state, setState] = useState(null);
 
   // Maintenance has no surgeon's office to ring, so the toggle reads as the
   // generic "I contacted my doctor" rather than a phone that does not exist.
-  const calledLabel = isMaintenance(record) ? "Doctor called" : "Office called";
+  const maintenance = isMaintenance(record);
+  const calledLabel = maintenance ? "Doctor called" : "Office called";
+  const office = telHref(record?.office_phone);
 
   const answered = Object.keys(answers).length;
-  const yesKeys = Object.keys(answers).filter((k) => answers[k] === "yes");
+
+  // Written straight from the values being set rather than read back out of
+  // state, because state has not caught up at the point the tap happens.
+  const persist = useCallback(
+    async (nextAnswers, nextDetails, nextSources) => {
+      // A care team member reads this card, and on a day the patient never
+      // touched the row she is reading does not exist — DayView hands over an
+      // unsaved stand-in with no id. The buttons are disabled for her, but the
+      // time picker is not, so this is the guard that actually holds.
+      if (!canWrite || !day.id) return;
+      setState("saving");
+      try {
+        await base44.entities.RecoveryDay.update(day.id, {
+          red_flag_answers: nextAnswers,
+          red_flag_details: nextDetails,
+          red_flag_sources: nextSources,
+          red_flag_completed: Object.keys(nextAnswers).length === RED_FLAG_ITEMS.length
+        });
+        setState("saved");
+      } catch {
+        // Deliberately not reloading the day on failure: what she typed is
+        // still on screen and still in state, and a reload would replace it
+        // with the copy that never got written.
+        setState("failed");
+      }
+    },
+    [day.id, canWrite]
+  );
+
+  // The note is the one field that types rather than taps, so it is the one
+  // field that cannot be written on every change.
+  const noteTimer = useRef(null);
+  const pending = useRef(null);
+  useEffect(() => () => clearTimeout(noteTimer.current), []);
+
+  const flush = useCallback(() => {
+    clearTimeout(noteTimer.current);
+    if (!pending.current) return;
+    const { a, d, s } = pending.current;
+    pending.current = null;
+    persist(a, d, s);
+  }, [persist]);
+
+  // A note half-typed when the app goes to the background is a note she thinks
+  // she wrote down.
+  useEffect(() => {
+    const onHide = () => flush();
+    window.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      window.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onHide);
+    };
+  }, [flush]);
 
   const setAns = (key, v) => {
-    setAnswers((a) => ({ ...a, [key]: v }));
-    setSources((s) => ({ ...s, [key]: "user" }));
+    const nextAnswers = { ...answers, [key]: v };
+    const nextSources = { ...sources, [key]: "user" };
+    let nextDetails;
     if (v === "no") {
-      setDetails((d) => {
-        const n = { ...d };
-        delete n[key];
-        return n;
-      });
+      nextDetails = { ...details };
+      delete nextDetails[key];
     } else {
-      setDetails((d) => ({
-        ...d,
-        [key]: { time: d[key]?.time || nowTime(), office_called: d[key]?.office_called || false, note: d[key]?.note || "" }
-      }));
+      nextDetails = {
+        ...details,
+        [key]: {
+          time: details[key]?.time || nowTime(),
+          office_called: details[key]?.office_called || false,
+          note: details[key]?.note || ""
+        }
+      };
     }
+    setAnswers(nextAnswers);
+    setSources(nextSources);
+    setDetails(nextDetails);
+    flush();
+    persist(nextAnswers, nextDetails, nextSources);
   };
 
-  const patch = (key, fields) => setDetails((d) => ({ ...d, [key]: { ...d[key], ...fields } }));
-
-  const save = async () => {
-    setSaving(true);
-    await base44.entities.RecoveryDay.update(day.id, {
-      red_flag_answers: answers,
-      red_flag_details: details,
-      red_flag_sources: sources,
-      red_flag_completed: answered === RED_FLAG_ITEMS.length
-    });
-    setSaving(false);
-    onSaved();
+  const patch = (key, fields, { debounce = false } = {}) => {
+    const nextDetails = { ...details, [key]: { ...details[key], ...fields } };
+    setDetails(nextDetails);
+    if (!debounce) {
+      flush();
+      persist(answers, nextDetails, sources);
+      return;
+    }
+    pending.current = { a: answers, d: nextDetails, s: sources };
+    clearTimeout(noteTimer.current);
+    noteTimer.current = setTimeout(flush, NOTE_DEBOUNCE_MS);
   };
+
+  const yesCount = Object.keys(answers).filter((k) => answers[k] === "yes").length;
 
   return (
-    <div className="nb-card p-4" style={yesKeys.length > 0 ? { borderColor: "hsl(var(--destructive))", borderWidth: 3 } : {}}>
-      <div className="flex items-center justify-between mb-1">
+    <div className="nb-card p-4" style={yesCount > 0 ? { borderColor: "hsl(var(--destructive))", borderWidth: 3 } : {}}>
+      <div className="flex items-center justify-between mb-1 gap-2">
         <h2 className="font-heading text-sm uppercase tracking-wider flex items-center gap-1.5">
           <AlertTriangle className="w-4 h-4 text-destructive" /> Red flag check
+          <HelpHint label="Red flags">
+            <p>
+              Twelve things that most often mean call someone after this surgery. Your surgeons gave the list.
+            </p>
+            <p>
+              Answer them once a day. A sparkle means something you logged looks like a yes — tap either answer
+              to override it. The app only ever suggests yes, so it can never talk you out of a flag.
+            </p>
+          </HelpHint>
         </h2>
-        <span className="text-xs font-bold text-muted-foreground">
+        <span className="text-xs font-bold text-muted-foreground shrink-0">
           {answered}/{RED_FLAG_ITEMS.length} answered
           {day.red_flag_completed && answered === RED_FLAG_ITEMS.length && (
             <Check className="inline w-3.5 h-3.5 ml-1 text-green-600" />
@@ -95,7 +177,30 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
         </span>
       </div>
 
-      <div className="space-y-3 mt-2">
+      {/* Twelve clinical phrases and two buttons, with nothing saying what they
+          are for, is a card a first-time patient cannot answer honestly. */}
+      <p className="text-xs font-semibold text-muted-foreground break-words">
+        Twelve things that most often mean call someone. Answer them once a day.
+      </p>
+
+      {canWrite && (
+        <p className="mt-1 text-xs font-semibold text-muted-foreground break-words">
+          Answers save as you tap them. If something changes later, answer again — the newest answer is the one
+          that counts, and the earlier one is not kept.
+        </p>
+      )}
+
+      {/* The mechanism was careful and invisible: only "yes" is ever suggested,
+          so the app can never talk her out of a flag, and hers wins the moment
+          she touches the question. Said out loud, a suggested yes reads as a
+          suggestion rather than as a diagnosis. */}
+      {Object.keys(suggestions).length > 0 && (
+        <p className="mt-1 text-xs font-semibold text-muted-foreground break-words">
+          A sparkle means something you logged looks like a yes. Tap either answer to override it.
+        </p>
+      )}
+
+      <div className="space-y-3 mt-3">
         {RED_FLAG_ITEMS.map((item) => {
           const ans = answers[item.key];
           const det = details[item.key];
@@ -106,12 +211,12 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
               <div className="flex items-center justify-between gap-2">
                 <span className="min-w-0">
                   <span className={`block text-sm font-semibold break-words ${ans === "yes" ? "text-destructive" : ""}`}>
-                    {item.label}
+                    {flagLabel(item, record)}
                   </span>
                   {hint && (
                     <span className="flex items-start gap-1 text-xs font-semibold text-muted-foreground break-words">
                       <Sparkles className="w-3 h-3 mt-0.5 shrink-0" />
-                      {hint}
+                      {hint} · Tap to override recommendation
                     </span>
                   )}
                 </span>
@@ -136,12 +241,25 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
               </div>
               {ans === "yes" && (
                 <div className="mt-1.5 pl-2 space-y-1.5">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
                     <TimeInput
                       small
                       value={det?.time || ""}
                       onChange={(t) => patch(item.key, { time: t })}
                     />
+                    {/* The number was collected, stored and printed in the PDF,
+                        and then when a flag fired she was shown a toggle saying
+                        "Office called" with no way to call. */}
+                    {office && (
+                      <a
+                        href={office}
+                        className="nb-chip h-9 text-xs gap-1.5"
+                        style={{ backgroundColor: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }}
+                      >
+                        <Phone className="w-3.5 h-3.5 shrink-0" />
+                        Call the office
+                      </a>
+                    )}
                     <button
                       className="nb-chip h-9 text-xs"
                       style={det?.office_called ? { backgroundColor: "hsl(var(--secondary))", color: "#fff" } : {}}
@@ -156,7 +274,8 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
                   <textarea
                     className="nb-textarea min-h-[3.5rem]"
                     value={det?.note || ""}
-                    onChange={(e) => patch(item.key, { note: e.target.value })}
+                    onChange={(e) => patch(item.key, { note: e.target.value }, { debounce: true })}
+                    onBlur={flush}
                     placeholder="What happens next"
                     readOnly={!canWrite}
                   />
@@ -167,10 +286,49 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
         })}
       </div>
 
-      {canWrite && (
-        <button className="nb-btn w-full h-14 bg-primary text-primary-foreground mt-4" onClick={save} disabled={saving}>
-          {saving ? "Saving…" : "Save red flag check"}
-        </button>
+      {/* Always on screen, not only after a yes: it is no use to her the first
+          time she reads it if that is the moment she needed it. The surgeons
+          gave this list as "if any of these happen, call", so the card says so
+          rather than tiering twelve questions the surgeons did not tier. */}
+      <div
+        className="mt-4 border-2 rounded-xl p-3 space-y-1.5"
+        style={{ borderColor: "hsl(var(--destructive))" }}
+      >
+        <p className="text-sm font-bold break-words" style={{ color: "hsl(var(--destructive))" }}>
+          Every one of these is on the list because your surgeon wants to hear about it. If any of them is
+          happening, call.
+        </p>
+        <p className="text-sm font-semibold break-words">
+          If you cannot breathe, have chest pain, are confused or cannot be woken, call emergency services. Do
+          not wait for the office.
+        </p>
+        {office && (
+          <a
+            href={office}
+            className="nb-btn w-full h-12 mt-1 flex items-center justify-center gap-2 bg-card"
+          >
+            <Phone className="w-4 h-4 shrink-0" />
+            Call {maintenance ? "your doctor" : "the office"}
+          </a>
+        )}
+        {!office && (
+          <p className="text-xs font-semibold text-muted-foreground break-words">
+            No phone number on this record yet. Add one on the surgery so it is here when you need it.
+          </p>
+        )}
+      </div>
+
+      {canWrite && state && (
+        <p
+          className="mt-2 text-xs font-bold break-words"
+          role="status"
+          style={state === "failed" ? { color: "hsl(var(--destructive))" } : undefined}
+        >
+          {state === "saving" && "Saving…"}
+          {state === "saved" && "Saved ✔"}
+          {state === "failed" &&
+            "That did not save. Your answers are still here — check your connection and tap the answer again."}
+        </p>
       )}
     </div>
   );

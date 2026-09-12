@@ -9,10 +9,10 @@ import SurgeryCard from "@/components/care/SurgeryCard";
 import SurgeryForm from "@/components/care/SurgeryForm";
 import CancelSurgeryDialog from "@/components/care/CancelSurgeryDialog";
 
-// The surgeries on the open log. The + in the header opens a modal to add one;
-// tapping a card opens it to show the details, and makes it the active surgery.
-// Arriving from the orientation checklist with openNewSurgery pops the modal
-// open and seeds the new surgery's tracking toggles.
+// The records on the open log: surgeries, and the maintenance log. The + in the
+// header opens a modal to add one, and tapping a card opens it to show the
+// details. Arriving from the orientation checklist with openNewSurgery pops the
+// modal open and seeds the new surgery's tracking toggles.
 export default function Surgeries() {
   const { surgeries, activeSurgeryId, selectSurgery, canWrite, patientId, refreshSurgeries } = usePatient();
   const location = useLocation();
@@ -63,7 +63,7 @@ export default function Surgeries() {
         <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
           <Scissors className="w-5 h-5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <div className="font-display text-xl uppercase leading-tight break-words">Surgeries</div>
+            <div className="font-display text-xl uppercase leading-tight break-words">Logs</div>
             <div className="text-sm font-semibold break-words">Each keeps its own days.</div>
           </div>
           {canWrite && (
@@ -79,9 +79,13 @@ export default function Surgeries() {
         </div>
 
         <div className="p-4 space-y-2">
+          {/* A maintenance patient has no surgery date for her days to count
+              from, and telling her they will is how the old empty state read to
+              everyone who is not having an operation. */}
           {surgeries.length === 0 && (
             <p className="text-sm text-muted-foreground break-words">
-              No surgeries yet. Tap + to add one and your days start counting from its date.
+              Nothing here yet. Tap + to add a surgery and your days count from its date, or start a
+              maintenance log below and they run by calendar date.
             </p>
           )}
           {activeSurgeries.map((s) => (
@@ -91,10 +95,12 @@ export default function Surgeries() {
               active={s.id === activeSurgeryId}
               open={expanded === s.id}
               canWrite={canWrite}
-              onToggle={() => {
-                setExpanded(expanded === s.id ? null : s.id);
-                selectSurgery(s.id);
-              }}
+              // Opening a card to read it used to also make it the surgery
+              // every setting applies to. Harmless when this list lived on
+              // Care; on Setup, with the tracking settings directly below, it
+              // would silently repoint them. The picker in "What to track" is
+              // the one place that chooses.
+              onToggle={() => setExpanded(expanded === s.id ? null : s.id)}
               onEdit={() => setEditing(s)}
               onCancel={() => setCancelling(s)}
             />

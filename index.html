@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/icon-192.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- 180×180 is the size iOS actually wants, and the file already is one.
+         Saying so stops it guessing and rescaling. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <!-- viewport-fit=cover is what makes env(safe-area-inset-*) report anything
          but zero. Without it the notch and the home indicator are simply not
          measurable, and a bar pinned to the bottom sits under the gesture bar. -->
@@ -16,12 +18,64 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="LipNode" />
-    <meta name="description" content="A post-surgery log: what you tracked, day by day, in a form a surgeon can read." />
+    <meta name="description" content="A daily log for lipedema: surgery recovery and the long haul, in a form that can help your care team support you." />
     <link rel="manifest" href="/manifest.json" />
     <title>LipNode</title>
+
+    <!-- Blocking, and in the head, because this is the one thing that cannot
+         wait for the bundle. main.jsx is a module, so it is deferred: by the
+         time applyStoredTheme() runs the document has already painted once, in
+         whichever scheme the stylesheet defaults to. A patient who chose dark
+         and opens the app at 3am saw a white flash first. Same key and same
+         classes as src/lib/theme.js, which stays the source of truth once the
+         app is running. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("recoverylog.theme");
+          if (t === "dark" || t === "light") document.documentElement.classList.add(t);
+          var s = { large: 115, largest: 130 }[localStorage.getItem("recoverylog.textSize")];
+          if (s) document.documentElement.style.fontSize = s + "%";
+        } catch (e) {
+          /* Storage blocked. The media query answers instead, which is the
+             same thing "system" does. */
+        }
+      })();
+    </script>
+
+    <style>
+      /* What the screen holds between the launch image and React's first
+         render. A standalone iOS app shows the launch image and then whatever
+         this is, so without it the first second of every session is a blank
+         page. Removed by the app mounting over it. */
+      #boot {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: hsl(18 86% 96%);
+        color: hsl(260 30% 11%);
+        font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 14px;
+      }
+      .dark #boot {
+        background: hsl(14 18% 10%);
+        color: hsl(48 100% 96%);
+      }
+      @media (prefers-color-scheme: dark) {
+        html:not(.light) #boot {
+          background: hsl(14 18% 10%);
+          color: hsl(48 100% 96%);
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="boot">LipNode</div></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

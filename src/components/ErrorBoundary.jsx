@@ -27,7 +27,7 @@ export default class ErrorBoundary extends React.Component {
             <p className="text-sm font-semibold break-words">
               The screen failed to load. Reloading usually fixes it. If it keeps happening, sign out and back in.
             </p>
-            <p className="text-[11px] font-mono break-words text-muted-foreground">
+            <p className="text-2xs font-mono break-words text-muted-foreground">
               {String(this.state.error?.message || this.state.error)}
             </p>
             <button className="nb-btn w-full h-14 bg-primary text-primary-foreground" onClick={() => window.location.reload()}>

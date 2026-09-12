@@ -98,7 +98,7 @@ const AuthenticatedApp = () => {
         <Route path="/trends" element={<Trends />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/me" element={<Me />} />
-        <Route path="/surgery" element={<Navigate to="/care" replace />} />
+        <Route path="/surgery" element={<Navigate to="/profile" replace />} />
         <Route path="/export" element={<Navigate to="/profile" replace />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />

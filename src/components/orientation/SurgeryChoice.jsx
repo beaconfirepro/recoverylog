@@ -20,7 +20,7 @@ function ToggleRow({ on, onClick, label, hint }) {
     >
       <span className="min-w-0">
         <span className="block truncate uppercase">{label}</span>
-        <span className="block text-[10px] font-semibold opacity-70 truncate uppercase">{hint}</span>
+        <span className="block text-2xs font-semibold opacity-70 truncate uppercase">{hint}</span>
       </span>
       <span className="font-heading text-xs shrink-0">{on ? "ON" : "OFF"}</span>
     </button>

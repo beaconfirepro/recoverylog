@@ -4,7 +4,7 @@ import { usePatient, displayName } from "@/lib/PatientContext";
 
 const Row = ({ label, value }) => (
   <div className="flex items-baseline justify-between gap-3 py-1.5 border-b-2 last:border-b-0 min-w-0">
-    <span className="font-heading text-[11px] uppercase tracking-wider text-muted-foreground shrink-0">{label}</span>
+    <span className="font-heading text-2xs uppercase tracking-wider text-muted-foreground shrink-0">{label}</span>
     <span className="text-sm font-bold text-right break-words min-w-0">{value || "—"}</span>
   </div>
 );

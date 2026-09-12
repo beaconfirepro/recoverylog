@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { codeMatches, formatJoinCode, generateJoinCode, normalizeJoinCode } from "@/lib/joinCode";
+import {
+  codeMatches, dobDigest, dobMatches, formatJoinCode, generateJoinCode, normalizeDob, normalizeJoinCode
+} from "@/lib/joinCode";
 
 // This is the whole of what stops an invitation landing at the wrong address
 // from opening a patient's log, so the tests are about what it refuses.
@@ -76,5 +78,62 @@ describe("formatJoinCode", () => {
   it("leaves anything else alone rather than inventing a dash", () => {
     expect(formatJoinCode("")).toBe("");
     expect(formatJoinCode("7K2")).toBe("7K2");
+  });
+});
+
+describe("the date of birth factor", () => {
+  const CODE = "7K2QM4";
+  const DOB = "1974-03-09";
+
+  const invite = async () => ({ join_code: CODE, dob_check: await dobDigest(CODE, DOB) });
+
+  it("normalizes what a date input hands over", () => {
+    expect(normalizeDob(" 1974-03-09 ")).toBe("1974-03-09");
+    expect(normalizeDob("1974-03-09T00:00:00Z")).toBe("1974-03-09");
+    expect(normalizeDob(null)).toBe("");
+  });
+
+  it("lets the right date through", async () => {
+    expect(await dobMatches(await invite(), CODE, DOB)).toBe(true);
+    expect(await dobMatches(await invite(), "7k2q-m4", DOB)).toBe(true);
+  });
+
+  it("keeps a wrong date out, including one day off", async () => {
+    const row = await invite();
+    expect(await dobMatches(row, CODE, "1974-03-08")).toBe(false);
+    expect(await dobMatches(row, CODE, "1974-04-09")).toBe(false);
+    expect(await dobMatches(row, CODE, "1975-03-09")).toBe(false);
+  });
+
+  it("refuses an empty date", async () => {
+    const row = await invite();
+    expect(await dobMatches(row, CODE, "")).toBe(false);
+    expect(await dobMatches(row, CODE, null)).toBe(false);
+  });
+
+  it("will not verify a date against the wrong code", async () => {
+    // The code is the salt, which is what stops either factor giving up the
+    // other: the digest is worthless to someone who does not already have both.
+    expect(await dobMatches(await invite(), "7K2QM5", DOB)).toBe(false);
+  });
+
+  it("produces nothing to compare when a factor is missing", async () => {
+    expect(await dobDigest("", DOB)).toBe(null);
+    expect(await dobDigest(CODE, "")).toBe(null);
+    expect(await dobDigest("7K2QM", DOB)).toBe(null);
+  });
+
+  it("does not carry the date itself", async () => {
+    // A digest that contained the date would defeat the point: an invitation
+    // that reached the wrong address would leak the patient's date of birth.
+    const row = await invite();
+    expect(row.dob_check).not.toContain("1974");
+    expect(row.dob_check).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("opens an invitation written before the date was asked for", async () => {
+    // Those rows carry no digest. The code alone opened them, and refusing
+    // them outright would lock out a care team that is already helping.
+    expect(await dobMatches({ join_code: CODE }, CODE, "")).toBe(true);
   });
 });

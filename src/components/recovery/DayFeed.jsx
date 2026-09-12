@@ -22,7 +22,7 @@ function CheckinCard({ entry, cfg, onEdit, tag }) {
           className="absolute inset-y-0 left-0"
           style={{ width: `${(d[f.key] / 10) * 100}%`, backgroundColor: gradeColor(d[f.key], 10, f.highIs) }}
         />
-        <span className="relative font-heading text-[10px] whitespace-nowrap text-[#1A1024]">
+        <span className="relative font-heading text-2xs whitespace-nowrap text-[#1A1024]">
           {f.label} {d[f.key]}
         </span>
       </span>
@@ -34,8 +34,8 @@ function CheckinCard({ entry, cfg, onEdit, tag }) {
     <button onClick={onEdit} className="relative w-full text-left block transition-transform active:translate-x-[2px]">
       <Card corner={d.slot}>
         <span className="grid grid-cols-2 gap-x-2 gap-y-1">
-          <span className="font-heading text-[9px] uppercase tracking-wide text-muted-foreground">Aim high</span>
-          <span className="font-heading text-[9px] uppercase tracking-wide text-muted-foreground">Aim low</span>
+          <span className="font-heading text-2xs uppercase tracking-wide text-muted-foreground">Aim high</span>
+          <span className="font-heading text-2xs uppercase tracking-wide text-muted-foreground">Aim low</span>
           {Array.from({ length: rows }, (_, i) => [bar(high[i]), bar(low[i])]).flat()}
         </span>
       </Card>
@@ -65,7 +65,7 @@ function BodyWorkRow({ entries, goal, onEdit, tag }) {
                   <FillPill text={label} done={running[i]} goal={goal} color={cfg.color} />
                 ) : (
                   <span
-                    className="flex items-center justify-center border-2 rounded-full px-3 py-2 font-heading text-[11px]"
+                    className="flex items-center justify-center border-2 rounded-full px-3 py-2 font-heading text-2xs"
                     style={{ backgroundColor: cfg.color, color: cfg.darkText ? "#1A1024" : "#fff" }}
                   >
                     {label}

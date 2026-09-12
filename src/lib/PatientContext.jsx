@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { PINNED, QUICK_ORDER } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
-import { codeMatches } from "@/lib/joinCode";
+import { codeMatches, dobMatches } from "@/lib/joinCode";
 import { loadScope, saveScope, resolveScope, recordsInScope } from "@/lib/scope";
 
 const PatientContext = createContext();
@@ -30,7 +30,7 @@ export const trackedTypes = (surgery) => {
 // A patient's own Maintenance record is created the moment they have no
 // surgeries at all, so logging works before any surgery is added. Existing
 // patients who already have a surgery do not get one automatically; they can
-// start one from the Care page.
+// start one from Setup.
 const ensureMaintenance = async (patientId, list) => {
   if (!patientId) return list;
   const hasAny = list.some((s) => !s.archived);
@@ -190,12 +190,18 @@ export const PatientProvider = ({ children }) => {
     [checkUserAuth, groups]
   );
 
-  // Confirm the patient's details against the copies on your own membership row
-  // and open their log. The check is what turns an invite into access, and the
-  // stamp is what stops the care page asking again.
+  // Confirm both factors against your own membership row and open their log.
+  // The code proves the patient meant you; the date of birth proves you are the
+  // person she meant to read it to. The stamp is what stops the care page
+  // asking again.
+  //
+  // Both checks run here, in the browser, which is only as strong as what came
+  // before it — the same hole issue #40 tracks. linkPatient closes it by doing
+  // this under the service role, and it cannot run until the API key lands.
   const claimMembership = useCallback(
-    async (row, code) => {
+    async (row, code, dob) => {
       if (!codeMatches(row, code)) return false;
+      if (!(await dobMatches(row, code, dob))) return false;
       if (!row.claimed_at) {
         await base44.entities.AppUser.update(row.id, { claimed_at: new Date().toISOString() });
       }

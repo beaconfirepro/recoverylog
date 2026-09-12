@@ -7,7 +7,10 @@ export default function Field({ label, hint, span, children }) {
     <div className={`min-w-0 space-y-1.5 ${span ? "col-span-2" : ""}`}>
       <div className="flex items-baseline justify-between gap-2">
         <label className="nb-label truncate">{label}</label>
-        {hint && <span className="text-[10px] font-semibold text-muted-foreground shrink-0">{hint}</span>}
+        {/* Not muted, and not 10px. A hint that explains what a field is for is
+            the thing you need in order to answer it correctly, and at that size
+            in that grey it read as chrome and got skipped. */}
+        {hint && <span className="text-xs font-semibold shrink-0">{hint}</span>}
       </div>
       {children}
     </div>

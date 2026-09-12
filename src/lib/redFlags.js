@@ -1,4 +1,5 @@
 import { BODY_PARTS } from "@/lib/bodyMap";
+import { FEVER_DEFAULT } from "@/lib/recovery";
 
 // The day's entries, read against the red-flag list. Only "yes" is ever
 // suggested: an entry that says something worrying is evidence, but the absence
@@ -8,7 +9,6 @@ import { BODY_PARTS } from "@/lib/bodyMap";
 // Every suggestion says which entry it came from, and she can change any of
 // them; nothing here is saved until she saves the check.
 
-const FEVER_DEFAULT = 100.4;
 const CALVES = BODY_PARTS.filter((p) => p.endsWith("calf"));
 const DARK_URINE = ["Brown / tea", "Pink / red"];
 const BAD_INCISION = ["Redness", "Increased warmth", "Pus", "Odor", "Increased pain"];

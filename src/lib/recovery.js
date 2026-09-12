@@ -566,8 +566,17 @@ export const checkinConfig = (patient) => {
   };
 };
 
+// The number a temperature is measured against when the record does not carry
+// one. 101.5 is the line most surgeons give for "call us"; a patient whose own
+// surgeon said something else enters it on the record and that wins.
+export const FEVER_DEFAULT = 101.5;
+
 export const RED_FLAG_ITEMS = [
-  { key: "fever", label: "Fever over the surgeon's number" },
+  // "The surgeon's number" is not a number, and a patient cannot answer a
+  // question against it. This one line names the threshold actually in force,
+  // so it carries a placeholder the record fills in. Read it through
+  // flagLabel() — never render `label` directly.
+  { key: "fever", label: "Fever over {n} °F", from: "fever_threshold", fallback: FEVER_DEFAULT },
   { key: "calf", label: "Calf pain, swelling, or warmth on one side" },
   { key: "chest", label: "Chest pain or short of breath" },
   { key: "redness", label: "Redness spreading, or skin hot or hard" },
@@ -580,6 +589,15 @@ export const RED_FLAG_ITEMS = [
   { key: "garment", label: "Numbness or color change under garment" },
   { key: "confusion", label: "Confused or hard to wake" }
 ];
+
+// What to show for a red flag on the card, in the PDF, and in the day totals.
+// Only the fever line varies by record; the other eleven read the same for
+// everyone, so they come straight back.
+export const flagLabel = (item, record) => {
+  if (!item?.from) return item?.label ?? "";
+  const n = record?.[item.from] ?? item.fallback;
+  return item.label.replace("{n}", n);
+};
 
 // The slot whose time has most recently passed, so the chip is already right
 // at the moment she opens the form. Before the first one, the first.

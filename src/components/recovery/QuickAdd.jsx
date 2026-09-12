@@ -29,7 +29,7 @@ const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, ...handl
         type="button"
         onClick={onClick}
         tabIndex={arranging ? -1 : 0}
-        className={`nb-btn w-full min-h-16 py-1.5 flex-col gap-0.5 text-[9px] leading-tight !rounded-xl ${
+        className={`nb-btn w-full min-h-16 py-1.5 flex-col gap-0.5 text-xs leading-tight !rounded-xl ${
           arranging ? "outline outline-2 outline-dashed outline-offset-2" : ""
         }`}
         style={{
@@ -63,9 +63,19 @@ const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, ...handl
 // The buttons are the app's main surface, so their order is the patient's to
 // set. Hold one down, or right-click it, and the grid becomes arrangeable:
 // drag to reorder, X to take one off, and the tray adds the rest back.
-export default function QuickAdd({ types, onAdd, onReorder, canWrite = true }) {
+export default function QuickAdd({ types, onAdd, onReorder, canWrite = true, arranging: arrangingProp, onArrangingChange }) {
   const list = (types?.length ? types : QUICK_ORDER).filter((t) => t !== PINNED);
-  const [arranging, setArranging] = useState(false);
+  // Arrange mode is still entered by long press, and now also by the Edit
+  // button beside the heading — which is the only way anyone was going to find
+  // it. The state is held here unless a parent supplies it, so the long press
+  // works the same whether or not there is a button.
+  const [arrangingLocal, setArrangingLocal] = useState(false);
+  const controlled = arrangingProp !== undefined;
+  const arranging = controlled ? arrangingProp : arrangingLocal;
+  const setArranging = (v) => {
+    if (!controlled) setArrangingLocal(v);
+    onArrangingChange?.(v);
+  };
   const [order, setOrder] = useState(list);
   const [dragIndex, setDragIndex] = useState(null);
 

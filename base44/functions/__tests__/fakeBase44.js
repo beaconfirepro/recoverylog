@@ -22,6 +22,11 @@ const makeEntities = (log) =>
           const hits = (state.tables[name] || []).filter((r) => matches(r, query));
           return typeof limit === "number" ? hits.slice(0, limit) : hits;
         },
+        // Returns null for a row that is not there rather than throwing, which
+        // is what a lookup by id does on the real one — and the difference
+        // matters: linkPatient reads the patient's row to check a date of
+        // birth, and a throw there would become a 500 instead of a refusal.
+        get: async (id) => (state.tables[name] || []).find((r) => r.id === id) || null,
         delete: async (id) => {
           const rows = state.tables[name] || [];
           const i = rows.findIndex((r) => r.id === id);
