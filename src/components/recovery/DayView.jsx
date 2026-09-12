@@ -32,6 +32,7 @@ export default function DayView({ date, startCollapsed }) {
   const [saving, setSaving] = useState(false);
   const [addOpen, setAddOpen] = useState(!startCollapsed);
   const [lastBm, setLastBm] = useState(null);
+  const [loadError, setLoadError] = useState(null);
   // The record new entries attach to, and whose day row (red flags, questions)
   // is shown. In single-record scope this is fixed to that record; in "all"
   // scope it is a choice, defaulting to maintenance.
@@ -60,41 +61,56 @@ export default function DayView({ date, startCollapsed }) {
       setEntries([]);
       return;
     }
-    // Single-record scope reads one record; "all" reads every record on the
-    // date by patient, so overlapping surgeries interleave on one rail.
-    const dayQ = multi ? { date, patient_id: patientId } : { date, surgery_id: focused.id };
-    const entQ = dayQ;
-    const [dayRows, entryRows] = await Promise.all([
-      base44.entities.RecoveryDay.filter(dayQ, "date", 200),
-      base44.entities.RecoveryEntry.filter(entQ, "created_date", 1000)
-    ]);
-    const ds = asRows(dayRows);
-    const es = asRows(entryRows);
-    const mine = ds.find((d) => d.surgery_id === focused.id) ||
-      (canWrite
-        ? null
-        : ds[0] || null);
-    const d =
-      mine ||
-      (canWrite
-        ? await base44.entities.RecoveryDay.create({
-            date,
-            patient_id: patientId,
-            surgery_id: focused.id,
-            mode: focused.mode
-          })
-        : null);
-    setDay(d);
-    setEntries(es);
-    // The bowel red flag counts days, so it needs the last one before today.
-    const bmQ = multi ? { type: "bm", patient_id: patientId } : { type: "bm", surgery_id: focused.id };
-    const bm = asRows(await base44.entities.RecoveryEntry.filter(bmQ, "-date", 5));
-    setLastBm(bm.find((e) => e.date < date)?.date || null);
+    setLoadError(null);
+    try {
+      // Single-record scope reads one record; "all" reads every record on the
+      // date by patient, so overlapping surgeries interleave on one rail.
+      const dayQ = multi ? { date, patient_id: patientId } : { date, surgery_id: focused.id };
+      const entQ = dayQ;
+      const [dayRows, entryRows] = await Promise.all([
+        base44.entities.RecoveryDay.filter(dayQ, "date", 200),
+        base44.entities.RecoveryEntry.filter(entQ, "created_date", 1000)
+      ]);
+      const ds = asRows(dayRows);
+      const es = asRows(entryRows);
+      const mine = ds.find((d) => d.surgery_id === focused.id) ||
+        (canWrite
+          ? null
+          : ds[0] || null);
+      const d =
+        mine ||
+        (canWrite
+          ? await base44.entities.RecoveryDay.create({
+              date,
+              patient_id: patientId,
+              surgery_id: focused.id,
+              mode: focused.mode
+            })
+          // A care team member cannot create this row — row security keys
+          // create to write_patient_id and she never carries one — and
+          // returning null left the page spinning for ever. Nobody could reach
+          // an untouched date until the day arrows landed; now anyone can. An
+          // unsaved stand-in renders the day read-only, which is the honest
+          // screen, because there is genuinely nothing here.
+          : { id: null, date, patient_id: patientId, surgery_id: focused.id, mode: focused.mode, unsaved: true });
+      setDay(d);
+      setEntries(es);
+      // The bowel red flag counts days, so it needs the last one before today.
+      const bmQ = multi ? { type: "bm", patient_id: patientId } : { type: "bm", surgery_id: focused.id };
+      const bm = asRows(await base44.entities.RecoveryEntry.filter(bmQ, "-date", 5));
+      setLastBm(bm.find((e) => e.date < date)?.date || null);
+    } catch (e) {
+      // This read also writes, so it can fail on a row-security refusal as well
+      // as on a dropped connection. Either way the old code left entries at
+      // null and the spinner turned for ever with nothing said.
+      setLoadError(e?.message || "The day did not load.");
+    }
   }, [date, patientId, focused, multi, canWrite, scopeRecords.length]);
 
   useEffect(() => {
     setDay(null);
     setEntries(null);
+    setLoadError(null);
     load();
   }, [load]);
 
@@ -106,6 +122,17 @@ export default function DayView({ date, startCollapsed }) {
         <p className="text-sm font-semibold break-words">
           No record to log against yet. Add a surgery on the Care page.
         </p>
+      </div>
+    );
+  }
+  if (loadError) {
+    return (
+      <div className="nb-card p-4 space-y-3">
+        <p className="text-sm font-bold break-words">This day did not load.</p>
+        <p className="text-sm font-semibold text-muted-foreground break-words">{loadError}</p>
+        <button type="button" className="nb-btn w-full h-12 bg-card" onClick={load}>
+          Try again
+        </button>
       </div>
     );
   }

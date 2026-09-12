@@ -13,6 +13,9 @@ export default function QuestionsCard({ day, onSaved, canWrite = true }) {
   // without a word is a question she believes is written down, and she finds
   // out in front of the surgeon that it is not.
   const persist = async (next) => {
+    // Same stand-in as the red flag check: a care team member on a day the
+    // patient never touched has no row to write to.
+    if (!canWrite || !day.id) return;
     const previous = list;
     const attempt = async () => {
       setSaving(true);

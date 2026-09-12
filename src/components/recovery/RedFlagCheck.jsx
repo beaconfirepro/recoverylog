@@ -64,6 +64,11 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
   // state, because state has not caught up at the point the tap happens.
   const persist = useCallback(
     async (nextAnswers, nextDetails, nextSources) => {
+      // A care team member reads this card, and on a day the patient never
+      // touched the row she is reading does not exist — DayView hands over an
+      // unsaved stand-in with no id. The buttons are disabled for her, but the
+      // time picker is not, so this is the guard that actually holds.
+      if (!canWrite || !day.id) return;
       setState("saving");
       try {
         await base44.entities.RecoveryDay.update(day.id, {
@@ -80,7 +85,7 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
         setState("failed");
       }
     },
-    [day.id]
+    [day.id, canWrite]
   );
 
   // The note is the one field that types rather than taps, so it is the one
