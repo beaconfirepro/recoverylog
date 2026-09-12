@@ -18,7 +18,7 @@ const BLANK = {
 
 // The form for adding or editing a surgery. Lives inside a modal on the care
 // page so the list stays a list.
-export default function SurgeryForm({ surgery, onSaved, onCancel }) {
+export default function SurgeryForm({ surgery, prefillTrack, onSaved, onCancel }) {
   const { patientId, selectSurgery, refreshSurgeries } = usePatient();
   const [draft, setDraft] = useState({ ...BLANK, ...(surgery || {}) });
   const [saving, setSaving] = useState(false);
@@ -46,8 +46,8 @@ export default function SurgeryForm({ surgery, onSaved, onCancel }) {
       const created = await base44.entities.Surgery.create({
         ...fields,
         patient_id: patientId,
-        track_before: true,
-        track_after: true,
+        track_before: prefillTrack?.track_before ?? true,
+        track_after: prefillTrack?.track_after ?? true,
         archived: false
       });
       selectSurgery(created.id);

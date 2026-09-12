@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { usePatient } from "@/lib/PatientContext";
 import { Plus, Scissors } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -7,11 +8,22 @@ import SurgeryForm from "@/components/care/SurgeryForm";
 
 // The surgeries on the open log. The + in the header opens a modal to add one;
 // tapping a card opens it to show the details, and makes it the active surgery.
+// Arriving from the orientation checklist with openNewSurgery pops the modal
+// open and seeds the new surgery's tracking toggles.
 export default function Surgeries() {
   const { surgeries, activeSurgeryId, selectSurgery, canWrite } = usePatient();
+  const location = useLocation();
   const [expanded, setExpanded] = useState(null);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [prefillTrack, setPrefillTrack] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.openNewSurgery && canWrite) {
+      setPrefillTrack(location.state.openNewSurgery);
+      setAdding(true);
+    }
+  }, [location.state, canWrite]);
 
   return (
     <>
@@ -57,9 +69,29 @@ export default function Surgeries() {
         </div>
       </div>
 
-      <Dialog open={adding} onOpenChange={(o) => !o && setAdding(false)}>
+      <Dialog
+        open={adding}
+        onOpenChange={(o) => {
+          if (!o) {
+            setAdding(false);
+            setPrefillTrack(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
-          {adding && <SurgeryForm onSaved={() => setAdding(false)} onCancel={() => setAdding(false)} />}
+          {adding && (
+            <SurgeryForm
+              prefillTrack={prefillTrack}
+              onSaved={() => {
+                setAdding(false);
+                setPrefillTrack(null);
+              }}
+              onCancel={() => {
+                setAdding(false);
+                setPrefillTrack(null);
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

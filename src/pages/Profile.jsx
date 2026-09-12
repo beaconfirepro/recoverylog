@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Check, Plus, X } from "lucide-react";
 import { todayStr, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
@@ -22,6 +23,7 @@ const savedSlots = (patient) => {
 };
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { me, patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const [from, setFrom] = useState(todayStr());
@@ -182,6 +184,26 @@ export default function Profile() {
   return (
     <div className="space-y-4">
       <h1 className="font-display text-2xl uppercase">Setup</h1>
+
+      {isOwner && (
+        <div className="nb-card overflow-hidden">
+          <div className="px-4 py-3 border-b-2 bg-muted">
+            <div className="font-display text-xl uppercase leading-tight break-words">Getting started</div>
+            <div className="text-sm font-semibold break-words">
+              The welcome checklist. Open it again any time.
+            </div>
+          </div>
+          <div className="p-4">
+            <button
+              type="button"
+              className="nb-btn w-full h-12 bg-primary text-primary-foreground"
+              onClick={() => navigate("/?orientation=1")}
+            >
+              Open the orientation checklist
+            </button>
+          </div>
+        </div>
+      )}
 
       {isOwner && (
         <div className="nb-card overflow-hidden">
