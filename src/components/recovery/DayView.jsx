@@ -9,6 +9,7 @@ import { usePatient, trackedTypes } from "@/lib/PatientContext";
 import { defaultFocused, recordLabel } from "@/lib/scope";
 import { remove, save } from "@/lib/saving";
 import PullToRefresh from "@/components/PullToRefresh";
+import { newClientId } from "@/lib/writeQueue";
 import QuickAdd from "./QuickAdd";
 import DayFeed from "./DayFeed";
 import EntryForm from "./EntryForm";
@@ -168,21 +169,40 @@ export default function DayView({ date, startCollapsed }) {
   const saveEntry = async (payload) => {
     const target = dialog;
     if (!target) return;
+    // Made once, out here, so a retry and a queued replay are the same write
+    // rather than two. This is what lets the queue tell whether the row already
+    // landed before it sends anything.
+    const clientId = target.entry ? null : newClientId();
+    const row = target.entry
+      ? null
+      : {
+          date,
+          type: target.type,
+          patient_id: patientId,
+          surgery_id: focused.id,
+          mode: focused.mode,
+          client_id: clientId,
+          ...payload
+        };
     const attempt = async () => {
       setSaving(true);
       const res = await save(
         () =>
           target.entry
             ? base44.entities.RecoveryEntry.update(target.entry.id, payload)
-            : base44.entities.RecoveryEntry.create({
-                date,
-                type: target.type,
-                patient_id: patientId,
-                surgery_id: focused.id,
-                mode: focused.mode,
-                ...payload
-              }),
-        { what: "Your entry", retry: attempt }
+            : base44.entities.RecoveryEntry.create(row),
+        {
+          what: "Your entry",
+          retry: attempt,
+          // Described as data as well as done as a closure, so a failure on a
+          // dead connection is kept and sent when one comes back. An edit is
+          // addressed by row id and replaying it is not a duplicate; a create
+          // carries its client_id, which is the only thing standing between a
+          // replay and a second copy of the same entry in a surgeon's PDF.
+          queue: target.entry
+            ? { entity: "RecoveryEntry", op: "update", args: [target.entry.id, payload] }
+            : { entity: "RecoveryEntry", op: "create", args: [row], clientId }
+        }
       );
       setSaving(false);
       if (!res.ok) return;

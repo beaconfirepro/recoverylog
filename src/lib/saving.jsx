@@ -2,6 +2,12 @@ import { ToastAction } from "@/components/ui/toast";
 import { toast } from "@/components/ui/use-toast";
 import { announce } from "@/lib/announce";
 import { buzz, deletedNote, failedNote, savedNote } from "@/lib/saveNotes";
+import { hold } from "@/lib/replayQueue";
+
+// Said instead of "tap Retry" once the write is actually being kept. Retry is
+// still offered, because someone watching the screen would rather it went now.
+const HELD_ADVICE =
+  "Nothing you typed is lost. It will send itself when you are back online, or tap Retry to try now.";
 
 // The single way a write in this app reports itself: a buzz and a brief toast
 // when it lands, and when it does not, a toast that says what went wrong and
@@ -18,7 +24,13 @@ import { buzz, deletedNote, failedNote, savedNote } from "@/lib/saveNotes";
 // advice (the failure headline and what to do about it), retry (what the Retry
 // button calls), quiet (no toast and no buzz on success — for a write that
 // already confirms itself on the page; the announcement still happens, because
-// a screen reader cannot see that confirmation).
+// a screen reader cannot see that confirmation), and queue.
+//
+// queue is the same write described as data — { entity, op, args } — so that a
+// failure can be held and sent when the connection returns. A closure cannot be
+// stored, and storing it is the whole point: the queue has to survive the app
+// being closed. Optional, so a call site without one behaves exactly as before:
+// it says it failed and offers Retry, and that is all.
 async function attempt(write, note, opts) {
   try {
     const value = await write();
@@ -40,8 +52,11 @@ async function attempt(write, note, opts) {
     }
     return { ok: true, value };
   } catch (err) {
+    // Held before the toast, so what it says about being sent later is already
+    // true by the time she reads it.
+    const held = opts.queue ? hold(opts.queue) : false;
     toast({
-      ...failedNote(opts.what, err, opts),
+      ...failedNote(opts.what, err, { ...opts, advice: held ? HELD_ADVICE : opts.advice }),
       // Long enough to reach Retry one-handed and sore, which is the state the
       // person reading it is in.
       duration: 12000,

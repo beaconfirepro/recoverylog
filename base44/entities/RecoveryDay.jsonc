@@ -1,6 +1,10 @@
 {
   "name": "RecoveryDay",
   "properties": {
+    "client_id": {
+      "description": "An id this device made before the row existed, so a write replayed off the offline queue can tell whether it already landed. Written on create and never changed. Absent on rows written before the queue existed.",
+      "type": "string"
+    },
     "mode": {
       "description": "Denormalized from the owning record: 'surgery' or 'maintenance'. A day row exists per (date, record), so a date with entries on two records has two day rows.",
       "enum": [
