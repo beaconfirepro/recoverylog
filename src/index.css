@@ -230,6 +230,78 @@
   .nb-label {
     @apply block font-heading text-xs uppercase tracking-wide;
   }
+  /* The guided tour for the garment orientation step. Self-contained so it
+     works before the tour system lands from GitHub: the spot is an absolute box
+     in document coordinates whose huge box-shadow dims the rest of the page,
+     the arrow and circle are SVG draws, and the note is a fixed bar. */
+  .gtour-spot {
+    position: absolute;
+    z-index: 50;
+    border-radius: 14px;
+    border: 2px solid hsl(var(--accent));
+    box-shadow: 0 0 0 100vmax hsl(260 30% 11% / 0.72);
+    transition: top 0.18s ease, left 0.18s ease, width 0.18s ease, height 0.18s ease;
+    pointer-events: none;
+  }
+  .gtour-arrow {
+    position: absolute;
+    z-index: 50;
+    color: hsl(285 85% 58%);
+    pointer-events: none;
+  }
+  .gtour-arrow-shaft,
+  .gtour-arrow-head {
+    stroke-dasharray: 60;
+    stroke-dashoffset: 60;
+    animation: gtour-draw 0.45s ease-out forwards;
+  }
+  .gtour-arrow-head {
+    stroke-dasharray: 70;
+    stroke-dashoffset: 70;
+    animation-delay: 0.3s;
+  }
+  .gtour-circle {
+    position: absolute;
+    z-index: 50;
+    color: hsl(330 100% 66%);
+    pointer-events: none;
+  }
+  .gtour-circle-path {
+    stroke-dasharray: 320;
+    stroke-dashoffset: 320;
+    animation: gtour-draw 0.6s ease-out forwards;
+  }
+  @keyframes gtour-draw {
+    to { stroke-dashoffset: 0; }
+  }
+  .gtour-note-wrap {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 60;
+    padding: calc(var(--safe-t) + 0.5rem) 0.75rem 0;
+    pointer-events: none;
+  }
+  .gtour-note {
+    max-width: 32rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    pointer-events: auto;
+  }
+  .gtour-note-text {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    word-break: break-word;
+    animation: gtour-note-in 0.25s ease-out;
+  }
+  @keyframes gtour-note-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+  }
   /* A ~5s pulse used by the orientation checklist to point at the section a
      step is about. The ring uses the theme ring colour so it reads in light
      and dark; the card's own 4px ink shadow is kept in each keyframe so the
@@ -261,93 +333,7 @@
      under it. It fades in from the left to match the heading's entrance. */
   .orient-backdrop {
     box-shadow: 0 0 0 3px hsl(var(--accent)), 0 0 0 100vmax hsl(0 0% 55% / 0.7);
-    animation: orient-backdrop-in 280ms ease-out, orient-ring 1s ease-in-out 3.75;
-  }
-  /* The highlight runs 3750ms and spends the back half of that leaving. A
-     fraction of an iteration is deliberate: the breathing stays at one second,
-     which is the rhythm, and the ring is already fading when it stops
-     mid-breath, so where it stops cannot be seen.
-
-     The fade is asked for under no-preference rather than left to the global
-     reduced-motion rule, which cuts every duration to 0.01ms. With `forwards`
-     that would snap the whole highlight to invisible at 1875ms and halve the
-     time it is readable for the people least well served by losing it. They
-     get the steady ring for the full 3750ms instead, and it goes when the
-     element does. */
-  @media (prefers-reduced-motion: no-preference) {
-    .orient-backdrop {
-      animation:
-        orient-backdrop-in 280ms ease-out,
-        orient-ring 1s ease-in-out 3.75,
-        orient-out 1875ms ease-in 1875ms forwards;
-    }
-  }
-  @keyframes orient-out {
-    to { opacity: 0; }
-  }
-
-  /* Tour. The spotlight is the same trick as the single highlight — a
-     transparent box whose huge shadow washes everything outside it — but
-     positioned in document coordinates so it scrolls with the page rather than
-     needing a scroll handler to chase it. */
-  .tour-spot {
-    position: absolute;
-    border-radius: 0.75rem;
-    box-shadow: 0 0 0 3px hsl(var(--accent)), 0 0 0 100vmax hsl(0 0% 55% / 0.7);
-    animation: tour-spot-in 260ms ease-out;
-    pointer-events: none;
-  }
-  @keyframes tour-spot-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  /* Drawn round one control among several. It grows inward rather than fading
-     in flat, which reads as being pointed at rather than appearing. */
-  .tour-circle {
-    position: absolute;
-    border: 3px solid currentColor;
-    border-radius: 999px;
-    animation: tour-circle-in 320ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
-    pointer-events: none;
-  }
-  @keyframes tour-circle-in {
-    from { opacity: 0; transform: scale(1.35); }
-    to { opacity: 1; transform: none; }
-  }
-  /* Above the thing it points at, nosing down towards it. */
-  .tour-arrow {
-    position: absolute;
-    animation: tour-arrow-in 360ms ease-out;
-    pointer-events: none;
-  }
-  @keyframes tour-arrow-in {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: none; }
-  }
-  .tour-pink { color: hsl(var(--primary)); }
-  .tour-purple { color: hsl(var(--secondary)); }
-
-  /* NoteBar. Yellow because the tour already spends lime on the spotlight ring
-     and pink and purple on what it points at; a fourth voice has to be its own.
-     Hue 48 is the family the dark theme's foreground already comes from. */
-  .notebar-note {
-    background-color: hsl(48 100% 62%);
-    color: hsl(260 30% 11%);
-    border-color: hsl(260 30% 11%);
-    box-shadow: 4px 4px 0 hsl(260 30% 11%);
-  }
-  /* The bar is pinned over the app and must read the same in both schemes, so
-     it does not take the card's foreground. Anything inside it inherits. */
-  .notebar { pointer-events: auto; }
-  .notebar-in { animation: notebar-in 200ms ease-out; }
-  .notebar-out { animation: notebar-out 200ms ease-in forwards; }
-  @keyframes notebar-in {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: none; }
-  }
-  @keyframes notebar-out {
-    from { opacity: 1; transform: none; }
-    to { opacity: 0; transform: translateY(-6px); }
+    animation: orient-backdrop-in 280ms ease-out, orient-ring 1s ease-in-out 5;
   }
   /* Breathes between two widths rather than in and out of nothing. The old
      ring spent a third of every second fully transparent, so the thing meant
