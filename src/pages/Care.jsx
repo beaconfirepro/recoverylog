@@ -378,8 +378,8 @@ export default function Care() {
 
       {/* Where the care team is managed. It is not in Setup: Setup is how the
           log is configured, and this is who can see it. */}
-      <div className="nb-card overflow-hidden" data-orient="careteam">
-        <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
+      <div className="nb-card overflow-hidden">
+        <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2" data-orient="careteam">
           <Users className="w-5 h-5 shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="font-display text-xl uppercase leading-tight break-words">Care team</div>

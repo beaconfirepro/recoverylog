@@ -236,11 +236,17 @@
      brutalist edge does not flicker off while it runs. */
   .orient-pulse {
     animation: orient-pulse 1s ease-in-out 5;
+    /* The whole box is not highlighted — only the title bar. A solid green
+       fill with dark type, pulsed with a dark inset edge so it cannot be
+       missed. !important beats the section's own header background/colour
+       (including the pink check-in header) for the five seconds it runs. */
+    background-color: hsl(var(--accent)) !important;
+    color: hsl(var(--accent-foreground)) !important;
     position: relative;
     z-index: 30;
   }
   @keyframes orient-pulse {
-    0%, 100% { box-shadow: 4px 4px 0 hsl(var(--foreground)); }
-    50% { box-shadow: 0 0 0 8px hsl(var(--ring) / 0.65), 4px 4px 0 hsl(var(--foreground)); }
+    0%, 100% { box-shadow: inset 0 0 0 0 hsl(var(--foreground) / 0); }
+    50% { box-shadow: inset 0 0 0 3px hsl(var(--foreground)); }
   }
 }
