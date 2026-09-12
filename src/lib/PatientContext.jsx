@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { PINNED, QUICK_ORDER } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
+import { detailsMatch } from "@/lib/invite";
 
 const PatientContext = createContext();
 
@@ -161,12 +162,7 @@ export const PatientProvider = ({ children }) => {
   // stamp is what stops the care page asking again.
   const claimMembership = useCallback(
     async (row, form) => {
-      const norm = (v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
-      const matches =
-        norm(row.match_first_name) === norm(form.first_name) &&
-        norm(row.match_last_name) === norm(form.last_name) &&
-        String(row.match_dob ?? "") === String(form.dob);
-      if (!matches) return false;
+      if (!detailsMatch(row, form)) return false;
       if (!row.claimed_at) {
         await base44.entities.AppUser.update(row.id, { claimed_at: new Date().toISOString() });
       }

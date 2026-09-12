@@ -3,8 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient } from "@/lib/PatientContext";
 import Field from "@/components/Field";
-
-const norm = (v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+import { detailsMatch } from "@/lib/invite";
 
 // Shown to a signed-in account not yet linked to a patient, in one of three
 // states: someone the patient has already invited, someone starting their own
@@ -23,12 +22,7 @@ export default function ClaimAccess() {
   const claim = async () => {
     setBusy(true);
     setError("");
-    const matches =
-      norm(invite.match_first_name) === norm(form.first_name) &&
-      norm(invite.match_last_name) === norm(form.last_name) &&
-      String(invite.match_dob ?? "") === String(form.dob);
-
-    if (!matches) {
+    if (!detailsMatch(invite, form)) {
       setError("Those details don't match your invitation. Check the spelling and the date of birth with the patient.");
       setBusy(false);
       return;

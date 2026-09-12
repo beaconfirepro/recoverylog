@@ -1,29 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
+import { composeTime as compose, digits, pad, parseTime as parse } from "@/lib/clock";
 
 // Hour, minutes, AM or PM. Three plain controls rather than the browser's own
 // time field, which looks and behaves differently on every phone and cannot be
 // styled to match anything around it.
 //
 // The value in and out is still 24-hour "HH:MM", so nothing that stores or
-// reads a time has to change.
-
-const pad = (n) => String(n).padStart(2, "0");
-
-const parse = (v) => {
-  const [H, M] = String(v || "").split(":").map(Number);
-  if (!Number.isFinite(H) || !Number.isFinite(M)) return { h: "", m: "", pm: false };
-  return { h: String(H % 12 === 0 ? 12 : H % 12), m: pad(M), pm: H >= 12 };
-};
-
-const compose = (h, m, pm) => {
-  const H = Number(h);
-  const M = Number(m);
-  if (!Number.isFinite(H) || !Number.isFinite(M) || h === "" || m === "") return "";
-  const h24 = pm ? (H % 12) + 12 : H % 12;
-  return `${pad(h24)}:${pad(M)}`;
-};
-
-const digits = (s, max) => s.replace(/\D/g, "").slice(0, max);
+// reads a time has to change. The conversion itself lives in @/lib/clock, where
+// it can be tested without a browser.
 
 export default function TimeInput({ value, onChange, small, className = "" }) {
   const [h, setH] = useState(() => parse(value).h);

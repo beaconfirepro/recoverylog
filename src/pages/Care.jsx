@@ -7,6 +7,7 @@ import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Field from "@/components/Field";
 import { useCareTeam } from "@/lib/careTeam";
+import { maskedDob, maskedName } from "@/lib/invite";
 import Surgeries from "@/components/care/Surgeries";
 
 // Set when a log is opened, so a member is asked which patient once a session
@@ -30,31 +31,6 @@ export const hasPicked = () => {
 
 const nameOf = (row) =>
   [row.match_first_name, row.match_last_name].filter(Boolean).join(" ").trim() || "This patient";
-
-// An invitation you have not opened yet shows enough to recognise the one you
-// were expecting, and not enough to learn a name and a date of birth from an
-// email you should not have. First initial, the last name's first and last
-// letter, and the year's last two digits: "D. D___e · ··/··/74".
-const maskedName = (row) => {
-  const first = String(row.match_first_name ?? "").trim();
-  const last = String(row.match_last_name ?? "").trim();
-  const initial = first ? `${first[0].toUpperCase()}.` : "";
-  // A two-letter surname would otherwise print in full, which is the whole
-  // name given away.
-  const surname =
-    last.length > 2
-      ? `${last[0]}${"_".repeat(last.length - 2)}${last[last.length - 1]}`
-      : last.length === 2
-        ? `${last[0]}_`
-        : last;
-  return [initial, surname].filter(Boolean).join(" ") || "A patient";
-};
-
-const maskedDob = (row) => {
-  const dob = String(row.match_dob ?? "").trim();
-  // Stored as YYYY-MM-DD. Only the last two digits of the year survive.
-  return dob.length >= 4 ? `··/··/${dob.slice(2, 4)}` : "";
-};
 
 function Claim({ row, onDone, onCancel }) {
   const { claimMembership } = usePatient();
