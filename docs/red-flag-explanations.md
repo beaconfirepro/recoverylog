@@ -17,8 +17,9 @@ Content for issue #105. Now lives as the `body` of each entry in
 wording was drafted and reviewed in, and as the place the citations are kept in
 full — the app carries one short attribution line, not eleven URLs.
 
-**How it surfaces on the card is still open.** The content and the strings are
-in; nothing reads them yet.
+**How it surfaces:** tapping a flag's label expands its three parts in place,
+one at a time. The sources and the disclaimer sit once at the foot of the card,
+under the standing warning, rather than repeated inside twelve expanders.
 
 ## Rules these were written to
 
