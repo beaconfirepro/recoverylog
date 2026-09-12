@@ -263,7 +263,7 @@ export default function Profile() {
               className="nb-btn w-full h-12 bg-primary text-primary-foreground"
               onClick={() => navigate("/?orientation=1")}
             >
-              Open the orientation checklist
+              Open the guided tour
             </button>
           </div>
         </div>
