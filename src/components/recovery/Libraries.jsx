@@ -3,9 +3,9 @@ import { ChevronRight, Plus, X } from "lucide-react";
 import { useLibrary } from "@/lib/library";
 import DrugLookup from "./DrugLookup";
 
-const Card = ({ title, blurb, orient, children }) => (
+const Card = ({ title, blurb, orient, gtour, children }) => (
   <div className="nb-card overflow-hidden">
-    <div className="px-4 py-3 border-b-2 bg-muted">
+    <div className="px-4 py-3 border-b-2 bg-muted" data-gtour={gtour}>
       <div className="font-display text-xl uppercase leading-tight break-words" data-orient={orient}>{title}</div>
       <div className="text-sm font-semibold break-words">{blurb}</div>
     </div>
@@ -29,7 +29,7 @@ export function GarmentLibrary() {
   };
 
   return (
-    <Card title="My garments" blurb="Offered on the Compression tracker." orient="garments">
+    <Card title="My garments" blurb="Offered on the Compression tracker." orient="garments" gtour="garments-header">
       {rows.length === 0 && (
         <p className="text-sm text-muted-foreground break-words">
           No garments saved. Add one and it is offered on the Compression tracker.
@@ -37,7 +37,7 @@ export function GarmentLibrary() {
       )}
       <div className="space-y-1.5">
         {rows.map((g) => (
-          <div key={g.id} className="flex items-center gap-2 min-w-0">
+          <div key={g.id} className="flex items-center gap-2 min-w-0" data-gtour="garments-row">
             <span className="flex-1 min-w-0 truncate text-sm font-bold">{g.name}</span>
             {g.size && <span className="nb-chip shrink-0 bg-muted">{g.size}</span>}
             <button
@@ -45,13 +45,14 @@ export function GarmentLibrary() {
               onClick={() => remove(g.id)}
               className="nb-btn h-11 w-11 shrink-0 bg-card"
               aria-label={`Remove ${g.name}`}
+              data-gtour="garments-remove"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         ))}
       </div>
-      <div className="flex gap-2 min-w-0">
+      <div className="flex gap-2 min-w-0" data-gtour="garments-inputs">
         <input
           type="text"
           value={name}
@@ -59,6 +60,7 @@ export function GarmentLibrary() {
           onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), save())}
           placeholder="e.g. Marena stage 1"
           className="nb-input"
+          data-gtour="garments-name"
         />
         <input
           type="text"
@@ -66,8 +68,9 @@ export function GarmentLibrary() {
           onChange={(e) => setSize(e.target.value)}
           placeholder="Size"
           className="nb-input w-20 shrink-0"
+          data-gtour="garments-size"
         />
-        <button type="button" onClick={save} className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground">
+        <button type="button" onClick={save} className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground" data-gtour="garments-add">
           <Plus className="w-5 h-5" />
         </button>
       </div>

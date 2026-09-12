@@ -230,6 +230,78 @@
   .nb-label {
     @apply block font-heading text-xs uppercase tracking-wide;
   }
+  /* The guided tour for the garment orientation step. Self-contained so it
+     works before the tour system lands from GitHub: the spot is an absolute box
+     in document coordinates whose huge box-shadow dims the rest of the page,
+     the arrow and circle are SVG draws, and the note is a fixed bar. */
+  .gtour-spot {
+    position: absolute;
+    z-index: 50;
+    border-radius: 14px;
+    border: 2px solid hsl(var(--accent));
+    box-shadow: 0 0 0 100vmax hsl(260 30% 11% / 0.72);
+    transition: top 0.18s ease, left 0.18s ease, width 0.18s ease, height 0.18s ease;
+    pointer-events: none;
+  }
+  .gtour-arrow {
+    position: absolute;
+    z-index: 50;
+    color: hsl(285 85% 58%);
+    pointer-events: none;
+  }
+  .gtour-arrow-shaft,
+  .gtour-arrow-head {
+    stroke-dasharray: 60;
+    stroke-dashoffset: 60;
+    animation: gtour-draw 0.45s ease-out forwards;
+  }
+  .gtour-arrow-head {
+    stroke-dasharray: 70;
+    stroke-dashoffset: 70;
+    animation-delay: 0.3s;
+  }
+  .gtour-circle {
+    position: absolute;
+    z-index: 50;
+    color: hsl(330 100% 66%);
+    pointer-events: none;
+  }
+  .gtour-circle-path {
+    stroke-dasharray: 320;
+    stroke-dashoffset: 320;
+    animation: gtour-draw 0.6s ease-out forwards;
+  }
+  @keyframes gtour-draw {
+    to { stroke-dashoffset: 0; }
+  }
+  .gtour-note-wrap {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 60;
+    padding: calc(var(--safe-t) + 0.5rem) 0.75rem 0;
+    pointer-events: none;
+  }
+  .gtour-note {
+    max-width: 32rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    pointer-events: auto;
+  }
+  .gtour-note-text {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    word-break: break-word;
+    animation: gtour-note-in 0.25s ease-out;
+  }
+  @keyframes gtour-note-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+  }
   /* A ~5s pulse used by the orientation checklist to point at the section a
      step is about. The ring uses the theme ring colour so it reads in light
      and dark; the card's own 4px ink shadow is kept in each keyframe so the
