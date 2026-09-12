@@ -12,6 +12,7 @@ import {
   MEASUREMENTS, NUTRIENTS, BODYWORK_GOAL, nutrientUnit
 } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
+import { fetchAllRows } from "@/lib/paging";
 import { buildRecoveryPdf } from "@/lib/recoveryPdf";
 import { save } from "@/lib/saving";
 import Field from "@/components/Field";
@@ -180,11 +181,17 @@ export default function Profile() {
       const wanted = scope === "all" ? surgeries : surgeries.filter((sx) => sx.id === activeSurgeryId);
       // One read per surgery rather than a filter the backend cannot express as
       // "any of these".
+      // Paged, not capped. A single filter() answers with one page, so 500
+      // days and 3,000 entries were a silent ceiling: past it the PDF built,
+      // looked complete, and went to a surgeon with days missing out of the
+      // middle. MAX_RANGE_DAYS below refuses a wide date range for exactly
+      // that reason and could not see this, because a few months of heavy
+      // logging passes 3,000 entries inside a narrow one.
       const per = await Promise.all(
         wanted.map((sx) =>
           Promise.all([
-            base44.entities.RecoveryDay.filter({ surgery_id: sx.id }, "date", 500),
-            base44.entities.RecoveryEntry.filter({ surgery_id: sx.id }, "created_date", 3000)
+            fetchAllRows(base44.entities.RecoveryDay, { surgery_id: sx.id }, "date", 500),
+            fetchAllRows(base44.entities.RecoveryEntry, { surgery_id: sx.id }, "created_date", 2000)
           ])
         )
       );
@@ -197,8 +204,8 @@ export default function Profile() {
       const doc = buildRecoveryPdf({
         from,
         to,
-        days: per.flatMap(([d]) => asRows(d)),
-        entries: per.flatMap(([, e]) => asRows(e)),
+        days: per.flatMap(([d]) => d),
+        entries: per.flatMap(([, e]) => e),
         patientName: displayName(patient),
         surgeries: wanted,
         team: asRows(team),
