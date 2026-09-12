@@ -33,6 +33,24 @@ npx skills add base44/skills
 - Reuse the existing SDK client and Vite plugin patterns before adding new Base44 integration paths.
 - Run the relevant checks from `package.json` before finishing code changes.
 
+## Tests
+
+`npm test` runs Vitest over the pure modules in `src/lib`. It needs no browser
+and no backend; `vitest.config.js` is separate from `vite.config.js` precisely
+so the Base44 plugin, which wants a live backend, stays out of the way.
+
+What is covered is the logic that would be silently wrong rather than visibly
+broken: the red flag rules, the day totals that reach a surgeon, the date
+maths, the check-in and measurement defaults, the body map, and the invitation
+masking. Components are not covered and do not need to be.
+
+Logic worth testing belongs in `src/lib`, not inside a component. Two modules
+were pulled out for exactly that reason (`clock.js` from `TimeInput`,
+`invite.js` from `Care`), and one of them turned out to have a real hole in it.
+
+`.github/workflows/checks.yml` runs lint, tests and the build on every pull
+request.
+
 ## Shipping (read this before saying anything is done)
 
 **Never call `edit_base44_app`.** It runs the Base44 builder agent and spends
