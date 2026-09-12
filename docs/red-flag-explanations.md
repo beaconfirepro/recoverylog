@@ -1,4 +1,4 @@
-# Red flag explanations — draft for clinical review
+# Red flag explanations
 
 > **Approved to ship, with attribution rather than clinical sign-off.** The
 > twelve red flags are the surgeons' list. These explanations are not: they are
