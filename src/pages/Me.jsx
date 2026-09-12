@@ -9,6 +9,7 @@ import MyLogs from "@/components/legal/MyLogs";
 import SignInMethod from "@/components/legal/SignInMethod";
 import LegalSection from "@/components/legal/LegalSection";
 import HelpSection from "@/components/help/HelpSection";
+import ContactForm from "@/components/help/ContactForm";
 import DeleteAccount from "@/components/DeleteAccount";
 import Field from "@/components/Field";
 import { THEMES, TEXT_SIZES, useTheme, useTextSize } from "@/lib/theme";
@@ -184,6 +185,8 @@ export default function Me() {
       <SignInMethod />
 
       <HelpSection />
+
+      <ContactForm />
 
       <LegalSection />
 
