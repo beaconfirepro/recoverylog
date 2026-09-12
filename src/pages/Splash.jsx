@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Mail, Lock, Loader2, ChevronDown } from "lucide-react";
+import { Mail, Lock, Loader2, ChevronDown, ArrowRight } from "lucide-react";
 import GoogleIcon from "@/components/GoogleIcon";
+import { Image } from "@/components/ui/image";
 import { safeReturnTo } from "@/lib/authReturnTo";
 import PhoneFrame from "@/components/splash/PhoneFrame";
 import DayMockup from "@/components/splash/DayMockup";
@@ -62,21 +63,33 @@ export default function Splash() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="max-w-lg mx-auto px-4 pt-8 pb-10 text-center space-y-4">
-        <h1 className="font-display text-4xl uppercase leading-none break-words">
-          A recovery log<br />that reads like a diary.
+      {/* Welcome hero */}
+      <section className="max-w-lg mx-auto px-4 pt-8 pb-6 space-y-5">
+        <div className="flex justify-center mb-1">
+          <Image
+            src="https://media.base44.com/images/public/6a9b4d25d94bfa5fda1dac13/4fd109b51_welcome-hero.png"
+            alt="LipNode editorial illustration"
+            fittingType="fit"
+            className="w-full max-w-[240px] aspect-square"
+          />
+        </div>
+        <h1 className="font-display text-5xl leading-[1] break-words" style={{ letterSpacing: "-0.04em" }}>
+          A small<br />fierce<br />reckoning.
         </h1>
-        <p className="text-sm font-semibold text-muted-foreground break-words max-w-md mx-auto">
-          LipNode is a post-surgery log: what you tracked, day by day, in a form a surgeon can read.
-          One tap to log. One page a day. One PDF for the visit.
-        </p>
-        <div className="flex flex-col items-center gap-3 pt-2">
-          <button className="nb-btn h-14 px-8 bg-primary text-primary-foreground" onClick={() => scrollTo("login")}>
-            Get started
-          </button>
-          <button className="flex items-center gap-1 text-xs font-semibold text-muted-foreground" onClick={() => scrollTo("how")}>
-            See how it works <ChevronDown className="w-3.5 h-3.5" />
+        <div className="border-l-4 border-primary pl-4 space-y-3">
+          <p className="font-heading text-xl leading-6 break-words" style={{ letterSpacing: "-0.02em" }}>
+            LipNode is your daily logbook for life with Lipidema.
+          </p>
+          <p className="text-base leading-snug break-words">
+            Inputs. Outputs. Symptoms. Measurements. Appointments. More...
+          </p>
+          <p className="text-base leading-snug break-words">
+            Just because they ignore us doesn't mean we ignore ourselves. Our body does keep a score and we are listening.
+          </p>
+        </div>
+        <div className="pt-2 text-center">
+          <button className="nb-btn h-12 px-6 bg-card" onClick={() => scrollTo("login")}>
+            <ArrowRight className="w-4 h-4" /> Tap to sign in
           </button>
         </div>
       </section>
@@ -151,7 +164,10 @@ export default function Splash() {
         </div>
       </section>
 
-      <footer className="max-w-lg mx-auto px-4 pb-10 pt-4 text-center">
+      <footer className="max-w-lg mx-auto px-4 pb-10 pt-4 text-center space-y-1">
+        <p className="text-sm font-semibold break-words">
+          Built for Lipidema Babes everywhere. 2026 Copyright Deborah Dale
+        </p>
         <p className="text-xs text-muted-foreground break-words">
           LipNode is a personal log, not a medical record. Nothing here is sent to your surgeon.
         </p>
