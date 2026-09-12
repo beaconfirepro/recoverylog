@@ -246,10 +246,25 @@
     0%, 100% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0); }
     50% { box-shadow: 0 0 0 4px hsl(var(--accent)); }
   }
+  /* The heading and its ring fade in from the left as the highlight takes
+     hold, rather than snapping on. Runs once, alongside the pulse. */
+  .orient-enter {
+    animation: orient-enter 280ms ease-out;
+  }
+  @keyframes orient-enter {
+    from { opacity: 0; transform: translateX(-16px); }
+    to { opacity: 1; transform: none; }
+  }
   /* A light gray screen over everything except the highlighted heading. The
      backdrop is a transparent div sized to the heading (plus a little room for
-     the ring); its huge box-shadow washes the rest of the screen gray. */
+     the ring); its huge box-shadow washes the rest of the screen gray. It
+     fades in from the left to match the heading's entrance. */
   .orient-backdrop {
     box-shadow: 0 0 0 100vmax hsl(0 0% 55% / 0.7);
+    animation: orient-backdrop-in 280ms ease-out;
+  }
+  @keyframes orient-backdrop-in {
+    from { opacity: 0; transform: translateX(-16px); }
+    to { opacity: 1; transform: none; }
   }
 }
