@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronRight, Mail, Plus, Users, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Mail, Plus, Users, X } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, sameEmail } from "@/lib/PatientContext";
 import { base44 } from "@/api/base44Client";
@@ -286,6 +286,7 @@ export default function Care() {
   const [removing, setRemoving] = useState(null);
   const [claiming, setClaiming] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [expanded, setExpanded] = useState(null);
 
   const teams = groups.filter((g) => !g.own);
   const opened = teams.filter((g) => g.row.claimed_at);
@@ -376,93 +377,110 @@ export default function Care() {
       {/* Where the care team is managed. It is not in Setup: Setup is how the
           log is configured, and this is who can see it. */}
       <div className="nb-card overflow-hidden">
-        <div className="px-4 py-3 border-b-2 bg-muted">
-          <div className="font-display text-xl uppercase leading-tight break-words flex items-center gap-2">
-            <Users className="w-5 h-5 shrink-0" /> Care team
+        <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
+          <Users className="w-5 h-5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="font-display text-xl uppercase leading-tight break-words">Care team</div>
+            <div className="text-sm font-semibold break-words">
+              {isOwner
+                ? "They sign in with this email, enter the code you read out to them, and can read your log."
+                : `Who else helps ${displayName(patient) || "this patient"}.`}
+            </div>
           </div>
-          <div className="text-sm font-semibold break-words">
-            {isOwner
-              ? "They sign in with this email, enter the code you read out to them, and can read your log."
-              : `Who else helps ${displayName(patient) || "this patient"}.`}
-          </div>
+          {isOwner && (
+            <button
+              type="button"
+              className="nb-btn h-9 w-9 shrink-0 bg-card p-0"
+              aria-label="Add to care team"
+              onClick={() => setAdding(true)}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-2">
           {team.length === 0 && (
             <p className="text-sm text-muted-foreground break-words">
               {isOwner
-                ? "Nobody else can see this log. Add someone and they get in with a code you read out to them."
+                ? "Nobody else can see this log. Tap + to add someone — they get in with a code you read out."
                 : "Nobody else is on this care team."}
             </p>
           )}
 
-          {team.map((m) => (
-            <div key={m.id} className="min-w-0 border-b-2 last:border-b-0 pb-3 last:pb-0 space-y-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold truncate">{displayName(m) || m.email}</div>
-                  <div className="text-[11px] font-semibold text-muted-foreground truncate">{m.email}</div>
-                </div>
-                {m.claimed_at && <Check className="w-4 h-4 shrink-0 text-muted-foreground" aria-label="Has opened your log" />}
-                {isOwner && (
-                  <button
-                    type="button"
-                    onClick={() => setRemoving(m.id)}
-                    className="nb-btn h-11 w-11 shrink-0 bg-card"
-                    aria-label={`Remove ${displayName(m) || m.email}`}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+          {team.map((m) => {
+            const open = expanded === m.id;
+            return (
+              <div key={m.id} className="border-2 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  className="w-full text-left p-3 flex items-center gap-2 min-w-0"
+                  onClick={() => setExpanded(open ? null : m.id)}
+                >
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-bold truncate">{displayName(m) || m.email}</span>
+                    <span className="block text-[11px] font-semibold text-muted-foreground truncate">{m.email}</span>
+                  </span>
+                  {m.claimed_at && <Check className="w-4 h-4 shrink-0 text-muted-foreground" aria-label="Has opened your log" />}
+                  <ChevronDown className={`w-5 h-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+                </button>
+
+                {open && (
+                  <div className="p-3 border-t-2 space-y-3">
+                    <p className="text-sm font-semibold break-words">
+                      {m.claimed_at ? "Has opened your log." : "Has not opened the log yet."}
+                    </p>
+
+                    {/* Until they use it, the code is the only thing standing
+                        between the invitation and the log, so the patient can
+                        always read it back rather than starting again. */}
+                    {isOwner && !m.claimed_at && <PendingInvite member={m} patient={patient} />}
+
+                    {/* Taking someone off ends their access to the whole log,
+                        so it asks, the way leaving a team does. */}
+                    {isOwner &&
+                      (removing === m.id ? (
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold break-words">
+                            {displayName(m) || m.email} loses access to your log straight away. You can add them
+                            again later.
+                          </p>
+                          <div className="flex gap-2 min-w-0">
+                            <button
+                              type="button"
+                              className="nb-btn flex-1 min-w-0 h-11 bg-destructive text-destructive-foreground"
+                              onClick={async () => {
+                                await base44.entities.AppUser.delete(m.id);
+                                setRemoving(null);
+                                setExpanded(null);
+                                loadTeam();
+                              }}
+                            >
+                              Remove for good
+                            </button>
+                            <button
+                              type="button"
+                              className="nb-btn h-11 px-4 shrink-0 bg-card"
+                              onClick={() => setRemoving(null)}
+                            >
+                              Keep them
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="nb-btn w-full h-11 bg-card flex items-center justify-center gap-2"
+                          onClick={() => setRemoving(m.id)}
+                        >
+                          <X className="w-4 h-4" /> Remove
+                        </button>
+                      ))}
+                  </div>
                 )}
               </div>
-
-              {/* Until they use it, the code is the only thing standing between
-                  the invitation and the log, so the patient can always read it
-                  back rather than starting again. */}
-              {isOwner && !m.claimed_at && <PendingInvite member={m} patient={patient} />}
-
-              {/* Taking someone off ends their access to the whole log, so it
-                  asks, the way leaving a team does. */}
-              {removing === m.id && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold break-words">
-                    {displayName(m) || m.email} loses access to your log straight away. You can add them again
-                    later.
-                  </p>
-                  <div className="flex gap-2 min-w-0">
-                    <button
-                      type="button"
-                      className="nb-btn flex-1 min-w-0 h-11 bg-destructive text-destructive-foreground"
-                      onClick={async () => {
-                        await base44.entities.AppUser.delete(m.id);
-                        setRemoving(null);
-                        loadTeam();
-                      }}
-                    >
-                      Remove for good
-                    </button>
-                    <button
-                      type="button"
-                      className="nb-btn h-11 px-4 shrink-0 bg-card"
-                      onClick={() => setRemoving(null)}
-                    >
-                      Keep them
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {isOwner && (
-            <button
-              type="button"
-              className="nb-btn w-full h-12 bg-accent text-accent-foreground flex items-center justify-center gap-2"
-              onClick={() => setAdding(true)}
-            >
-              <Plus className="w-4 h-4" /> Add someone
-            </button>
-          )}
+            );
+          })}
         </div>
       </div>
 
