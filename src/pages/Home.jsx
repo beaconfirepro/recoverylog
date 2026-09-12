@@ -5,13 +5,16 @@ import PatientCard from "@/components/recovery/PatientCard";
 import InstallHint from "@/components/InstallHint";
 import { todayStr } from "@/lib/dates";
 import { usePatient } from "@/lib/PatientContext";
-import { loadOrientation, saveOrientation, allDone } from "@/lib/orientation";
+import { loadOrientation, saveOrientation, allDone, deriveDone } from "@/lib/orientation";
+import { base44 } from "@/api/base44Client";
+import { asRows } from "@/lib/recoveryUtils";
+import { isMaintenance } from "@/lib/scope";
 import OrientationChecklist from "@/components/orientation/OrientationChecklist";
 import OrientationFab from "@/components/orientation/OrientationFab";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
 
 export default function Home() {
-  const { isOwner, patientId, surgeries } = usePatient();
+  const { isOwner, patientId, patient, surgeries } = usePatient();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const forceOpen = params.get("orientation") === "1";
@@ -29,6 +32,14 @@ export default function Home() {
   // still collapses the checklist to the button until the user taps it.
   const [openedByFab, setOpenedByFab] = useState(false);
 
+  // What the app can see for itself, so the checklist stops asking her to mark
+  // her own homework. A step used to tick on *navigating* to it, whether or not
+  // anything changed, and one asked her to come back and tick it herself.
+  //
+  // Only read while the checklist is actually on screen: a patient who finished
+  // onboarding months ago should not pay for these on every visit to Today.
+  const [facts, setFacts] = useState({});
+
   // Pulses the section a checklist step points at when the step lands here.
   useOrientationHighlight();
 
@@ -37,7 +48,50 @@ export default function Home() {
   // surgery exists or it is minimised, so a no-surgery patient is not dropped
   // onto a blank day by the auto-created maintenance record.
   const hasRealSurgery = surgeries.some((s) => s.mode !== "maintenance" && !s.archived && !s.cancelled);
-  const active = isOwner && !state.dismissed && !allDone(state);
+
+  const derived = deriveDone({ ...facts, hasRealSurgery, choice: state.choice });
+  const active = isOwner && !state.dismissed && !allDone(state, derived);
+
+  useEffect(() => {
+    if (!active || !patientId) return;
+    let live = true;
+    (async () => {
+      try {
+        const [garments, medGroups, team, checkins, days] = await Promise.all([
+          base44.entities.Garment.list("sort_order", 1),
+          base44.entities.MedGroup.list("sort_order", 1),
+          base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 1),
+          base44.entities.RecoveryEntry.filter({ patient_id: patientId, type: "checkin" }, "-date", 1),
+          base44.entities.RecoveryDay.filter({ patient_id: patientId }, "-date", 50)
+        ]);
+        if (!live) return;
+        setFacts({
+          hasGarment: asRows(garments).length > 0,
+          hasMedGroup: asRows(medGroups).length > 0,
+          hasTeamMember: asRows(team).length > 0,
+          hasCheckin: asRows(checkins).length > 0,
+          hasRedFlagAnswer: asRows(days).some((d) => Object.keys(d.red_flag_answers || {}).length > 0)
+        });
+      } catch {
+        // A checklist that cannot read the log is a checklist that shows
+        // nothing ticked, which is the state it started in. Nothing to say.
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, [active, patientId]);
+
+  // Read off the patient rather than fetched: an empty list means the built-in
+  // set, so having chosen is having a saved list at all.
+  useEffect(() => {
+    setFacts((f) => ({
+      ...f,
+      hasNamedCheckinSlot: (patient?.checkin_slots || []).some((x) => x?.label?.trim()),
+      hasChosenMeasurements: (patient?.measurements || []).filter(Boolean).length > 0,
+      hasChosenTrackers: surgeries.some((sx) => !isMaintenance(sx) && (sx.tracked_types || []).length > 0)
+    }));
+  }, [patient, surgeries]);
   const expanded =
     active && (!state.minimized && !hasRealSurgery ? true : openedByFab || forceOpen);
   const showFab = isOwner && active && !expanded;
@@ -95,6 +149,7 @@ export default function Home() {
       {expanded ? (
         <OrientationChecklist
           state={state}
+          derived={derived}
           setState={setState}
           onMinimize={minimize}
           onDismiss={dismiss}

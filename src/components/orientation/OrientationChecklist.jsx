@@ -6,10 +6,10 @@ import OrientationItem from "@/components/orientation/OrientationItem";
 // The full getting-started page. It replaces the day view while expanded;
 // minimizing it leaves a floating button. Ticking "don't show again" dismisses
 // it for good (still openable from Profile).
-export default function OrientationChecklist({ state, setState, onMinimize, onDismiss, onNavigate }) {
-  const complete = doneCount(state);
+export default function OrientationChecklist({ state, derived = {}, setState, onMinimize, onDismiss, onNavigate }) {
+  const complete = doneCount(state, derived);
   const total = ORIENTATION_ITEMS.length;
-  const finished = allDone(state);
+  const finished = allDone(state, derived);
 
   return (
     <div className="space-y-4">
@@ -37,6 +37,7 @@ export default function OrientationChecklist({ state, setState, onMinimize, onDi
               key={it.key}
               item={it}
               state={state}
+              derived={derived}
               setState={setState}
               onNavigate={onNavigate}
             />

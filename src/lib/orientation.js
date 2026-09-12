@@ -35,7 +35,7 @@ export const ORIENTATION_ITEMS = [
     key: "trackers",
     n: 3,
     question: "Customize what you track.",
-    body: "Turn trackers on or off, choose what shows on the mini log, and set goals for water, nutrients, exercise and bodywork. Come back and tick this done once you have.",
+    body: "Turn trackers on or off, choose what shows on the mini log, and set goals for water, nutrients, exercise and bodywork.",
     kind: "nav",
     target: "/profile",
     highlight: "trackers",
@@ -125,5 +125,36 @@ export const saveOrientation = (patientId, state) => {
   }
 };
 
-export const allDone = (state) => ORIENTATION_ITEMS.every((it) => state.items[it.key]);
-export const doneCount = (state) => ORIENTATION_ITEMS.filter((it) => state.items[it.key]).length;
+// Which steps are done according to the app rather than according to a tick.
+//
+// The old count was neither: a step was marked done by *navigating* to it,
+// whether or not anything changed, and one step asked her to come back and tick
+// it herself. So "3 of 10 done" meant nothing consistent, and the one thing a
+// checklist owes you is an honest count.
+//
+// Every key here is answered by state the app already holds. "pdf" is absent on
+// purpose: opening a PDF leaves no trace, so it stays hers to tick.
+export const deriveDone = (facts = {}) => ({
+  // A maintenance record is auto-created, so its existence is not a choice she
+  // made. A real surgery is, and so is saying out loud that she is not having
+  // one.
+  surgery: !!facts.hasRealSurgery || facts.choice === "maintenance",
+  checkins: !!facts.hasNamedCheckinSlot,
+  trackers: !!facts.hasChosenTrackers,
+  measurements: !!facts.hasChosenMeasurements,
+  garments: !!facts.hasGarment,
+  meds: !!facts.hasMedGroup,
+  careteam: !!facts.hasTeamMember,
+  firstcheckin: !!facts.hasCheckin,
+  redflags: !!facts.hasRedFlagAnswer
+});
+
+// A derived step is done when the app can see it is done; a step nothing can
+// see falls back to her own tick. The two yes/no steps are the awkward case —
+// "no, I am not wearing compression" is a real answer and leaves no garment
+// behind — so a manual tick still counts for everything.
+export const isDone = (key, state, derived = {}) => !!derived[key] || !!state.items[key];
+
+export const allDone = (state, derived) => ORIENTATION_ITEMS.every((it) => isDone(it.key, state, derived));
+export const doneCount = (state, derived) =>
+  ORIENTATION_ITEMS.filter((it) => isDone(it.key, state, derived)).length;
