@@ -46,7 +46,7 @@ export default function Splash() {
 
   const features = [
     "Day zero is the anchor. Every label counts from surgery.",
-    "Red flags watch the log for you and say what to do next.",
+    "Red flags watch the log for you, and keep a record of what you did about them.",
     "Your care team can read along — invite them from the app.",
     "Export a day or a range as a PDF for the visit."
   ];
@@ -78,7 +78,7 @@ export default function Splash() {
         </h1>
         <div className="border-l-4 border-primary pl-4 space-y-3">
           <p className="font-heading text-xl leading-6 break-words" style={{ letterSpacing: "-0.02em" }}>
-            LipNode is your daily logbook for life with Lipidema.
+            A daily log for lipedema: surgery recovery and the long haul, in a form that can help your care team support you.
           </p>
           <p className="text-base leading-snug break-words">
             Inputs. Outputs. Symptoms. Measurements. Appointments. More...
@@ -166,7 +166,7 @@ export default function Splash() {
 
       <footer className="max-w-lg mx-auto px-4 pb-10 pt-4 text-center space-y-1">
         <p className="text-sm font-semibold break-words">
-          Built for Lipidema Babes everywhere. 2026 Copyright Deborah Dale
+          Built for Lipedema Babes everywhere. 2026 Copyright Deborah Dale
         </p>
         <p className="text-xs text-muted-foreground break-words">
           LipNode is a personal log, not a medical record. Nothing here is sent to your surgeon.
