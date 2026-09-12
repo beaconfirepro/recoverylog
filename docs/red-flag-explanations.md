@@ -26,7 +26,12 @@ the red flag card using the question-mark-and-tooltip pattern settled in #118.
    the reason to call.
 5. **Short.** Two or three sentences. This is read one-handed, sore, possibly at
    3am.
-6. **Say when the app cannot see it.** Two of the twelve can never be raised
+6. **Say what the app will do, and that she can overrule it.** Not "can raise" —
+   it will, every time the condition matches, and a patient who reads that as a
+   maybe has been told something false about her own screen. Always paired with
+   the override, because a flag the app raised and she disagrees with otherwise
+   reads as the app telling her she has a problem. Same wording the card uses.
+7. **Say when the app cannot see it.** Two of the twelve can never be raised
    automatically, and that is worth her knowing.
 
 ---
@@ -43,7 +48,8 @@ taken when you have not just had a hot drink or a hot shower. The app uses
 low-grade rise in the first day or two is common; a fever that arrives later, or
 climbs, is the one that matters.
 
-**The app can raise this for you** from your temperature entries.
+**The app will raise this for you** from your temperature entries. You can
+override it.
 
 ---
 
@@ -56,7 +62,8 @@ one feels on its own. It may hurt only when you stand or walk.
 **When it counts:** Any clear difference between one side and the other. Both
 legs swelling after surgery is expected. One leg is not.
 
-**The app can raise this for you** when you mark a calf on the body map.
+**The app will raise this for you** when you mark a calf on the body map. You
+can override it.
 
 ---
 
@@ -85,7 +92,8 @@ a photo answers that better than memory.
 pink line along a closed incision is expected. Redness marching outward, or
 skin that is hot and firm, is not.
 
-**The app can raise this for you** from your incision entries.
+**The app will raise this for you** from your incision entries. You can
+override it.
 
 ---
 
@@ -98,7 +106,8 @@ to thick, cloudy, yellow, green or grey.
 sometimes a lot of it, is normal after this surgery. Cloudy, thick or smelly
 is not, however small the amount.
 
-**The app can raise this for you** from your drainage and incision entries.
+**The app will raise this for you** from your drainage and incision entries.
+You can override it.
 
 ---
 
@@ -111,7 +120,8 @@ already settled down.
 than you can change it. Old blood is dark and expected. Bright red and new,
 after things had calmed, is the change worth a phone call.
 
-**The app can raise this for you** from your drainage entries.
+**The app will raise this for you** from your drainage entries. You can
+override it.
 
 ---
 
@@ -124,7 +134,8 @@ on to something, or nearly fainting.
 have to sit back down. A moment of light-headedness standing up on day one is
 common. Every time you stand, on day five, is not.
 
-**The app can raise this for you** when you log feeling dizzy during movement.
+**The app will raise this for you** when you log feeling dizzy during movement.
+You can override it.
 
 ---
 
@@ -138,7 +149,8 @@ first thing.
 Concentrated first-morning urine is ordinary. All day, or brown or pink at any
 point, is not.
 
-**The app can raise this for you** from your urine entries.
+**The app will raise this for you** from your urine entries. You can override
+it.
 
 ---
 
@@ -152,7 +164,8 @@ touching when it was working before.
 with bad days in it. A step up, especially in one place, is different from a bad
 day.
 
-**The app can raise this for you** when a check-in puts pain at 8 or above.
+**The app will raise this for you** when a check-in puts pain at 8 or above.
+You can override it.
 
 ---
 
@@ -166,8 +179,8 @@ this is expected enough that the plan is usually made in advance — but it is o
 the list because it stops being a nuisance and becomes a problem if it is left.
 Call sooner if you also have a swollen belly, cramping, or you are being sick.
 
-**The app can raise this for you** by counting the days since your last logged
-bowel movement.
+**The app will raise this for you** by counting the days since your last logged
+bowel movement. You can override it.
 
 ---
 
@@ -182,8 +195,8 @@ few minutes of loosening the garment. Compression is meant to be firm, and
 patchy numbness over an area that was operated on is expected as nerves recover.
 A cold or colourless hand or foot is not.
 
-**The app can raise this for you** when you log numbness or a pale, cold area on
-the skin map.
+**The app will raise this for you** when you log numbness or a pale, cold area
+on the skin map. You can override it.
 
 ---
 
