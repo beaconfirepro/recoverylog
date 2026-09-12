@@ -64,8 +64,18 @@ export default async function (req: Request): Promise<Response> {
     }
 
     // The login last: everything it pointed at is already gone, so a failure
-    // here leaves an empty account rather than orphaned medical records.
-    await admin.entities.User.delete(user.id);
+    // here leaves an empty account rather than orphaned medical records. The
+    // platform will not delete the app owner's login through this path, so a
+    // builder testing with their own account gets a clear message rather than
+    // a 500, and the data clear still ran.
+    try {
+      await admin.entities.User.delete(user.id);
+    } catch (loginError) {
+      return Response.json(
+        { ok: true, deleted, login_remaining: true, message: "Your log was deleted. Your login can't be removed from inside the app — sign out and contact support to close the account." },
+        { status: 200 }
+      );
+    }
 
     return Response.json({ ok: true, deleted });
   } catch (error) {

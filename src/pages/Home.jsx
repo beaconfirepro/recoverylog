@@ -1,3 +1,4 @@
+/* global __BUILD_COMMIT__, __BUILD_TIME__ */
 import React from "react";
 import DayView from "@/components/recovery/DayView";
 import PatientCard from "@/components/recovery/PatientCard";
