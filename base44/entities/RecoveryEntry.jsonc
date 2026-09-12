@@ -1,6 +1,10 @@
 {
   "name": "RecoveryEntry",
   "properties": {
+    "client_id": {
+      "description": "An id this device made before the row existed, so a write replayed off the offline queue can tell whether it already landed. Written on create and never changed. Absent on rows written before the queue existed.",
+      "type": "string"
+    },
     "mode": {
       "description": "Denormalized from the owning record: 'surgery' or 'maintenance'. Lets views group by mode without a join. Matches the surgery this entry is filed under.",
       "enum": [

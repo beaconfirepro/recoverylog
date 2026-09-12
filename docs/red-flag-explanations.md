@@ -1,15 +1,25 @@
-# Red flag explanations — draft for clinical review
+# Red flag explanations
 
-> **This is a draft. It has not been reviewed by a clinician and must not ship
-> until it has been.** The twelve red flags are the surgeons' list. These
-> explanations are written from published patient-facing guidance (sources at the
-> end), not from the surgeons who gave you the list, and they may not match what
-> those surgeons meant by each line. Every threshold below is the one general
-> guidance uses; a surgeon's own number for their own patient wins.
+> **Approved to ship, with attribution rather than clinical sign-off.** The
+> twelve red flags are the surgeons' list. These explanations are not: they are
+> adapted from published patient guidance (sources at the end), and every
+> threshold below is the one that guidance uses. So the app says where they came
+> from, and says plainly that they are no substitute for treatment or for a
+> surgeon's own instructions. A surgeon's own number for their own patient wins,
+> and the fever line points at the field where hers goes rather than naming one.
+>
+> The two strings the app carries are `RED_FLAG_SOURCES` and
+> `RED_FLAG_DISCLAIMER` in `src/lib/recovery.js`, next to the explanations
+> themselves so they cannot drift apart.
 
-Content for issue #105. Intended as the `body` of each entry in
-`RED_FLAG_ITEMS` (`src/lib/recovery.js:569`), shown behind a tap-to-expand on
-the red flag card using the question-mark-and-tooltip pattern settled in #118.
+Content for issue #105. Now lives as the `body` of each entry in
+`RED_FLAG_ITEMS` (`src/lib/recovery.js`). This file stays as the source the
+wording was drafted and reviewed in, and as the place the citations are kept in
+full — the app carries one short attribution line, not eleven URLs.
+
+**How it surfaces:** tapping a flag's label expands its three parts in place,
+one at a time. The sources and the disclaimer sit once at the foot of the card,
+under the standing warning, rather than repeated inside twelve expanders.
 
 ## Rules these were written to
 
@@ -40,16 +50,16 @@ the red flag card using the question-mark-and-tooltip pattern settled in #118.
 
 ### 1. Fever over your surgeon's number
 
-**Look for:** A temperature at or above the number on your discharge papers,
-taken when you have not just had a hot drink or a hot shower. The app uses
-101.5 °F until you enter your own.
+**Look for:** A temperature at or above the baseline set in Setup, taken when
+you have not just had a hot drink or a hot shower. Put your surgeon's number in
+that field.
 
-**When it counts:** One reading at or over the number is enough to call. A
+**When it counts:** One reading at or over the baseline is enough to call. A
 low-grade rise in the first day or two is common; a fever that arrives later, or
 climbs, is the one that matters.
 
-**The app will raise this for you** from your temperature entries. You can
-override it.
+**The app will raise this for you** when a temperature you log comes in over the
+baseline set in Setup. You can override it.
 
 ---
 
@@ -222,10 +232,12 @@ that it is on the list.
    made — so the disclaimer has to carry the "do not wait for the office" weight
    for these two. Worth checking the disclaimer wording against these two
    explanations so they say the same thing.
-2. **Item 1 names 101.5 °F.** That is the app's fallback per #106. If a patient
-   has entered her own number, this text should name hers instead of the
-   fallback, which means the body needs to be a function of the record rather
-   than a fixed string for this one item.
+2. ~~**Item 1 names 101.5 °F.**~~ **Settled.** The explanation points at the
+   baseline in Setup and names no number at all, so it stays a fixed string like
+   the other eleven and cannot go stale against a patient who set her own. The
+   number still appears where it is actionable — the red flag question itself
+   reads it off the record through `flagLabel` (#106), so she always knows what
+   she is answering against.
 
 ## Sources
 

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, Check, Phone, Sparkles } from "lucide-react";
-import { RED_FLAG_ITEMS, flagLabel } from "@/lib/recovery";
+import { AlertTriangle, Check, ChevronDown, Phone, Sparkles } from "lucide-react";
+import { RED_FLAG_DISCLAIMER, RED_FLAG_ITEMS, RED_FLAG_SOURCES, flagLabel } from "@/lib/recovery";
 import { nowTime } from "@/lib/dates";
 import { base44 } from "@/api/base44Client";
 import { isMaintenance } from "@/lib/scope";
@@ -152,6 +152,10 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
     noteTimer.current = setTimeout(flush, NOTE_DEBOUNCE_MS);
   };
 
+  // One explanation open at a time. Twelve of these expanded is a page nobody
+  // scrolls, and the question she opened one to answer is about one flag.
+  const [open, setOpen] = useState(null);
+
   const yesCount = Object.keys(answers).filter((k) => answers[k] === "yes").length;
 
   return (
@@ -180,7 +184,8 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
       {/* Twelve clinical phrases and two buttons, with nothing saying what they
           are for, is a card a first-time patient cannot answer honestly. */}
       <p className="text-xs font-semibold text-muted-foreground break-words">
-        Twelve things that most often mean call someone. Answer them once a day.
+        Twelve things that most often mean call someone. Answer them once a day. Tap any one to read what it
+        means.
       </p>
 
       {canWrite && (
@@ -210,9 +215,27 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
             <div key={item.key}>
               <div className="flex items-center justify-between gap-2">
                 <span className="min-w-0">
-                  <span className={`block text-sm font-semibold break-words ${ans === "yes" ? "text-destructive" : ""}`}>
-                    {flagLabel(item, record)}
-                  </span>
+                  {/* The label is the control. A question mark beside all
+                      twelve reads as twelve small glyphs down one column, and
+                      the thing she wants to tap is the phrase she does not
+                      understand — so that is what opens it. The chevron rides
+                      inside the label rather than sitting in its own column,
+                      because a label that looks like text and behaves like a
+                      button is a control nobody finds. */}
+                  <button
+                    type="button"
+                    className="flex items-start gap-1 text-left min-h-11 py-1 w-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-expanded={open === item.key}
+                    aria-controls={`flag-body-${item.key}`}
+                    onClick={() => setOpen(open === item.key ? null : item.key)}
+                  >
+                    <span className={`block text-sm font-semibold break-words ${ans === "yes" ? "text-destructive" : ""}`}>
+                      {flagLabel(item, record)}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 mt-0.5 shrink-0 text-muted-foreground transition-transform ${open === item.key ? "rotate-180" : ""}`}
+                    />
+                  </button>
                   {hint && (
                     <span className="flex items-start gap-1 text-xs font-semibold text-muted-foreground break-words">
                       <Sparkles className="w-3 h-3 mt-0.5 shrink-0" />
@@ -239,6 +262,24 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
                   </button>
                 </div>
               </div>
+              {/* Three parts: what it looks like, when it is worth a call, and
+                  what the app does about it. The third says itself whether the
+                  app can see this one at all, so it is not labelled — two of
+                  the twelve nothing tracks, and that is worth her knowing. */}
+              <div id={`flag-body-${item.key}`} hidden={open !== item.key}>
+                <div className="mt-1.5 mb-1 pl-2 border-l-2 space-y-1.5" style={{ borderColor: "hsl(var(--muted-foreground))" }}>
+                  <p className="text-xs font-semibold break-words">
+                    <span className="text-muted-foreground">Look for: </span>
+                    {item.body[0]}
+                  </p>
+                  <p className="text-xs font-semibold break-words">
+                    <span className="text-muted-foreground">When it counts: </span>
+                    {item.body[1]}
+                  </p>
+                  <p className="text-xs font-semibold text-muted-foreground break-words">{item.body[2]}</p>
+                </div>
+              </div>
+
               {ans === "yes" && (
                 <div className="mt-1.5 pl-2 space-y-1.5">
                   <div className="flex items-center gap-2 min-w-0 flex-wrap">
@@ -316,6 +357,15 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
             No phone number on this record yet. Add one on the surgery so it is here when you need it.
           </p>
         )}
+
+        {/* The twelve flags are the surgeons' list. The explanations behind
+            them are not, and she is entitled to know which before she acts on
+            one — so it is said here, under the standing warning, rather than
+            inside twelve separate expanders where it would read as fine print
+            twelve times. */}
+        <p className="pt-1 text-xs font-semibold text-muted-foreground break-words">
+          {RED_FLAG_SOURCES} {RED_FLAG_DISCLAIMER}
+        </p>
       </div>
 
       {canWrite && state && (

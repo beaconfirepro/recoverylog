@@ -1,7 +1,8 @@
 /* global __BUILD_COMMIT__, __BUILD_TIME__ */
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { LogOut } from "lucide-react";
+import { ChevronRight, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName } from "@/lib/PatientContext";
 import { useCareTeam } from "@/lib/careTeam";
@@ -189,6 +190,18 @@ export default function Me() {
       <ContactForm />
 
       <LegalSection />
+
+      {/* The other half of the same signpost. Someone who came here looking
+          for trackers or the PDF has no way of knowing they are a tab away. */}
+      <Link to="/profile" className="nb-card block p-4 flex items-center gap-2 min-w-0">
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm font-semibold break-words">
+            Looking for trackers, goals, check-in times or the PDF?
+          </span>
+          <span className="block nb-label text-muted-foreground mt-0.5">Setup</span>
+        </span>
+        <ChevronRight className="w-5 h-5 shrink-0" />
+      </Link>
 
       <DeleteAccount isOwner={isOwner} />
 
