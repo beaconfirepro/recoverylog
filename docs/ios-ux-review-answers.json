@@ -1,0 +1,439 @@
+{
+  "review": "LipNode iOS UX & copy review",
+  "reviewed": "2026-09-12",
+  "answered_by": "Deb Dale",
+  "answered_on": "2026-09-12",
+  "note": "COPY-3 and COPY-4 are marked superseded: COPY-3 was answered no and COPY-4 left blank, both on the question of what a care team member types to get in. Resolved in conversation as BOTH the join code and the patient's date of birth, which is neither what the code did nor what the seeded documents said.",
+  "counts": {
+    "mod": 14,
+    "yes": 36,
+    "superseded": 2,
+    "no": 1
+  },
+  "answers": [
+    {
+      "id": "COPY-1",
+      "section": "COPY",
+      "severity": "critical",
+      "title": "The privacy policy ships with unfilled placeholders",
+      "decision": "mod",
+      "notes": "Controller: pearshapedapps Inc. - 8119 Exchange Dr Suite A6, Austin, TX 78754. Minimum Age: 18. Privacy contact: Deb Dale, info@pearshapedapps.com. Delete the legal notes or raise with me if they need review."
+    },
+    {
+      "id": "COPY-2",
+      "section": "COPY",
+      "severity": "critical",
+      "title": "Two consent documents promise write access that does not exist",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "COPY-3",
+      "section": "COPY",
+      "severity": "high",
+      "title": "The privacy policy still says name and date of birth open a log",
+      "decision": "superseded",
+      "notes": "Answered no (\"that is not what I specified\"), then resolved in chat: a care team member enters BOTH the join code AND the patient's date of birth. The policy describes both factors."
+    },
+    {
+      "id": "COPY-4",
+      "section": "COPY",
+      "severity": "high",
+      "title": "The Date of birth field still claims the care team uses it",
+      "decision": "superseded",
+      "notes": "Left unanswered. Resolved by the same decision: the hint is accurate again, and should name the code alongside the date of birth."
+    },
+    {
+      "id": "COPY-5",
+      "section": "COPY",
+      "severity": "medium",
+      "title": "Onboarding step 7 promises permissions you cannot give",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "COPY-6",
+      "section": "COPY",
+      "severity": "medium",
+      "title": "\"Red flags say what to do next\" — they don't",
+      "decision": "mod",
+      "notes": "Just make it softer."
+    },
+    {
+      "id": "COPY-7",
+      "section": "COPY",
+      "severity": "low",
+      "title": "The permissions doc's \"whole list\" of local storage is not the whole list",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAME-1",
+      "section": "NAME",
+      "severity": "high",
+      "title": "Six places send the user to \"Profile\"; the tab is called \"Setup\"",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAME-2",
+      "section": "NAME",
+      "severity": "medium",
+      "title": "\"Lipidema\" is misspelled throughout the splash page",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAME-3",
+      "section": "NAME",
+      "severity": "medium",
+      "title": "The installed app and the website describe two different products",
+      "decision": "mod",
+      "notes": "A daily log for lipedema: surgery recovery and the long haul, in a form that can help your care team support you."
+    },
+    {
+      "id": "NAME-4",
+      "section": "NAME",
+      "severity": "medium",
+      "title": "A maintenance-only user is managed under a heading called \"Surgeries\"",
+      "decision": "mod",
+      "notes": "Rename to Logs."
+    },
+    {
+      "id": "NAME-5",
+      "section": "NAME",
+      "severity": "low",
+      "title": "The History tab's page heading is \"Day by day\"",
+      "decision": "mod",
+      "notes": "Day by Day, two capital Ds, in both places."
+    },
+    {
+      "id": "NAME-6",
+      "section": "NAME",
+      "severity": "low",
+      "title": "\"Red flag\" is never defined anywhere in the app",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAV-1",
+      "section": "NAV",
+      "severity": "critical",
+      "title": "A day you logged nothing on cannot be opened, so it cannot be filled in",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAV-2",
+      "section": "NAV",
+      "severity": "high",
+      "title": "The welcome checklist hides Today instead of sitting above it",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAV-3",
+      "section": "NAV",
+      "severity": "high",
+      "title": "A day opened from History is a dead end in the installed app",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAV-4",
+      "section": "NAV",
+      "severity": "high",
+      "title": "Delete sits next to Save with no confirmation",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAV-5",
+      "section": "NAV",
+      "severity": "medium",
+      "title": "Settings are split across Setup and You with no visible logic",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAV-6",
+      "section": "NAV",
+      "severity": "medium",
+      "title": "Care holds three unrelated things",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAV-7",
+      "section": "NAV",
+      "severity": "medium",
+      "title": "History has no way to reach a date that is not on screen",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAV-8",
+      "section": "NAV",
+      "severity": "medium",
+      "title": "Trends is two fixed charts with a hardcoded target",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "NAV-9",
+      "section": "NAV",
+      "severity": "low",
+      "title": "The build stamp is printed on Today",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-1",
+      "section": "IOS",
+      "severity": "critical",
+      "title": "No save ever reports failure, so a bad-signal save is lost silently",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-2",
+      "section": "IOS",
+      "severity": "high",
+      "title": "The check-in scale's buttons are below the minimum touch target",
+      "decision": "mod",
+      "notes": "A slider that runs along a line with notches, stopping at whole numbers."
+    },
+    {
+      "id": "IOS-3",
+      "section": "IOS",
+      "severity": "high",
+      "title": "There is no way to learn that the app can be installed",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-4",
+      "section": "IOS",
+      "severity": "high",
+      "title": "Nine and ten pixel type carries real content, not decoration",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-5",
+      "section": "IOS",
+      "severity": "high",
+      "title": "Nothing works offline",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-6",
+      "section": "IOS",
+      "severity": "medium",
+      "title": "Rearranging the tracker tiles is undiscoverable",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-7",
+      "section": "IOS",
+      "severity": "medium",
+      "title": "A save gives no haptic and no confirmation",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-8",
+      "section": "IOS",
+      "severity": "medium",
+      "title": "Type size is fixed; there is no way to make the app bigger",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-9",
+      "section": "IOS",
+      "severity": "medium",
+      "title": "The numeric keypad has no way to dismiss itself",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-10",
+      "section": "IOS",
+      "severity": "low",
+      "title": "The manifest locks the app to portrait",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-11",
+      "section": "IOS",
+      "severity": "low",
+      "title": "Launching the installed app flashes a blank screen",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "IOS-12",
+      "section": "IOS",
+      "severity": "low",
+      "title": "Pull to refresh has no wording and competes with Safari's own",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "SAFE-1",
+      "section": "SAFE",
+      "severity": "critical",
+      "title": "A yes on chest pain gets the same empty text box as a yes on constipation",
+      "decision": "mod",
+      "notes": "One standing disclaimer at the bottom of the red flags rather than per-item tiering: the surgeons gave this list as \"if any of these happen, call\"."
+    },
+    {
+      "id": "SAFE-2",
+      "section": "SAFE",
+      "severity": "high",
+      "title": "The surgeon's office number is collected and never made callable",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "SAFE-3",
+      "section": "SAFE",
+      "severity": "high",
+      "title": "Twelve red flag answers are held in local state behind one Save",
+      "decision": "mod",
+      "notes": "Save against the day record as they are answered. A later change overwrites the earlier one, and say that plainly on the card."
+    },
+    {
+      "id": "SAFE-4",
+      "section": "SAFE",
+      "severity": "medium",
+      "title": "No red flag explains itself",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "SAFE-5",
+      "section": "SAFE",
+      "severity": "medium",
+      "title": "Three different fever numbers, one question",
+      "decision": "mod",
+      "notes": "Use the fallback everywhere until the user sets a different number. The fallback is 101.5."
+    },
+    {
+      "id": "SAFE-6",
+      "section": "SAFE",
+      "severity": "medium",
+      "title": "Nothing tells the patient she can overrule a suggested flag",
+      "decision": "mod",
+      "notes": "Wording should be explicit, e.g. \"Tap to override recommendation\"."
+    },
+    {
+      "id": "START-1",
+      "section": "START",
+      "severity": "high",
+      "title": "Ten checklist items stand between a new patient and her first entry",
+      "decision": "no",
+      "notes": "Keep all ten checklist items."
+    },
+    {
+      "id": "START-2",
+      "section": "START",
+      "severity": "medium",
+      "title": "Checklist steps ask the user to mark her own homework",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "START-3",
+      "section": "START",
+      "severity": "medium",
+      "title": "\"I am on someone's care team\" is a dead end",
+      "decision": "mod",
+      "notes": "It should take them to the care page."
+    },
+    {
+      "id": "START-4",
+      "section": "START",
+      "severity": "medium",
+      "title": "The join code appears once, then hides in an accordion",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "START-5",
+      "section": "START",
+      "severity": "low",
+      "title": "A wrong code tells you to ask again, with no way to ask",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "A11Y-1",
+      "section": "A11Y",
+      "severity": "high",
+      "title": "Who raised a red flag is encoded in hue alone",
+      "decision": "mod",
+      "notes": "Two different shapes is good."
+    },
+    {
+      "id": "A11Y-2",
+      "section": "A11Y",
+      "severity": "medium",
+      "title": "Nothing the app does is announced",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "A11Y-3",
+      "section": "A11Y",
+      "severity": "medium",
+      "title": "The check-in's level wording is not attached to the control",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "A11Y-4",
+      "section": "A11Y",
+      "severity": "medium",
+      "title": "Identical-looking controls with different semantics, side by side",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "A11Y-5",
+      "section": "A11Y",
+      "severity": "low",
+      "title": "Real content is set in 10px muted grey",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "HELP-1",
+      "section": "HELP",
+      "severity": "high",
+      "title": "There is no help surface anywhere in the app",
+      "decision": "yes",
+      "notes": null
+    },
+    {
+      "id": "HELP-2",
+      "section": "HELP",
+      "severity": "medium",
+      "title": "The FAQ should be reachable from the screens that raise the questions",
+      "decision": "mod",
+      "notes": "A question mark in a circle. Tap, or hover on desktop, shows a tooltip with a short definition, and the definition links to the fuller answer in the FAQ."
+    },
+    {
+      "id": "HELP-3",
+      "section": "HELP",
+      "severity": "medium",
+      "title": "The FAQ needs a support address that exists",
+      "decision": "mod",
+      "notes": "No email address listed. A form that uses their profile and name, gives them a small text box, and sends the message to me."
+    }
+  ]
+}
