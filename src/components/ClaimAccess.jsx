@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient } from "@/lib/PatientContext";
 import Field from "@/components/Field";
-import { detailsMatch } from "@/lib/invite";
+import { codeMatches } from "@/lib/joinCode";
 
 // Shown to a signed-in account not yet linked to a patient, in one of three
 // states: someone the patient has already invited, someone starting their own
@@ -13,6 +13,7 @@ export default function ClaimAccess() {
   const { me, refreshPatient } = usePatient();
   const [role, setRole] = useState(null);
   const [form, setForm] = useState({ first_name: "", last_name: "", dob: "" });
+  const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -22,8 +23,8 @@ export default function ClaimAccess() {
   const claim = async () => {
     setBusy(true);
     setError("");
-    if (!detailsMatch(invite, form)) {
-      setError("Those details don't match your invitation. Check the spelling and the date of birth with the patient.");
+    if (!codeMatches(invite, code)) {
+      setError("That code doesn't match your invitation. Ask the patient to read it out again.");
       setBusy(false);
       return;
     }
@@ -62,6 +63,36 @@ export default function ClaimAccess() {
     setError("");
   };
 
+  const joinCode = (
+    <div className="space-y-3 min-w-0">
+      <Field label="Join code">
+        <input
+          type="text"
+          inputMode="text"
+          autoCapitalize="characters"
+          autoComplete="off"
+          value={code}
+          onChange={(e) => {
+            setCode(e.target.value);
+            setError("");
+          }}
+          placeholder="7K2-QM4"
+          className="nb-input tracking-[0.3em] text-center uppercase"
+        />
+      </Field>
+
+      {error && <p className="text-sm font-bold text-destructive break-words">{error}</p>}
+
+      <button
+        className="nb-btn w-full h-14 bg-primary text-primary-foreground disabled:opacity-40"
+        onClick={claim}
+        disabled={busy || !code.trim()}
+      >
+        {busy ? "Checking…" : "Open the log"}
+      </button>
+    </div>
+  );
+
   const details = (labelPrefix, onSubmit, cta) => (
     <div className="grid grid-cols-2 gap-3 min-w-0">
       <Field label={`${labelPrefix} first name`}>
@@ -87,7 +118,7 @@ export default function ClaimAccess() {
   );
 
   let heading = "Find the log";
-  let blurb = `Signed in as ${user?.email}. Enter the patient's details to open their log.`;
+  let blurb = `Signed in as ${user?.email}. Enter the join code the patient gave you.`;
   if (!me && !role) {
     heading = "Whose log is this";
     blurb = `Signed in as ${user?.email}. This account is not on a recovery log yet.`;
@@ -108,7 +139,7 @@ export default function ClaimAccess() {
         </div>
 
         <div className="p-4 space-y-3">
-          {invite && details("Patient", claim, "Open the log")}
+          {invite && joinCode}
 
           {!invite && me && (
             <p className="text-sm font-semibold break-words">
