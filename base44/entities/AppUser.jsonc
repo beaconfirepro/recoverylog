@@ -3,7 +3,7 @@
   "properties": {
     "can_write": {
       "default": true,
-      "description": "False makes a team member read-only.",
+      "description": "Unused. Write access is the patient's alone; nothing reads this.",
       "type": "boolean"
     },
     "checkin_measures": {
@@ -31,11 +31,11 @@
       "type": "array"
     },
     "claimed_at": {
-      "description": "On a team_member row: when this person first confirmed the patient's name and date of birth and opened the log. Blank means the invite is still open.",
+      "description": "On a team_member row: when this person first entered the join code and opened the log. Blank means the invitation is still open.",
       "type": "string"
     },
     "dob": {
-      "description": "This person's date of birth. Only meaningful on a patient row, where it is what a joining member types.",
+      "description": "This person's date of birth. Only meaningful on a patient row.",
       "format": "date",
       "type": "string"
     },
@@ -45,6 +45,10 @@
     },
     "first_name": {
       "description": "This person's first name.",
+      "type": "string"
+    },
+    "join_code": {
+      "description": "On a team_member row: the six-character code the patient reads out, and the only thing that opens the log. Never sent in the invitation email. Absent on rows written before codes existed, which can no longer be opened.",
       "type": "string"
     },
     "kind": {
@@ -60,16 +64,16 @@
       "type": "string"
     },
     "match_dob": {
-      "description": "On a team_member row: a copy of the patient's date of birth.",
+      "description": "Unused. Invitations no longer carry a date of birth; kept only for rows written before join codes.",
       "format": "date",
       "type": "string"
     },
     "match_first_name": {
-      "description": "On a team_member row: a copy of the patient's first name, written by the patient, matched when the member joins.",
+      "description": "On a team_member row: a copy of the patient's first name, so an unopened invitation can say who it is from. Shown masked.",
       "type": "string"
     },
     "match_last_name": {
-      "description": "On a team_member row: a copy of the patient's last name.",
+      "description": "On a team_member row: a copy of the patient's last name. Shown masked.",
       "type": "string"
     },
     "measurements": {
