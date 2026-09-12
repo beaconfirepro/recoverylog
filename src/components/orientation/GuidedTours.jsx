@@ -1,76 +1,25 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
+import { TOURS } from "@/lib/gtours";
 
-// The care-team orientation step is a scripted tour, the same shape as the
-// garment tour: spotlight one thing, optionally draw an arrow or a circle,
-// say one line, and — for the steps that need it — actually do the action
-// (open the form, type a sample invite, press add, press done, expand the row).
-// It marks the resend and remove buttons without pressing them, the way the
-// garment tour marks remove: a real email send and a real deletion are not the
-// point.
+// The shared guided-tour engine. One component, mounted in Layout, runs
+// whichever tour the orientation checklist asked for (location.state.orient).
+// It is self-contained on purpose and reuses the shared `gtour-*` classes.
 //
-// It is self-contained on purpose and reuses the shared `gtour-*` classes from
-// index.css. It neutralises the plain orientation highlight itself — by pulling
-// the data-orient attribute off the heading in a useLayoutEffect, which runs
-// before the highlight's useEffect can find it — so it owns the screen.
+// The spotlight and marks are `position: fixed` and are re-measured with
+// getBoundingClientRect on every animation frame while a step is showing. That
+// is correct no matter which element scrolls — the app runs inside an iframe in
+// the preview, where window.scrollY stays 0 — and it makes the marks follow a
+// smooth scroll live instead of jumping to where it landed.
 
-const NOTES = [
-  "Add other people to your care team. This can be a partner, a caregiver, a provider, or even another patient that you want to share your journey with.",
-  "Click + to invite the person via email.",
-  "They will need to sign up for the app with that email address or already use that one.",
-  "To see your info, they need this invite code, your first and last name, and birthdate.",
-  "To see if they have accepted the invite, click the title to expand it.",
-  "If they need the invitation resent, click here to resend it.",
-  "If you want to withdraw their permission or the invite, click remove to prevent them from accessing your account."
-];
-
-const EMAIL = "sample@lipnode.com";
-const FIRST = "Sample";
-const LAST = "Smith";
 const PAD = 8;
 const SETTLE_MS = 450;
-const TYPE_MS = 60;
-
-const STEPS = [
-  { target: "careteam-header", mark: "spot", note: NOTES[0], ms: 4400 },
-  { target: "careteam-add", mark: "circle", note: NOTES[1], ms: 3000, markAt: 400, click: true, clickAt: 2000 },
-  {
-    target: "careteam-email",
-    mark: "spot",
-    note: NOTES[2],
-    ms: 8000,
-    type: ["careteam-email", "careteam-first", "careteam-last"],
-    values: { "careteam-email": EMAIL, "careteam-first": FIRST, "careteam-last": LAST },
-    click: true,
-    clickTarget: "careteam-submit",
-    clickAt: 7200
-  },
-  {
-    target: "careteam-code",
-    waitFor: true,
-    mark: "spot",
-    note: NOTES[3],
-    ms: 4400,
-    markAt: 600,
-    arrowTarget: "careteam-done",
-    click: true,
-    clickTarget: "careteam-done",
-    clickAt: 3600
-  },
-  { target: "careteam-row", waitFor: true, find: "row", mark: "spot", note: NOTES[4], ms: 3000, click: true, clickAt: 2200 },
-  { target: "careteam-resend", waitFor: true, mark: "arrow", note: NOTES[5], ms: 3200, markAt: 400 },
-  { target: "careteam-remove", waitFor: true, mark: "circle", note: NOTES[6], ms: 3600, markAt: 400 }
-];
+const TYPE_MS = 65;
 
 const boxOf = (el) => {
   const r = el.getBoundingClientRect();
-  return {
-    top: r.top + window.scrollY - PAD,
-    left: r.left + window.scrollX - PAD,
-    width: r.width + PAD * 2,
-    height: r.height + PAD * 2
-  };
+  return { top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 };
 };
 
 // React-controlled inputs ignore a plain .value assignment; setting through the
@@ -105,83 +54,88 @@ const Circle = ({ box }) => (
   </svg>
 );
 
-export default function CareTeamTour() {
+export default function GuidedTours() {
   const location = useLocation();
   const navigate = useNavigate();
+  const key = location.state?.orient;
+  const config = key ? TOURS[key] : null;
+
   const [running, setRunning] = useState(false);
+  const [activeConfig, setActiveConfig] = useState(null);
   const [phase, setPhase] = useState(0);
   const [box, setBox] = useState(null);
   const [arrowBox, setArrowBox] = useState(null);
   const [markVisible, setMarkVisible] = useState(false);
   const timers = useRef([]);
+  const rafRef = useRef(null);
+  const cleanupRef = useRef(null);
 
-  const clearTimers = () => {
-    timers.current.forEach((t) => clearTimeout(t));
-    timers.current = [];
-  };
+  const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = []; };
+  const stopRaf = () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); rafRef.current = null; };
 
   const finish = useCallback(() => {
     clearTimers();
-    // A skipped tour must not leave half-typed sample text in the form.
-    setNativeValue(document.querySelector('[data-gtour="careteam-email"]'), "");
-    setNativeValue(document.querySelector('[data-gtour="careteam-first"]'), "");
-    setNativeValue(document.querySelector('[data-gtour="careteam-last"]'), "");
+    stopRaf();
     setBox(null);
     setArrowBox(null);
     setMarkVisible(false);
     setRunning(false);
+    setActiveConfig(null);
+    const cleanup = cleanupRef.current;
+    cleanupRef.current = null;
+    if (cleanup) { try { cleanup(); } catch { /* a tour's cleanup is best-effort */ } }
   }, []);
 
   // Latch on the trigger, then drop the navigation state so a back/forward does
-  // not replay. The data-orient attribute is pulled before the highlight's
-  // useEffect runs (useLayoutEffect runs first), so the plain ring never finds
-  // its target and this tour owns the screen.
+  // not replay. The data-orient attribute is pulled before the page's highlight
+  // useEffect runs (this useLayoutEffect runs first), so the plain ring never
+  // finds its target and this tour owns the screen.
   useLayoutEffect(() => {
-    const want = location.pathname === "/care" && location.state?.orient === "careteam";
-    if (!want || running) return;
+    if (!config || running) return;
+    if (location.pathname !== config.path) return;
+    cleanupRef.current = config.cleanup || null;
+    setActiveConfig(config);
     setRunning(true);
     setPhase(0);
     setBox(null);
-    const heading = document.querySelector('[data-orient="careteam"]');
+    setArrowBox(null);
+    setMarkVisible(false);
+    const heading = document.querySelector(`[data-orient="${CSS.escape(key)}"]`);
     if (heading) heading.removeAttribute("data-orient");
+    if (config.onStart) config.onStart();
     navigate(location.pathname, { replace: true, state: null });
-  }, [location, running, navigate]);
+  }, [location, running, navigate, config, key]);
 
-  // Stop if the patient leaves Care mid-tour.
+  // Stop if the patient leaves the tour's page mid-run, and clean up whatever
+  // the tour created.
   useEffect(() => {
-    if (running && location.pathname !== "/care") finish();
-  }, [running, location.pathname, finish]);
+    if (running && activeConfig && location.pathname !== activeConfig.path) finish();
+  }, [running, location.pathname, activeConfig, finish]);
 
   useEffect(() => {
-    if (!running || phase < 0 || phase >= STEPS.length) return undefined;
-    const step = STEPS[phase];
+    if (!running || !activeConfig) return undefined;
+    if (phase < 0 || phase >= activeConfig.steps.length) return undefined;
+    const step = activeConfig.steps[phase];
     let cancelled = false;
     clearTimers();
+    stopRaf();
     // Clear the last step's spotlight so a waitFor gap does not leave a stale
-    // box floating over a thing that has gone (the dialog closing, the row not
-    // yet loaded). The note stays so the hand-off reads as a move, not a flash.
+    // box floating over a thing that has gone. The note stays so the hand-off
+    // reads as a move, not a flash.
     setBox(null);
     setArrowBox(null);
     setMarkVisible(false);
     const max = step.waitFor ? 10000 : 2000;
     const startedAt = Date.now();
 
-    const findRow = () => {
-      const rows = document.querySelectorAll('[data-gtour="careteam-row"]');
-      for (const r of rows) {
-        if (r.textContent.toLowerCase().includes(EMAIL)) return r;
-      }
-      return null;
-    };
-
     const startType = () => {
-      const ids = step.type || [];
+      const ids = Array.isArray(step.type) ? step.type : [];
       let i = 0;
       const typeField = (id) => {
         if (cancelled) return;
         const el = document.querySelector(`[data-gtour="${CSS.escape(id)}"]`);
         if (!el) return;
-        const val = step.values[id] || "";
+        const val = (step.values && step.values[id]) || "";
         let k = 0;
         const tick = () => {
           if (cancelled) return;
@@ -199,10 +153,49 @@ export default function CareTeamTour() {
       if (ids.length) typeField(ids[0]);
     };
 
+    const findRow = () => {
+      const rows = document.querySelectorAll(activeConfig.rowSelector);
+      const match = String(activeConfig.rowMatch).toLowerCase();
+      for (const r of rows) {
+        if (r.textContent.toLowerCase().includes(match)) {
+          if (activeConfig.rowChild) {
+            const c = r.querySelector(activeConfig.rowChild);
+            if (c) return c;
+          }
+          return r;
+        }
+      }
+      return null;
+    };
+
+    const findTarget = () => {
+      if (step.find === "row") return findRow();
+      return document.querySelector(`[data-gtour="${CSS.escape(step.target)}"]`);
+    };
+
+    // Re-read the target's rect on every frame and write it straight to the
+    // spotlight, so it follows a scroll live and is right no matter which
+    // element scrolls.
+    const startRaf = (el, arrowEl) => {
+      stopRaf();
+      const tick = () => {
+        if (cancelled) return;
+        if (!el.isConnected) { stopRaf(); return; }
+        setBox(boxOf(el));
+        if (arrowEl && arrowEl.isConnected) setArrowBox(boxOf(arrowEl));
+        else setArrowBox(null);
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
     const begin = (el) => {
       if (cancelled) return;
       setBox(boxOf(el));
-      setArrowBox(null);
+      const arrowEl = step.arrowTarget
+        ? document.querySelector(`[data-gtour="${CSS.escape(step.arrowTarget)}"]`)
+        : null;
+      if (arrowEl) setArrowBox(boxOf(arrowEl));
       setMarkVisible(false);
       if (step.markAt != null) {
         timers.current.push(setTimeout(() => { if (!cancelled) setMarkVisible(true); }, step.markAt));
@@ -212,11 +205,7 @@ export default function CareTeamTour() {
       if (step.markGone != null) {
         timers.current.push(setTimeout(() => { if (!cancelled) setMarkVisible(false); }, step.markGone));
       }
-      if (step.type && step.type.length) startType();
-      if (step.arrowTarget) {
-        const a = document.querySelector(`[data-gtour="${CSS.escape(step.arrowTarget)}"]`);
-        if (a) timers.current.push(setTimeout(() => { if (!cancelled) setArrowBox(boxOf(a)); }, 200));
-      }
+      if (Array.isArray(step.type) && step.type.length) startType();
       if (step.click) {
         const clickId = step.clickTarget || step.target;
         timers.current.push(setTimeout(() => {
@@ -225,9 +214,10 @@ export default function CareTeamTour() {
           if (t) t.click();
         }, step.clickAt));
       }
+      startRaf(el, arrowEl);
       timers.current.push(setTimeout(() => {
         if (cancelled) return;
-        if (phase === STEPS.length - 1) { finish(); return; }
+        if (phase === activeConfig.steps.length - 1) { finish(); return; }
         setPhase((p) => p + 1);
       }, step.ms));
     };
@@ -235,11 +225,6 @@ export default function CareTeamTour() {
     const place = (el) => {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       timers.current.push(setTimeout(() => begin(el), SETTLE_MS));
-    };
-
-    const findTarget = () => {
-      if (step.find === "row") return findRow();
-      return document.querySelector(`[data-gtour="${CSS.escape(step.target)}"]`);
     };
 
     const poll = () => {
@@ -252,12 +237,12 @@ export default function CareTeamTour() {
 
     poll();
 
-    return () => { cancelled = true; clearTimers(); };
-  }, [running, phase, finish]);
+    return () => { cancelled = true; clearTimers(); stopRaf(); };
+  }, [running, phase, activeConfig, finish]);
 
-  if (!running || phase < 0 || phase >= STEPS.length) return null;
-  const step = STEPS[phase];
-  const isLast = phase === STEPS.length - 1;
+  if (!running || !activeConfig || phase < 0 || phase >= activeConfig.steps.length) return null;
+  const step = activeConfig.steps[phase];
+  const isLast = phase === activeConfig.steps.length - 1;
 
   return createPortal(
     <>

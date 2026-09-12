@@ -16,14 +16,14 @@ export default function OrientationChecklist({ state, derived = {}, setState, on
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
           <div className="flex-1 min-w-0">
-            <div className="font-display text-xl uppercase leading-tight break-words">Welcome, let's get started</div>
+            <div className="font-display text-xl uppercase leading-tight break-words">Guided Tour</div>
             <div className="text-sm font-semibold break-words">
               {complete} of {total} done.
             </div>
           </div>
           <button
             type="button"
-            aria-label="Minimize orientation"
+            aria-label="Minimize the guided tour"
             onClick={onMinimize}
             className="nb-btn h-9 w-9 shrink-0 bg-card p-0"
           >
@@ -45,7 +45,7 @@ export default function OrientationChecklist({ state, derived = {}, setState, on
 
           {finished && (
             <p className="text-sm font-bold text-center break-words">
-              All set. You can reopen this from Setup any time.
+              All set. You can reopen the guided tour from Setup any time.
             </p>
           )}
 
@@ -56,7 +56,7 @@ export default function OrientationChecklist({ state, derived = {}, setState, on
               onChange={(e) => e.target.checked && onDismiss()}
               className="w-5 h-5 accent-foreground shrink-0"
             />
-            <span className="text-sm font-semibold break-words">Don't show this orientation again</span>
+            <span className="text-sm font-semibold break-words">Don't show the guided tour again</span>
           </label>
         </div>
       </div>

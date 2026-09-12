@@ -5,8 +5,7 @@ import { usePatient, displayName } from "@/lib/PatientContext";
 import { announceNow, currentAnnouncements, subscribeAnnouncements } from "@/lib/announce";
 import { RESTORE_TIMEOUT_MS, canRestore, worthRestoring } from "@/lib/tabScroll";
 import { useOffline } from "@/lib/offline";
-import GarmentTour from "@/components/orientation/GarmentTour";
-import CareTeamTour from "@/components/orientation/CareTeamTour";
+import GuidedTours from "@/components/orientation/GuidedTours";
 
 const NAV = [
   { to: "/", label: "Today", icon: CalendarDays, match: (p) => p === "/" || p.startsWith("/day") },
@@ -228,8 +227,7 @@ export default function Layout() {
           })}
         </div>
       </nav>
-      <GarmentTour />
-      <CareTeamTour />
+      <GuidedTours />
     </div>
   );
 }

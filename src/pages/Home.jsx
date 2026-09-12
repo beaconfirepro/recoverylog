@@ -159,7 +159,7 @@ export default function Home() {
         <DayView date={todayStr()} />
       )}
 
-      {showFab && <OrientationFab label="Get started" onClick={() => setOpenedByFab(true)} />}
+      {showFab && <OrientationFab label="Open the guided tour" onClick={() => setOpenedByFab(true)} />}
     </div>
   );
 }

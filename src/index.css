@@ -235,16 +235,15 @@
      in document coordinates whose huge box-shadow dims the rest of the page,
      the arrow and circle are SVG draws, and the note is a fixed bar. */
   .gtour-spot {
-    position: absolute;
+    position: fixed;
     z-index: 50;
     border-radius: 14px;
     border: 2px solid hsl(var(--accent));
     box-shadow: 0 0 0 100vmax hsl(260 30% 11% / 0.72);
-    transition: top 0.18s ease, left 0.18s ease, width 0.18s ease, height 0.18s ease;
     pointer-events: none;
   }
   .gtour-arrow {
-    position: absolute;
+    position: fixed;
     z-index: 50;
     color: hsl(285 85% 58%);
     pointer-events: none;
@@ -261,7 +260,7 @@
     animation-delay: 0.3s;
   }
   .gtour-circle {
-    position: absolute;
+    position: fixed;
     z-index: 50;
     color: hsl(330 100% 66%);
     pointer-events: none;
@@ -333,7 +332,7 @@
      under it. It fades in from the left to match the heading's entrance. */
   .orient-backdrop {
     box-shadow: 0 0 0 3px hsl(var(--accent)), 0 0 0 100vmax hsl(0 0% 55% / 0.7);
-    animation: orient-backdrop-in 280ms ease-out, orient-ring 1s ease-in-out 5;
+    animation: orient-backdrop-in 280ms ease-out, orient-ring 1s ease-in-out 3.75;
   }
   /* Breathes between two widths rather than in and out of nothing. The old
      ring spent a third of every second fully transparent, so the thing meant

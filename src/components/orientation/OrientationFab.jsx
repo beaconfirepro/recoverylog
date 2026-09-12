@@ -7,11 +7,11 @@ export default function OrientationFab({ label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      aria-label={label || "Open orientation"}
+      aria-label={label || "Open the guided tour"}
       className="nb-btn fixed right-4 bottom-24 z-40 h-12 px-3 bg-primary text-primary-foreground gap-2"
     >
       <ListChecks className="w-5 h-5 shrink-0" />
-      <span className="text-xs">{label || "Get started"}</span>
+      <span className="text-xs">{label || "Open the guided tour"}</span>
     </button>
   );
 }

@@ -33,7 +33,14 @@ export const inviteSubject = (patientName) => `${patientName} added you to their
 // which only exercises the body and subject strings, never has to resolve the
 // function module. The body and subject are built there too, so the patient
 // cannot put words in the platform's mouth.
+// The guided tour drives the care-team form the way a patient would, which
+// would send a real invitation to a made-up address. The tour sets this flag
+// for the duration of the run, so the send is skipped without the form knowing
+// — it still shows the "sent" screen, which is what the tour is demonstrating.
+export const inviteSuppressed = { current: false };
+
 export const sendInviteEmail = async ({ to, memberFirstName, patientName }) => {
+  if (inviteSuppressed.current) return;
   const { sendInvite } = await import("@/functions/sendInvite");
   const res = await sendInvite({ to, memberFirstName, patientName });
   const data = res?.data || {};
