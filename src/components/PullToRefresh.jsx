@@ -26,6 +26,10 @@ export default function PullToRefresh({ onRefresh, children }) {
     }
   }, [pull, busy, onRefresh]);
 
+  // Named so the gesture explains itself as it crosses the threshold rather
+  // than only once it has already fired.
+  const label = busy ? "Refreshing…" : pull >= TRIGGER ? "Release to refresh" : "Pull to refresh";
+
   return (
     <div
       onTouchStart={(e) => {
@@ -47,14 +51,23 @@ export default function PullToRefresh({ onRefresh, children }) {
       onTouchCancel={end}
     >
       <div
-        className="flex items-center justify-center overflow-hidden"
-        style={{ height: busy ? 44 : pull, transition: start.current === null ? "height .2s ease" : "none" }}
-        aria-hidden={!busy}
+        className="flex flex-col items-center justify-center overflow-hidden gap-1"
+        style={{ height: busy ? 56 : pull, transition: start.current === null ? "height .2s ease" : "none" }}
       >
         <RefreshCw
           className={`w-5 h-5 ${busy ? "animate-spin" : ""}`}
           style={{ transform: busy ? undefined : `rotate(${(pull / TRIGGER) * 270}deg)`, opacity: busy ? 1 : pull / TRIGGER }}
+          aria-hidden="true"
         />
+        {/* A rotating icon and nothing else, at the same gesture and the same
+            place iOS uses for its own reload, reads as a glitch to anyone who
+            does not already know the pattern. */}
+        <span
+          className="font-heading text-2xs uppercase tracking-wider text-muted-foreground"
+          style={{ opacity: busy ? 1 : Math.min(1, pull / TRIGGER) }}
+        >
+          {label}
+        </span>
         <span className="sr-only" role="status">
           {busy ? "Refreshing" : ""}
         </span>

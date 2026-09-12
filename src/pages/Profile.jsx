@@ -18,6 +18,7 @@ import { save } from "@/lib/saving";
 import Field from "@/components/Field";
 import TimeInput from "@/components/recovery/TimeInput";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
+import { useDismissKeyboard } from "@/lib/dismissKeyboard";
 
 // What the patient actually has saved, blank rows and all. The check-in form
 // reads through checkinSlots(), which drops the blanks; the editor must not.
@@ -29,6 +30,8 @@ const savedSlots = (patient) => {
 export default function Profile() {
   const navigate = useNavigate();
   useOrientationHighlight();
+  // Setup is the one screen that is mostly numeric fields.
+  useDismissKeyboard();
   const { user, logout } = useAuth();
   const { me, patient, patientId, isOwner, canWrite, refreshPatient, surgeries, activeSurgery, activeSurgeryId, selectSurgery, refreshSurgeries } = usePatient();
   const [from, setFrom] = useState(todayStr());
@@ -358,13 +361,21 @@ export default function Profile() {
 
           <div className="p-4 space-y-3">
             <p className="text-2xs font-semibold text-muted-foreground break-words">
-              History shows a tracker on each day's card. Turning one off keeps what is already logged.
+              Day by Day shows a tracker on each day's card. Turning one off keeps what is already logged.
             </p>
             <div className="flex items-center gap-2 min-w-0 pb-1 border-b-2">
               <span className="flex-1 min-w-0" />
               <span className="nb-label w-14 shrink-0 text-center text-muted-foreground">Track</span>
-              <span className="nb-label w-14 shrink-0 text-center text-muted-foreground">History</span>
+              <span className="nb-label w-14 shrink-0 text-center text-muted-foreground">Card</span>
             </div>
+            {/* The two controls are a switch and a checkbox — different things,
+                and correctly different roles — but they are the same size and
+                sit side by side, and one gates the other with nothing on screen
+                saying so. A greyed box with no reason is a control that looks
+                broken. */}
+            <p id="track-gate" className="text-xs font-semibold text-muted-foreground break-words">
+              A tracker has to be on before it can show on the day card.
+            </p>
             <div className="divide-y-2">
               {QUICK_ORDER.map((t) => {
                 const cfg = TYPES[t];
@@ -392,7 +403,8 @@ export default function Profile() {
                       type="button"
                       role="checkbox"
                       aria-checked={onHistory.includes(t)}
-                      aria-label={`Show ${cfg.label} on history card`}
+                      aria-label={`Show ${cfg.label} on the day card`}
+                      aria-describedby={on ? undefined : "track-gate"}
                       onClick={() => toggleHistory(t)}
                       disabled={savingTracking || !on}
                       className="w-14 h-8 shrink-0 grid place-items-center disabled:opacity-30"

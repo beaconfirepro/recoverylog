@@ -33,6 +33,7 @@ export default function DayView({ date, startCollapsed }) {
   const [addOpen, setAddOpen] = useState(!startCollapsed);
   const [lastBm, setLastBm] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  const [arranging, setArranging] = useState(false);
   // The record new entries attach to, and whose day row (red flags, questions)
   // is shown. In single-record scope this is fixed to that record; in "all"
   // scope it is a choice, defaulting to maintenance.
@@ -249,6 +250,17 @@ export default function DayView({ date, startCollapsed }) {
           <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${addOpen ? "rotate-90" : ""}`} />
           <h2 className="font-heading text-sm uppercase tracking-wider">Log an entry</h2>
         </button>
+        {/* Arrange mode was a 450ms long press documented only in a code
+            comment. Good feature, nobody would find it. */}
+        {addOpen && canWrite && loggable && (
+          <button
+            type="button"
+            onClick={() => setArranging(true)}
+            className="absolute right-0 top-0 h-11 px-2 font-heading text-xs uppercase tracking-wider text-muted-foreground"
+          >
+            Edit
+          </button>
+        )}
         {!addOpen ? null : loggable ? (
           <div className="space-y-2">
             {multi && (
@@ -263,6 +275,8 @@ export default function DayView({ date, startCollapsed }) {
               onAdd={(type) => setDialog({ type })}
               onReorder={saveOrder}
               canWrite={canWrite}
+              arranging={arranging}
+              onArrangingChange={setArranging}
             />
           </div>
         ) : (
