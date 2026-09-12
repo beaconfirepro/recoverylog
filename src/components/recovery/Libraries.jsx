@@ -3,9 +3,9 @@ import { ChevronRight, Plus, X } from "lucide-react";
 import { useLibrary } from "@/lib/library";
 import DrugLookup from "./DrugLookup";
 
-const Card = ({ title, blurb, children }) => (
+const Card = ({ title, blurb, orient, children }) => (
   <div className="nb-card overflow-hidden">
-    <div className="px-4 py-3 border-b-2 bg-muted">
+    <div className="px-4 py-3 border-b-2 bg-muted" data-orient={orient}>
       <div className="font-display text-xl uppercase leading-tight break-words">{title}</div>
       <div className="text-sm font-semibold break-words">{blurb}</div>
     </div>
@@ -29,7 +29,7 @@ export function GarmentLibrary() {
   };
 
   return (
-    <Card title="My garments" blurb="Offered on the Compression tracker.">
+    <Card title="My garments" blurb="Offered on the Compression tracker." orient="garments">
       {rows.length === 0 && (
         <p className="text-sm text-muted-foreground break-words">
           No garments saved. Add one and it is offered on the Compression tracker.
@@ -192,6 +192,7 @@ export function MedGroupLibrary() {
     <Card
       title="My med groups"
       blurb="Offered on the Med tracker, with everything in the group already ticked."
+      orient="meds"
     >
       {rows.length === 0 && (
         <p className="text-sm text-muted-foreground break-words">

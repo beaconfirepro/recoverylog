@@ -71,7 +71,7 @@ export const ORIENTATION_ITEMS = [
     key: "careteam",
     n: 7,
     question: "Would you like to add a care team member?",
-    body: "They can view or update your log based on the permissions you give, and you can remove them at any time.",
+    body: "They can read your whole log. They cannot change anything, and you can remove them at any time.",
     kind: "nav",
     target: "/care",
     highlight: "careteam",

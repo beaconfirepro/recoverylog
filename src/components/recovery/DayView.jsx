@@ -181,11 +181,12 @@ export default function DayView({ date, startCollapsed }) {
         onPickRecord={(id) => setScope({ all: false, ids: [id] })}
       />
 
-      <div data-orient="firstcheckin">
+      <div>
         <button
           type="button"
           onClick={() => setAddOpen((o) => !o)}
           aria-expanded={addOpen}
+          data-orient="firstcheckin"
           className="w-full flex items-center gap-1.5 mb-2"
         >
           <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${addOpen ? "rotate-90" : ""}`} />

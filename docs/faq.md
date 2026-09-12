@@ -5,6 +5,10 @@ log, a care team member reads one. Every answer below describes what the app
 does **today**, at the commit this file was written against. Where an answer
 depends on something not yet built, it says so rather than promising it.
 
+The join answers describe the two-factor join decided in #71: the six-character
+code and the patient's date of birth. Both screens now ask for both, and
+`linkPatient` checks both under the service role, so these answers match the app.
+
 Suggested placement: **You → Help & FAQ**, with deep links into the two
 sections. Link the join-code questions from the join-code screen, and the
 red-flag questions from the red flag check.
@@ -105,9 +109,11 @@ No. It never contacts your surgeon, your clinic, or emergency services. It
 records what you decided.
 
 **What fever number does it use?**
-Whatever you put in your surgery's "Call if fever over" field. If you leave it
-blank the app falls back to 100.4 °F, which is a general threshold and not your
-surgeon's. Enter the number they gave you.
+Whatever you put in the "Call if fever over" field on your surgery or
+maintenance log. If you leave it blank the app falls back to 101.5 °F, which is
+the line most surgeons give — but it is not yours until you enter yours. The
+red flag question names whichever number is in force, so you always know what
+you are answering against.
 
 ### Your care team
 
@@ -116,17 +122,24 @@ You, and only the people you add yourself. Nobody else.
 
 **How do I add someone?**
 Care → Care team → **+**. Enter their email and name. They get an invitation
-email, and you get a six-character code.
+email, and you get a six-character code. Your own date of birth has to be on
+your account, because it is the second thing they need.
+
+**What does someone need to open my log?**
+Two things: the six-character code, and your date of birth. Neither one works
+without the other.
 
 **Why is the code not in the email?**
 Because the email alone would be enough to open your log. Having their address
-is what identifies them; the code is what proves you meant them. If both
-travelled in one message, one mistyped address would hand over everything. Read
-the code out, text it, or write it down.
+is what identifies them; the code and your date of birth are what let them in.
+If any of that travelled in the same message, one mistyped address would hand
+over everything. Read the code out, text it, or write it down, and tell them
+your date of birth the same way.
 
 **Where do I find the code again?**
-Care → Care team, tap that person's row. The code stays there until they use
-it. You can also send the invitation email again from the same place.
+Care → Care team. Anyone who has not opened the log yet shows their code on
+their row, so you do not have to go looking. Tap the row to send the invitation
+email again. Your date of birth is the other half, and it is on the You screen.
 
 **What can a care team member do?**
 Read. All of it — every entry, every day, every red flag, your measurements and
@@ -140,10 +153,13 @@ Not today. Every care team member is read-only.
 Care → Care team, tap their row, Remove. Their access ends immediately. You can
 add them again later, which issues a new code.
 
-**They say the code doesn't work.**
+**They say it doesn't work.**
 Codes are not case-sensitive and the dash is optional, so `7k2qm4` and `7K2-QM4`
-are the same code. If it still fails, remove them and add them again — an
-invitation created before codes existed has none and cannot be opened.
+are the same code. Check they are typing your date of birth and not their own.
+The app does not say which of the two was wrong, on purpose: telling someone
+guessing which half to keep working on is telling them too much. If it still
+fails, remove them and add them again — an invitation created before codes
+existed has none and cannot be opened.
 
 ### Sharing and export
 
@@ -184,8 +200,9 @@ measurements, garments, med groups and your care team's access. Permanent, no
 undo.
 
 **Who do I contact about a problem?**
-[[CONTACT: support email]] *(placeholder — the privacy policy carries the same
-gap and both need filling before launch.)*
+The privacy policy carries the address to write to. *(There is no route from
+inside the app yet. HELP-3 is a contact form that sends the message for you,
+so no address has to be listed here.)*
 
 ---
 
@@ -194,22 +211,27 @@ gap and both need filling before launch.)*
 ### Getting in
 
 **Someone added me. What do I do?**
-Create an account with the email address they used, sign in, and enter the
-six-character code they read out to you. That opens their log.
+Create an account with the email address they used, sign in, and enter two
+things: the six-character code they read out to you, and their date of birth.
+That opens their log.
 
-**Why do I need a code as well as the email?**
-The email tells you the log exists. The code proves the patient meant you. The
-code is deliberately never sent by email, so an invitation that reaches the
-wrong inbox still opens nothing.
+**Why do I need a code and their date of birth?**
+The email tells you the log exists, and holding that address is what identifies
+you. The code proves the patient meant you. Their date of birth proves you are
+the person she read the code out to. Neither is enough alone — a date of birth
+is not a secret, and a code can be overheard or forwarded — and the email
+carries neither, so an invitation that reaches the wrong inbox opens nothing.
 
-**Where do I get the code?**
-From the patient, out loud or by text. Not from the app, not from the email,
-and nobody else can look it up for you.
+**Where do I get the code and the date?**
+Both from the patient, out loud or by text. Not from the app, not from the
+email, and nobody else can look either of them up for you.
 
-**The code isn't working.**
-Case and the dash don't matter. If it still fails, ask them to check the code
-on their Care page — and if the row shows no code at all, ask them to remove
-you and add you again.
+**It isn't working.**
+Case and the dash don't matter in the code, and the date has to be the
+patient's own date of birth, not yours. You will not be told which of the two
+was wrong. If it still fails, ask them to check the code on their Care page —
+and if the row shows no code at all, ask them to remove you and add you
+again.
 
 **I signed in and it says I'm not on a log.**
 Nobody has added you yet, or they used a different email address. Only the

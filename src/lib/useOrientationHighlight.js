@@ -25,7 +25,10 @@ export function useOrientationHighlight() {
       el = document.querySelector(`[data-orient="${CSS.escape(key)}"]`);
       if (el) {
         fired.current = key;
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Land the title just below the sticky app bar rather than sliding it
+        // under, since the anchor is now the header, not the whole card.
+        const rect = el.getBoundingClientRect();
+        window.scrollTo({ top: Math.max(0, window.scrollY + rect.top - 52), behavior: "smooth" });
         el.classList.add("orient-pulse");
         pulseTimer = setTimeout(() => {
           el?.classList.remove("orient-pulse");
