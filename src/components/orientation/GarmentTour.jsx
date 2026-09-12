@@ -27,10 +27,10 @@ const SETTLE_MS = 450;
 const TYPE_MS = 65;
 
 const STEPS = [
-  { target: "garments-header", mark: "spot", note: NOTES[0], ms: 3600 },
+  { target: "garments-header", mark: "spot", note: NOTES[0], ms: 1200 },
   { target: "garments-inputs", mark: "spot", note: NOTES[1], ms: 3600, type: true },
-  { target: "garments-add", mark: "arrow", note: NOTES[2], ms: 4200, click: true, clickAt: 2200 },
-  { target: "garments-remove", mark: "circle", note: NOTES[3], ms: 5200, waitFor: true }
+  { target: "garments-add", mark: "arrow", note: NOTES[2], ms: 8400, click: true, clickAt: 3000, markAt: 1200, markGone: 7200 },
+  { target: "garments-remove", mark: "circle", note: NOTES[3], ms: 5200, waitFor: true, markAt: 1200, markGone: 5000 }
 ];
 
 const boxOf = (el) => {
@@ -59,6 +59,7 @@ export default function GarmentTour() {
   const [running, setRunning] = useState(false);
   const [phase, setPhase] = useState(0);
   const [box, setBox] = useState(null);
+  const [markVisible, setMarkVisible] = useState(false);
   const timers = useRef([]);
 
   const clearTimers = () => {
@@ -72,6 +73,7 @@ export default function GarmentTour() {
     setNativeValue(document.querySelector('[data-gtour="garments-name"]'), "");
     setNativeValue(document.querySelector('[data-gtour="garments-size"]'), "");
     setBox(null);
+    setMarkVisible(false);
     setRunning(false);
   }, []);
 
@@ -132,6 +134,15 @@ export default function GarmentTour() {
     const begin = (el) => {
       if (cancelled) return;
       setBox(boxOf(el));
+      setMarkVisible(false);
+      // The mark draws in partway through, after the spotlight has had the
+      // floor, and leaves before the phase ends so the next highlight is clean.
+      if (step.markAt != null) {
+        timers.current.push(setTimeout(() => { if (!cancelled) setMarkVisible(true); }, step.markAt));
+      }
+      if (step.markGone != null) {
+        timers.current.push(setTimeout(() => { if (!cancelled) setMarkVisible(false); }, step.markGone));
+      }
       if (step.type) startTyping();
       if (step.click) {
         timers.current.push(setTimeout(() => { if (!cancelled) el.click(); }, step.clickAt));
@@ -181,7 +192,7 @@ export default function GarmentTour() {
   return createPortal(
     <>
       <div className="gtour-spot" style={spotStyle} aria-hidden="true" />
-      {step.mark === "arrow" && (
+      {step.mark === "arrow" && markVisible && (
         <div
           className="gtour-arrow"
           aria-hidden="true"
@@ -193,7 +204,7 @@ export default function GarmentTour() {
           </svg>
         </div>
       )}
-      {step.mark === "circle" && (
+      {step.mark === "circle" && markVisible && (
         <svg className="gtour-circle" style={spotStyle} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <path
             className="gtour-circle-path"
