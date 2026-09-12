@@ -201,7 +201,7 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
           </p>
         </div>
 
-        <div className="border-2 rounded-xl bg-muted p-4 text-center">
+        <div className="border-2 rounded-xl bg-muted p-4 text-center" data-gtour="careteam-code">
           <div className="font-display text-4xl tracking-[0.2em] break-words">{formatJoinCode(added.code)}</div>
         </div>
 
@@ -211,7 +211,7 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
           the care team list until they use it.
         </p>
 
-        <button type="button" className="nb-btn w-full h-12 bg-primary text-primary-foreground" onClick={onDone}>
+        <button type="button" data-gtour="careteam-done" className="nb-btn w-full h-12 bg-primary text-primary-foreground" onClick={onDone}>
           Done
         </button>
       </div>
@@ -232,6 +232,7 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
         <Field label="Their email" span>
           <input
             type="email"
+            data-gtour="careteam-email"
             value={form.email}
             onChange={set("email")}
             placeholder="name@example.com"
@@ -239,10 +240,10 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
           />
         </Field>
         <Field label="Their first name">
-          <input type="text" value={form.first_name} onChange={set("first_name")} className="nb-input" />
+          <input type="text" data-gtour="careteam-first" value={form.first_name} onChange={set("first_name")} className="nb-input" />
         </Field>
         <Field label="Their last name">
-          <input type="text" value={form.last_name} onChange={set("last_name")} className="nb-input" />
+          <input type="text" data-gtour="careteam-last" value={form.last_name} onChange={set("last_name")} className="nb-input" />
         </Field>
       </div>
 
@@ -251,6 +252,7 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
       <div className="flex gap-2 min-w-0">
         <button
           type="button"
+          data-gtour="careteam-submit"
           className="nb-btn flex-1 min-w-0 h-12 bg-primary text-primary-foreground"
           onClick={submit}
           disabled={busy}
@@ -308,6 +310,7 @@ function PendingInvite({ member, patient }) {
       )}
       <button
         type="button"
+        data-gtour="careteam-resend"
         className="nb-btn w-full h-11 bg-card flex items-center justify-center gap-2"
         onClick={resend}
         disabled={sending}
@@ -425,7 +428,7 @@ export default function Care() {
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
           <Users className="w-5 h-5 shrink-0" />
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0" data-gtour="careteam-header">
             <div className="font-display text-xl uppercase leading-tight break-words" data-orient="careteam">Care team</div>
             <div className="text-sm font-semibold break-words">
               {isOwner
@@ -436,6 +439,7 @@ export default function Care() {
           {isOwner && (
             <button
               type="button"
+              data-gtour="careteam-add"
               className="nb-btn h-9 w-9 shrink-0 bg-card p-0"
               aria-label="Add to care team"
               onClick={() => setAdding(true)}
@@ -460,6 +464,7 @@ export default function Care() {
               <div key={m.id} className="border-2 rounded-xl overflow-hidden">
                 <button
                   type="button"
+                  data-gtour="careteam-row"
                   className="w-full text-left p-3 flex items-center gap-2 min-w-0"
                   onClick={() => setExpanded(open ? null : m.id)}
                 >
@@ -524,6 +529,7 @@ export default function Care() {
                       ) : (
                         <button
                           type="button"
+                          data-gtour="careteam-remove"
                           className="nb-btn w-full h-11 bg-card flex items-center justify-center gap-2"
                           onClick={() => setRemoving(m.id)}
                         >
