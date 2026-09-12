@@ -17,6 +17,7 @@ import { buildRecoveryPdf } from "@/lib/recoveryPdf";
 import { save } from "@/lib/saving";
 import Field from "@/components/Field";
 import TimeInput from "@/components/recovery/TimeInput";
+import Surgeries from "@/components/care/Surgeries";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
 import { useDismissKeyboard } from "@/lib/dismissKeyboard";
 
@@ -237,6 +238,11 @@ export default function Profile() {
   return (
     <div className="space-y-4">
       <h1 className="font-display text-2xl uppercase">Setup</h1>
+
+      {/* Care is about people. This is about records, and it sits here because
+          everything below configures one of them — a patient with no care team
+          should not have to go to a tab about other people to add a surgery. */}
+      <Surgeries />
 
       {isOwner && (
         <div className="nb-card overflow-hidden">

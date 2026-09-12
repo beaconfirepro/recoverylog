@@ -121,7 +121,7 @@ export default function DayView({ date, startCollapsed }) {
     return (
       <div className="nb-card p-4">
         <p className="text-sm font-semibold break-words">
-          No record to log against yet. Add a surgery on the Care page.
+          No record to log against yet. Add a surgery in Setup.
         </p>
       </div>
     );

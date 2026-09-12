@@ -13,7 +13,8 @@ const NAV = [
   // ever pushes it to two, icon and two 10px lines still sit inside h-16.
   { to: "/history", label: "Day by Day", icon: HistoryIcon, match: (p) => p.startsWith("/history") },
   { to: "/trends", label: "Trends", icon: TrendingUp, match: (p) => p.startsWith("/trends") },
-  // Care holds both lists: who is on the team, and the surgeries.
+  // Care is people: the team, and the logs she helps with. The records
+  // themselves live in Setup, next to the settings that configure them.
   { to: "/care", label: "Care", icon: Users, match: (p) => p.startsWith("/care") },
   // Setup is how the log is configured. Who you are lives behind the button
   // in the header, because it is about the person rather than the log.

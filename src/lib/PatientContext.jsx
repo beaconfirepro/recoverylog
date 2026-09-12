@@ -30,7 +30,7 @@ export const trackedTypes = (surgery) => {
 // A patient's own Maintenance record is created the moment they have no
 // surgeries at all, so logging works before any surgery is added. Existing
 // patients who already have a surgery do not get one automatically; they can
-// start one from the Care page.
+// start one from Setup.
 const ensureMaintenance = async (patientId, list) => {
   if (!patientId) return list;
   const hasAny = list.some((s) => !s.archived);

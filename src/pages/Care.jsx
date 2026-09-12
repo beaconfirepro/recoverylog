@@ -10,7 +10,6 @@ import { useCareTeam } from "@/lib/careTeam";
 import { maskedName } from "@/lib/invite";
 import { dobDigest, formatJoinCode, generateJoinCode } from "@/lib/joinCode";
 import { sendInviteEmail } from "@/lib/inviteEmail";
-import Surgeries from "@/components/care/Surgeries";
 import HelpHint from "@/components/help/HelpHint";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
 
@@ -538,8 +537,6 @@ export default function Care() {
           })}
         </div>
       </div>
-
-      <Surgeries />
 
       <Dialog open={adding} onOpenChange={(o) => !o && setAdding(false)}>
         <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">

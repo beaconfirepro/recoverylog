@@ -100,7 +100,7 @@ export default function Home() {
     // Item 1 hands the tracking toggles to the new-surgery modal on Care.
     if (item.kind === "surgery") {
       if (choice === "surgery") {
-        navigate("/care", {
+        navigate("/profile", {
           state: {
             openNewSurgery: {
               track_before: state.track_before !== false,
