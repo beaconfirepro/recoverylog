@@ -12,6 +12,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 import { newClientId } from "@/lib/writeQueue";
 import QuickAdd from "./QuickAdd";
 import DayFeed from "./DayFeed";
+import PendingEntries from "./PendingEntries";
 import EntryForm from "./EntryForm";
 import DayHeader from "./DayHeader";
 import DayTotals from "./DayTotals";
@@ -312,6 +313,13 @@ export default function DayView({ date, startCollapsed }) {
         <h2 className="font-heading text-sm uppercase tracking-wider">
           {multi ? "The page · all records" : "The page"}
         </h2>
+        {/* Above the feed, because a write that failed is the most recent
+            thing she did and the one she is looking for. On an empty day it
+            answers the question the empty state otherwise leaves open: she
+            logged something, the page says nothing is here, and both are
+            true. */}
+        <PendingEntries date={date} surgeryIds={multi ? scopeRecords.map((r) => r.id) : [focused.id]} />
+
         {sorted.length === 0 && (
           <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card">
             Nothing logged today. Tap a tracker above to start.
