@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { CalendarDays, History as HistoryIcon, SlidersHorizontal, TrendingUp, UserRound, Users } from "lucide-react";
 import { usePatient, displayName } from "@/lib/PatientContext";
 import { announceNow, currentAnnouncements, subscribeAnnouncements } from "@/lib/announce";
+import { RESTORE_TIMEOUT_MS, canRestore, worthRestoring } from "@/lib/tabScroll";
 
 const NAV = [
   { to: "/", label: "Today", icon: CalendarDays, match: (p) => p === "/" || p.startsWith("/day") },
@@ -19,16 +20,52 @@ const NAV = [
   { to: "/profile", label: "Setup", icon: SlidersHorizontal, match: (p) => p.startsWith("/profile") }
 ];
 
-// A tab keeps where you left it. Coming back to History and landing at the top
-// of a hundred days is the same as losing your place.
+// A tab keeps where you left it. Coming back to Day by Day and landing at the
+// top of a hundred days is the same as losing your place.
+//
+// The catch is that the destination is still a spinner at the moment the
+// pathname changes, so the document is one viewport tall and the browser
+// clamps any restore to roughly zero — which is why this never worked. The
+// position is held until the page is tall enough to hold it, and a resize
+// observer is what says when that is.
 const useTabScroll = (pathname) => {
   const positions = useRef({});
   const last = useRef(pathname);
+
   useEffect(() => {
     positions.current[last.current] = window.scrollY;
     last.current = pathname;
-    const y = positions.current[pathname];
-    if (y) window.scrollTo({ top: y, behavior: "instant" });
+
+    const target = positions.current[pathname];
+    if (!worthRestoring(target)) return undefined;
+
+    let done = false;
+    const attempt = () => {
+      if (done) return;
+      if (!canRestore(target, document.documentElement.scrollHeight, window.innerHeight)) return;
+      done = true;
+      window.scrollTo({ top: target, behavior: "instant" });
+      stop();
+    };
+
+    // The page may already be tall enough — a cached tab, or one that renders
+    // from state it still had.
+    attempt();
+
+    const observer = new ResizeObserver(attempt);
+    observer.observe(document.documentElement);
+    // A read that is still going after this has gone wrong, and scrolling a
+    // half-drawn page is worse than leaving it at the top.
+    const timer = setTimeout(() => {
+      done = true;
+      stop();
+    }, RESTORE_TIMEOUT_MS);
+
+    function stop() {
+      observer.disconnect();
+      clearTimeout(timer);
+    }
+    return stop;
   }, [pathname]);
 };
 
