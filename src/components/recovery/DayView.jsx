@@ -7,6 +7,7 @@ import { suggestFlags } from "@/lib/redFlags";
 import { asRows } from "@/lib/recoveryUtils";
 import { usePatient, trackedTypes } from "@/lib/PatientContext";
 import { defaultFocused, recordLabel } from "@/lib/scope";
+import { remove, save } from "@/lib/saving";
 import PullToRefresh from "@/components/PullToRefresh";
 import QuickAdd from "./QuickAdd";
 import DayFeed from "./DayFeed";
@@ -124,47 +125,76 @@ export default function DayView({ date, startCollapsed }) {
     ? scopeRecords.filter((r) => entries.some((e) => e.surgery_id === r.id))
     : [];
 
+  // The dialog is held open until the write lands, and only then closed. It
+  // used to close first and add the row optimistically, so a create that failed
+  // on bad wifi showed the entry, dropped it on the next load() and said
+  // nothing: the patient's memory was the only record it had been typed. There
+  // is nothing to be optimistic about while the dialog is open anyway — it
+  // covers the feed the row would appear on — and what she typed is still on
+  // screen to retry. The `saving` flag was already wired through EntryForm and
+  // CheckinStack and never set, so a second tap on Save wrote a second entry.
+  //
+  // Retry sends exactly the entry that was tapped Save on, not whatever the
+  // form says by the time it is pressed. Editing the form and then tapping Save
+  // again is the way to change it.
   const saveEntry = async (payload) => {
-    const editing = dialog.entry;
-    setDialog(null);
-    if (editing) {
-      setEntries((rows) => rows.map((e) => (e.id === editing.id ? { ...e, ...payload } : e)));
-      await base44.entities.RecoveryEntry.update(editing.id, payload);
-    } else {
-      const optimistic = {
-        id: `pending-${Date.now()}`,
-        date,
-        type: dialog.type,
-        patient_id: patientId,
-        surgery_id: focused.id,
-        mode: focused.mode,
-        created_date: new Date().toISOString(),
-        ...payload
-      };
-      setEntries((rows) => [...rows, optimistic]);
-      await base44.entities.RecoveryEntry.create({
-        date,
-        type: dialog.type,
-        patient_id: patientId,
-        surgery_id: focused.id,
-        mode: focused.mode,
-        ...payload
-      });
-    }
-    load();
+    const target = dialog;
+    if (!target) return;
+    const attempt = async () => {
+      setSaving(true);
+      const res = await save(
+        () =>
+          target.entry
+            ? base44.entities.RecoveryEntry.update(target.entry.id, payload)
+            : base44.entities.RecoveryEntry.create({
+                date,
+                type: target.type,
+                patient_id: patientId,
+                surgery_id: focused.id,
+                mode: focused.mode,
+                ...payload
+              }),
+        { what: "Your entry", retry: attempt }
+      );
+      setSaving(false);
+      if (!res.ok) return;
+      setDialog(null);
+      load();
+    };
+    await attempt();
   };
 
   const deleteEntry = async () => {
-    const gone = dialog.entry.id;
-    setDialog(null);
-    setEntries((rows) => rows.filter((e) => e.id !== gone));
-    await base44.entities.RecoveryEntry.delete(gone);
-    load();
+    const gone = dialog?.entry;
+    if (!gone) return;
+    const attempt = async () => {
+      setSaving(true);
+      // The row stays on the feed until the delete is confirmed. A row that
+      // disappears and comes back on the next load is worse than one that
+      // waits.
+      const res = await remove(() => base44.entities.RecoveryEntry.delete(gone.id), {
+        what: "Your entry",
+        retry: attempt
+      });
+      setSaving(false);
+      if (!res.ok) return;
+      setDialog(null);
+      load();
+    };
+    await attempt();
   };
 
   const saveOrder = async (order) => {
-    await base44.entities.Surgery.update(focused.id, { tracked_types: order });
+    const res = await save(() => base44.entities.Surgery.update(focused.id, { tracked_types: order }), {
+      what: "Your tracker order",
+      saved: "The buttons keep this order.",
+      retry: () => saveOrder(order)
+    });
+    // Refreshed either way: the read is the only thing that says what is
+    // actually stored. QuickAdd keeps the order you dragged on screen until it
+    // is remounted, which is part of why the Retry offer matters here.
     await refreshSurgeries();
+    return res.ok;
   };
 
   return (
@@ -255,7 +285,9 @@ export default function DayView({ date, startCollapsed }) {
         canWrite={canWrite}
       />
 
-      <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
+      {/* Not dismissible while the write is in flight: the swipe-away or the
+          Escape key would take the only copy of what she typed with it. */}
+      <Dialog open={!!dialog} onOpenChange={(o) => !o && !saving && setDialog(null)}>
         <DialogContent
           className="max-w-lg max-h-[92vh] overflow-y-auto"
           onOpenAutoFocus={(e) => e.preventDefault()}

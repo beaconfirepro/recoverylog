@@ -1,18 +1,36 @@
 import React, { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { save } from "@/lib/saving";
 
 export default function QuestionsCard({ day, onSaved, canWrite = true }) {
   const [list, setList] = useState(day.questions || []);
   const [text, setText] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // The list on screen is the whole list every time, so the write is put on
+  // screen first and taken back off if it fails. A question that vanished
+  // without a word is a question she believes is written down, and she finds
+  // out in front of the surgeon that it is not.
   const persist = async (next) => {
-    setSaving(true);
-    await base44.entities.RecoveryDay.update(day.id, { questions: next });
-    setList(next);
-    setSaving(false);
-    onSaved();
+    const previous = list;
+    const attempt = async () => {
+      setSaving(true);
+      setList(next);
+      const res = await save(() => base44.entities.RecoveryDay.update(day.id, { questions: next }), {
+        what: "Your questions",
+        saved: "The list is saved.",
+        retry: attempt
+      });
+      setSaving(false);
+      if (!res.ok) {
+        setList(previous);
+        return false;
+      }
+      onSaved();
+      return true;
+    };
+    return attempt();
   };
 
   return (
@@ -29,10 +47,15 @@ export default function QuestionsCard({ day, onSaved, canWrite = true }) {
           />
           <button
             className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground"
-            onClick={() => {
-              if (!text.trim()) return;
-              persist([text.trim(), ...list]);
-              setText("");
+            aria-label="Add this question"
+            disabled={saving}
+            // The box is only cleared once the write lands. Clearing it first
+            // and then failing loses the question twice over: off the list, and
+            // out of the box she typed it into.
+            onClick={async () => {
+              const question = text.trim();
+              if (!question) return;
+              if (await persist([question, ...list])) setText("");
             }}
           >
             <Plus className="w-5 h-5" />
@@ -49,7 +72,11 @@ export default function QuestionsCard({ day, onSaved, canWrite = true }) {
             <li key={i} className="flex items-start gap-2 text-sm font-medium border-2 rounded-xl px-3 py-2 bg-muted">
               <span className="flex-1 min-w-0 break-words">{q}</span>
               {canWrite && (
-                <button onClick={() => persist(list.filter((_, j) => j !== i))} aria-label="Remove question">
+                <button
+                  onClick={() => persist(list.filter((_, j) => j !== i))}
+                  aria-label="Remove question"
+                  disabled={saving}
+                >
                   <X className="w-4 h-4 shrink-0" />
                 </button>
               )}

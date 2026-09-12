@@ -1,4 +1,3 @@
-/* global __BUILD_COMMIT__, __BUILD_TIME__ */
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import DayView from "@/components/recovery/DayView";
@@ -99,10 +98,6 @@ export default function Home() {
       )}
 
       {showFab && <OrientationFab label="Get started" onClick={() => setOpenedByFab(true)} />}
-
-      <p className="pt-2 text-center text-[10px] font-mono text-muted-foreground select-all">
-        {__BUILD_COMMIT__} · {__BUILD_TIME__.slice(0, 16).replace("T", " ")}Z
-      </p>
     </div>
   );
 }
