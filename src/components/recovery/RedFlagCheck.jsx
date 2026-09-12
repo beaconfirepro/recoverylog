@@ -3,9 +3,10 @@ import { AlertTriangle, Check, Sparkles } from "lucide-react";
 import { RED_FLAG_ITEMS } from "@/lib/recovery";
 import { nowTime } from "@/lib/dates";
 import { base44 } from "@/api/base44Client";
+import { isMaintenance } from "@/lib/scope";
 import TimeInput from "@/components/recovery/TimeInput";
 
-export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite = true }) {
+export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite = true, record = null }) {
   // A suggestion fills a question she has not answered herself. Once she
   // answers one, hers is the answer: the day's entries never overwrite it.
   const [answers, setAnswers] = useState(() => {
@@ -41,6 +42,10 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
     return merged;
   });
   const [saving, setSaving] = useState(false);
+
+  // Maintenance has no surgeon's office to ring, so the toggle reads as the
+  // generic "I contacted my doctor" rather than a phone that does not exist.
+  const calledLabel = isMaintenance(record) ? "Doctor called" : "Office called";
 
   const answered = Object.keys(answers).length;
   const yesKeys = Object.keys(answers).filter((k) => answers[k] === "yes");
@@ -143,7 +148,7 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
                       onClick={() => patch(item.key, { office_called: !det?.office_called })}
                       disabled={!canWrite}
                     >
-                      Office called
+                      {calledLabel}
                     </button>
                   </div>
                   {/* A flag with no next action is a worry written down. This is

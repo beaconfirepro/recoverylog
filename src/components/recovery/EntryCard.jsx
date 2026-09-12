@@ -82,7 +82,7 @@ function Pill({ spec, color, darkText }) {
   );
 }
 
-export default function EntryCard({ entry, run, goal, goalLabel, nutrientGoals, onEdit }) {
+export default function EntryCard({ entry, run, goal, goalLabel, nutrientGoals, onEdit, tag }) {
   const cfg = TYPES[entry.type];
   const specs = cfg.pills(entry.data || {}, entry, run, cfg.goal?.perNutrient ? nutrientGoals : goal);
   const shown = cfg.stacked ? specs.slice(0, CAP) : specs;
@@ -103,7 +103,7 @@ export default function EntryCard({ entry, run, goal, goalLabel, nutrientGoals, 
           )}
         </Pills>
       </Card>
-      <Plate time={entry.entry_time} label={cfg.label} color={cfg.color} darkText={cfg.darkText} />
+      <Plate time={entry.entry_time} label={tag ? `${tag} · ${cfg.label}` : cfg.label} color={cfg.color} darkText={cfg.darkText} />
     </button>
   );
 }

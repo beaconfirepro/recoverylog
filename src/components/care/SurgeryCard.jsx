@@ -1,6 +1,7 @@
 import React from "react";
 import { todayStr, postOpLabel, fullDate } from "@/lib/dates";
-import { ChevronDown, Pencil, Phone, Stethoscope, FileText, Thermometer, Calendar, User } from "lucide-react";
+import { ChevronDown, Pencil, Phone, Stethoscope, FileText, Thermometer, Calendar, User, HeartPulse } from "lucide-react";
+import { isMaintenance } from "@/lib/scope";
 
 function Detail({ icon: Icon, label, value }) {
   if (!value) return null;
@@ -15,10 +16,13 @@ function Detail({ icon: Icon, label, value }) {
   );
 }
 
-// One surgery as a card that opens to show its details. Tapping the header also
-// makes it the active surgery the day page tracks.
+// One record as a card that opens to show its details. A surgery shows its
+// date, procedure, surgeon and office; the maintenance record has none of
+// those, so its card is the label, a lime "Maintenance" tag and its notes.
+// Tapping the header also makes it the record the day page tracks.
 export default function SurgeryCard({ surgery, active, open, canWrite, onToggle, onEdit }) {
   const s = surgery;
+  const maint = isMaintenance(s);
   return (
     <div className="border-2 rounded-xl overflow-hidden">
       <button
@@ -30,25 +34,54 @@ export default function SurgeryCard({ surgery, active, open, canWrite, onToggle,
         <span className="flex-1 min-w-0">
           <span className="block font-bold truncate">{s.label}</span>
           <span className="block text-xs font-semibold opacity-80 truncate">
-            {s.surgery_date ? `${postOpLabel(s.surgery_date, todayStr()) || "Surgery"} · ${s.surgery_date}` : "No date"}
+            {maint
+              ? "Logs by date · no surgery day"
+              : s.surgery_date
+                ? `${postOpLabel(s.surgery_date, todayStr()) || "Surgery"} · ${s.surgery_date}`
+                : "No date"}
             {s.archived ? " · archived" : ""}
           </span>
         </span>
+        {maint && !active && (
+          <span
+            className="nb-chip px-2 py-0.5 text-[10px] shrink-0"
+            style={{ backgroundColor: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}
+          >
+            Maintenance
+          </span>
+        )}
         <ChevronDown className={`w-5 h-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
         <div className="p-3 border-t-2 space-y-2">
-          <Detail
-            icon={Calendar}
-            label="Date"
-            value={s.surgery_date ? `${fullDate(s.surgery_date)}${s.surgery_time ? ` · ${s.surgery_time}` : ""}` : null}
-          />
-          <Detail icon={Stethoscope} label="Procedure" value={s.procedure} />
-          <Detail icon={User} label="Surgeon" value={s.surgeon} />
-          <Detail icon={Phone} label="Office phone" value={s.office_phone} />
-          <Detail icon={Thermometer} label="Call if fever over" value={s.fever_threshold != null ? `${s.fever_threshold} °F` : null} />
-          <Detail icon={FileText} label="Notes" value={s.notes} />
+          {maint ? (
+            <>
+              <div className="flex items-start gap-2 min-w-0">
+                <HeartPulse className="w-4 h-4 shrink-0 mt-0.5 text-muted-foreground" />
+                <div className="min-w-0">
+                  <div className="nb-label text-muted-foreground">Maintenance log</div>
+                  <div className="text-sm font-semibold break-words">
+                    Entries file by calendar date with no day-zero count.
+                  </div>
+                </div>
+              </div>
+              <Detail icon={FileText} label="Notes" value={s.notes} />
+            </>
+          ) : (
+            <>
+              <Detail
+                icon={Calendar}
+                label="Date"
+                value={s.surgery_date ? `${fullDate(s.surgery_date)}${s.surgery_time ? ` · ${s.surgery_time}` : ""}` : null}
+              />
+              <Detail icon={Stethoscope} label="Procedure" value={s.procedure} />
+              <Detail icon={User} label="Surgeon" value={s.surgeon} />
+              <Detail icon={Phone} label="Office phone" value={s.office_phone} />
+              <Detail icon={Thermometer} label="Call if fever over" value={s.fever_threshold != null ? `${s.fever_threshold} °F` : null} />
+              <Detail icon={FileText} label="Notes" value={s.notes} />
+            </>
+          )}
 
           {canWrite && (
             <button

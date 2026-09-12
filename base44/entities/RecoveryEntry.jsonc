@@ -1,6 +1,15 @@
 {
   "name": "RecoveryEntry",
   "properties": {
+    "mode": {
+      "description": "Denormalized from the owning record: 'surgery' or 'maintenance'. Lets views group by mode without a join. Matches the surgery this entry is filed under.",
+      "enum": [
+        "surgery",
+        "maintenance"
+      ],
+      "default": "surgery",
+      "type": "string"
+    },
     "data": {
       "description": "Everything the entry type records, keyed by field. A check-in also stores a per-measure note under \"<measure>_note\", e.g. pain_note.",
       "type": "object"
@@ -21,7 +30,7 @@
       "type": "string"
     },
     "surgery_id": {
-      "description": "Surgery this entry is being tracked against.",
+      "description": "Surgery this entry is being tracked against. A maintenance record is still a Surgery row, so this points at it.",
       "type": "string"
     },
     "type": {

@@ -1,6 +1,15 @@
 {
   "name": "Surgery",
   "properties": {
+    "mode": {
+      "description": "Whether this row is a real surgery or the patient's maintenance record. A maintenance record has no surgery date and logs by calendar day; it sits in the record picker alongside any surgeries.",
+      "enum": [
+        "surgery",
+        "maintenance"
+      ],
+      "default": "surgery",
+      "type": "string"
+    },
     "archived": {
       "default": false,
       "description": "Hidden from the picker but its days are kept.",
@@ -55,7 +64,7 @@
       "type": "string"
     },
     "surgery_date": {
-      "description": "Day zero. Every day label counts from here.",
+      "description": "Day zero. Every day label counts from here. Blank on a maintenance record.",
       "format": "date",
       "type": "string"
     },

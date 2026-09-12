@@ -28,9 +28,14 @@ export default function Home() {
   // still collapses the checklist to the button until the user taps it.
   const [openedByFab, setOpenedByFab] = useState(false);
 
+  // A maintenance record is a Surgery row, so "has a surgery" is not the same
+  // as "has a real surgery". The checklist stays front-and-centre until a real
+  // surgery exists or it is minimised, so a no-surgery patient is not dropped
+  // onto a blank day by the auto-created maintenance record.
+  const hasRealSurgery = surgeries.some((s) => s.mode !== "maintenance" && !s.archived);
   const active = isOwner && !state.dismissed && !allDone(state);
   const expanded =
-    active && (!state.minimized && surgeries.length === 0 ? true : openedByFab || forceOpen);
+    active && (!state.minimized && !hasRealSurgery ? true : openedByFab || forceOpen);
   const showFab = isOwner && active && !expanded;
 
   const onNavigate = (item, choice) => {

@@ -4,6 +4,7 @@ import { asRows } from "@/lib/recoveryUtils";
 import { computeTotals } from "@/lib/daySummary";
 import { daysBetween, shortDate } from "@/lib/dates";
 import { usePatient } from "@/lib/PatientContext";
+import ScopeSwitch from "@/components/recovery/ScopeSwitch";
 import PullToRefresh from "@/components/PullToRefresh";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
@@ -23,40 +24,47 @@ const avg = (list) => {
 const round1 = (n) => (n == null ? null : Math.round(n * 10) / 10);
 
 export default function Trends() {
-  const { activeSurgery, activeSurgeryId } = usePatient();
+  const { surgeries, scope, setScope, scopeRecords, patientId } = usePatient();
   const [rows, setRows] = useState(null);
 
+  const single = scopeRecords.length === 1 ? scopeRecords[0] : null;
+  const all = !single;
+  const surgeryDate = single?.surgery_date || null;
+
   const load = useCallback(async () => {
-      if (!activeSurgeryId) {
-        setRows([]);
-        return;
-      }
-      const [daysRaw, entriesRaw] = await Promise.all([
-        base44.entities.RecoveryDay.filter({ surgery_id: activeSurgeryId }, "date", 200),
-        base44.entities.RecoveryEntry.filter({ surgery_id: activeSurgeryId }, "created_date", 3000)
-      ]);
-      const [days, entries] = [asRows(daysRaw), asRows(entriesRaw)];
-      const surgeryDate = activeSurgery?.surgery_date || null;
-      const byDate = {};
-      entries.forEach((e) => {
-        (byDate[e.date] = byDate[e.date] || []).push(e);
-      });
-      const data = days.map((d) => {
-        const es = byDate[d.date] || [];
-        const checkins = es.filter((e) => e.type === "checkin");
-        const t = computeTotals(es, d.date);
-        return {
-          label: surgeryDate ? `D${daysBetween(surgeryDate, d.date)}` : shortDate(d.date),
-          pain: round1(avg(checkins.map((e) => e.data?.pain))),
-          energy: round1(avg(checkins.map((e) => e.data?.energy))),
-          mood: round1(avg(checkins.map((e) => e.data?.mood))),
-          water: t.water,
-          protein: t.protein,
-          sleep: round1(t.sleepH + t.napH)
-        };
-      });
-      setRows(data);
-  }, [activeSurgery, activeSurgeryId]);
+    if (!scopeRecords.length || !patientId) {
+      setRows([]);
+      return;
+    }
+    const q = all ? { patient_id: patientId } : { surgery_id: single.id };
+    const [daysRaw, entriesRaw] = await Promise.all([
+      base44.entities.RecoveryDay.filter(q, "date", 500),
+      base44.entities.RecoveryEntry.filter(q, "created_date", 5000)
+    ]);
+    const days = asRows(daysRaw);
+    const entries = asRows(entriesRaw);
+    const byDate = {};
+    entries.forEach((e) => {
+      (byDate[e.date] = byDate[e.date] || []).push(e);
+    });
+    // One row per calendar date. In "all" scope a date with entries on two
+    // records is one point, averaged and totalled across both.
+    const data = Object.keys(byDate).sort().map((date) => {
+      const es = byDate[date];
+      const checkins = es.filter((e) => e.type === "checkin");
+      const t = computeTotals(es, date);
+      return {
+        label: surgeryDate ? `D${daysBetween(surgeryDate, date)}` : shortDate(date),
+        pain: round1(avg(checkins.map((e) => e.data?.pain))),
+        energy: round1(avg(checkins.map((e) => e.data?.energy))),
+        mood: round1(avg(checkins.map((e) => e.data?.mood))),
+        water: t.water,
+        protein: t.protein,
+        sleep: round1(t.sleepH + t.napH)
+      };
+    });
+    setRows(data);
+  }, [all, single, patientId, surgeryDate, scopeRecords.length]);
 
   useEffect(() => {
     load();
@@ -68,6 +76,7 @@ export default function Trends() {
     <PullToRefresh onRefresh={load}>
     <div className="space-y-4">
       <h1 className="font-display text-2xl uppercase">Trends</h1>
+      <ScopeSwitch surgeries={surgeries} scope={scope} onScope={setScope} />
       {rows.length === 0 && (
         <p className="text-sm text-muted-foreground border-2 rounded-xl p-4 bg-card">
           Trends need a few days of check-ins. Keep logging and the lines appear here.

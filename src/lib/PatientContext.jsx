@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { PINNED, QUICK_ORDER } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
 import { codeMatches } from "@/lib/joinCode";
+import { loadScope, saveScope, resolveScope, recordsInScope } from "@/lib/scope";
 
 const PatientContext = createContext();
 
@@ -26,7 +27,30 @@ export const trackedTypes = (surgery) => {
   return saved.length ? saved : QUICK_ORDER;
 };
 
-const activeKey = (patientId) => `recoverylog.activeSurgery.${patientId}`;
+// A patient's own Maintenance record is created the moment they have no
+// surgeries at all, so logging works before any surgery is added. Existing
+// patients who already have a surgery do not get one automatically; they can
+// start one from the Care page.
+const ensureMaintenance = async (patientId, list) => {
+  if (!patientId) return list;
+  const hasAny = list.some((s) => !s.archived);
+  if (hasAny) return list;
+  try {
+    await base44.entities.Surgery.create({
+      patient_id: patientId,
+      label: "Maintenance",
+      mode: "maintenance",
+      surgery_date: null,
+      track_before: true,
+      track_after: true,
+      archived: false
+    });
+  } catch {
+    // A race between two tabs could make this throw on a duplicate; the reload
+    // below picks up whichever one landed.
+  }
+  return asRows(await base44.entities.Surgery.filter({ patient_id: patientId }, "-surgery_date", 50));
+};
 
 // AppUser mirrors the app's people — the patient and their care team in one
 // table. A person's row is written by the patient, never by themselves, so what
@@ -37,7 +61,7 @@ export const PatientProvider = ({ children }) => {
   const [groups, setGroups] = useState([]);
   const [patient, setPatient] = useState(null);
   const [surgeries, setSurgeries] = useState([]);
-  const [activeId, setActiveId] = useState(null);
+  const [scope, setScope] = useState(null);
   const [loading, setLoading] = useState(true);
   // The group we last asked the account to point at, so a link that does not
   // take is tried once rather than every render.
@@ -108,16 +132,16 @@ export const PatientProvider = ({ children }) => {
     setMe(mine);
     setGroups(all);
     setPatient(p);
-    const list = await loadSurgeries(p?.id);
+    // The owner gets a maintenance record the moment they have no surgeries at
+    // all, so the day page has somewhere to log before a surgery is added. A
+    // care team member never creates one: they read a patient's existing log.
+    let list = await loadSurgeries(p?.id);
+    if (p && mine?.kind === "patient") list = await ensureMaintenance(p.id, list);
+    setSurgeries(list);
     if (p) {
-      let stored = null;
-      try {
-        stored = window.localStorage.getItem(activeKey(p.id));
-      } catch {
-        stored = null;
-      }
-      const usable = list.find((s) => s.id === stored) || list.find((s) => !s.archived) || list[0] || null;
-      setActiveId(usable?.id || null);
+      setScope(resolveScope(loadScope(p.id), list));
+    } else {
+      setScope(null);
     }
     setLoading(false);
   }, [isAuthenticated, user, loadSurgeries, checkUserAuth]);
@@ -126,22 +150,31 @@ export const PatientProvider = ({ children }) => {
     load();
   }, [load]);
 
+  // Keeping the old single-record names working: a scope of exactly one record
+  // is that record. Views that still read activeSurgery/activeSurgeryId keep
+  // behaving when the scope is a single record, and see null when it is "all".
+  const scopeRecords = useMemo(() => recordsInScope(scope, surgeries), [scope, surgeries]);
+  const single = scopeRecords.length === 1 ? scopeRecords[0] : null;
+
   const selectSurgery = useCallback(
     (id) => {
-      setActiveId(id);
-      try {
-        if (patient) window.localStorage.setItem(activeKey(patient.id), id);
-      } catch {
-        // A browser that refuses storage still gets the selection for this visit.
-      }
+      const next = { all: false, ids: [id] };
+      setScope(next);
+      if (patient) saveScope(patient.id, next);
     },
     [patient]
   );
 
-  const activeSurgery = useMemo(
-    () => surgeries.find((s) => s.id === activeId) || null,
-    [surgeries, activeId]
+  const setScopeAndSave = useCallback(
+    (next) => {
+      setScope(next);
+      if (patient) saveScope(patient.id, next);
+    },
+    [patient]
   );
+
+  const activeSurgery = single;
+  const activeSurgeryId = single?.id || null;
 
   // Open a different patient's log. Only a care team member has more than one.
   const switchPatient = useCallback(
@@ -208,9 +241,13 @@ export const PatientProvider = ({ children }) => {
         refreshPatient: load,
         surgeries,
         activeSurgery,
-        activeSurgeryId: activeId,
+        activeSurgeryId,
         selectSurgery,
-        refreshSurgeries: () => loadSurgeries(patient?.id)
+        refreshSurgeries: () => loadSurgeries(patient?.id),
+        scope,
+        setScope: setScopeAndSave,
+        scopeRecords,
+        isAll: scope?.all === true
       }}
     >
       {children}

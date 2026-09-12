@@ -5,6 +5,7 @@ import { Check, Plus, X } from "lucide-react";
 import { todayStr, daysBetween, MAX_RANGE_DAYS } from "@/lib/dates";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, trackedTypes } from "@/lib/PatientContext";
+import { isMaintenance } from "@/lib/scope";
 import { GarmentLibrary, MedGroupLibrary } from "@/components/recovery/Libraries";
 import {
   TYPES, PINNED, QUICK_ORDER, CHECKIN_MEASURES, DEFAULT_CHECKIN_SLOTS,
@@ -398,6 +399,7 @@ export default function Profile() {
               ))}
             </div>
 
+            {!isMaintenance(activeSurgery) && (
             <div className="border-t-2 pt-3 space-y-2">
               {[
                 ["track_before", "Track days before surgery", "Log a baseline in the run-up."],
@@ -425,6 +427,7 @@ export default function Profile() {
                 </button>
               ))}
             </div>
+            )}
           </div>
         </div>
       )}
@@ -527,11 +530,11 @@ export default function Profile() {
           {surgeries.length > 1 && (
             <>
               <div className="col-span-2 space-y-1.5">
-                <div className="nb-label">Which surgery</div>
+                <div className="nb-label">Which record</div>
                 <div className="flex gap-1.5">
                   {[
-                    ["surgery", "This one"],
-                    ["all", "All of them"]
+                    ["surgery", "This record"],
+                    ["all", "All records"]
                   ].map(([k, label]) => (
                     <button
                       key={k}
@@ -552,7 +555,7 @@ export default function Profile() {
                   <div className="nb-label">How to lay them out</div>
                   <div className="flex gap-1.5">
                     {[
-                      ["surgery", "By surgery"],
+                      ["surgery", "By record"],
                       ["timeline", "One timeline"]
                     ].map(([k, label]) => (
                       <button
@@ -568,8 +571,8 @@ export default function Profile() {
                     ))}
                   </div>
                   <p className="text-xs font-semibold text-muted-foreground break-words">
-                    By surgery runs each one end to end. One timeline puts every day in date order and
-                    names the surgery on each.
+                    By record runs each one end to end. One timeline puts every day in date order and
+                    names the record on each.
                   </p>
                 </div>
               )}

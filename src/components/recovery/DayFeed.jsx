@@ -5,7 +5,7 @@ import EntryCard, { Card, FillPill, Pills, Plate } from "./EntryCard";
 // The check-in is the one entry that is not a pill. It records six things at
 // once, and a day is read by comparing them, so it keeps its grid rather than
 // being folded down to the slot it was taken in.
-function CheckinCard({ entry, cfg, onEdit }) {
+function CheckinCard({ entry, cfg, onEdit, tag }) {
   const d = entry.data || {};
   const measures = cfg.fields.filter((f) => f.kind === "scale");
   const high = measures.filter((f) => f.highIs === "good");
@@ -39,14 +39,14 @@ function CheckinCard({ entry, cfg, onEdit }) {
           {Array.from({ length: rows }, (_, i) => [bar(high[i]), bar(low[i])]).flat()}
         </span>
       </Card>
-      <Plate time={entry.entry_time} label={cfg.label} color={cfg.color} />
+      <Plate time={entry.entry_time} label={tag ? `${tag} · ${cfg.label}` : cfg.label} color={cfg.color} />
     </button>
   );
 }
 
 // The four body-map sessions land on one line. Five separate rows for one
 // afternoon of treatment reads as five events; it was one.
-function BodyWorkRow({ entries, goal, onEdit }) {
+function BodyWorkRow({ entries, goal, onEdit, tag }) {
   // Each session's pill is the whole goal, filled to where the day had got to
   // once that session was done. Reading down them shows the afternoon adding up.
   let done = 0;
@@ -76,14 +76,14 @@ function BodyWorkRow({ entries, goal, onEdit }) {
           })}
         </Pills>
       </Card>
-      <Plate time={entries[0].entry_time} label="Body Work" color={TYPES.mld.color} />
+      <Plate time={entries[0].entry_time} label={tag ? `${tag} · Body Work` : "Body Work"} color={TYPES.mld.color} />
     </div>
   );
 }
 
 // The day, in order, on a rail. Each entry is a coloured plate laid across the
 // rail with its pills in a card behind it.
-export default function DayFeed({ entries, run, surgery, onEdit }) {
+export default function DayFeed({ entries, run, surgery, onEdit, tagWith = null }) {
   const bodywork = entries.filter((e) => BODYWORK_GROUP.includes(e.type));
   const rest = entries.filter((e) => !BODYWORK_GROUP.includes(e.type));
   // The folded row sits where the first session was, so the rail stays in order.
@@ -96,15 +96,25 @@ export default function DayFeed({ entries, run, surgery, onEdit }) {
   const nutrients = nutrientGoals(surgery);
   const checkin = checkinConfig(surgery);
 
+  // In "all" scope every plate carries its record so two entries at the same
+  // time on two records still read as separate events.
+  const tagOf = (entry) => (tagWith && entry ? tagWith(entry) : null);
+
   return (
     <div className="relative flex flex-col gap-2.5">
       {/* Behind the plates, which is what makes them read as pinned to it. */}
       <span className="absolute left-[46px] top-2 bottom-2 w-0.5 bg-foreground" />
       {rows.map((r) =>
         r.bodywork ? (
-          <BodyWorkRow key="bodywork" entries={r.bodywork} goal={bodyworkGoal} onEdit={onEdit} />
+          <BodyWorkRow
+            key="bodywork"
+            entries={r.bodywork}
+            goal={bodyworkGoal}
+            onEdit={onEdit}
+            tag={tagOf(r.bodywork[0])}
+          />
         ) : r.type === "checkin" ? (
-          <CheckinCard key={r.id} entry={r} cfg={checkin} onEdit={() => onEdit(r)} />
+          <CheckinCard key={r.id} entry={r} cfg={checkin} onEdit={() => onEdit(r)} tag={tagOf(r)} />
         ) : (
           <EntryCard
             key={r.id}
@@ -114,6 +124,7 @@ export default function DayFeed({ entries, run, surgery, onEdit }) {
             goalLabel={r.type === "water" && waterGoal ? `Goal: ${waterGoal} oz` : null}
             nutrientGoals={nutrients}
             onEdit={() => onEdit(r)}
+            tag={tagOf(r)}
           />
         )
       )}

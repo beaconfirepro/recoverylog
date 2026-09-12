@@ -390,7 +390,10 @@ export function buildRecoveryPdf({
     doc.setLineWidth(1.4);
     doc.roundedRect(L, y, R - L, 24, R_CARD, R_CARD, "FD");
     y += 16;
-    text((postOpLabel(dateOf(sxId), date) || "Surgery date not set").toUpperCase(), L + 12, {
+    // A maintenance record (or any record without a surgery date) has no
+    // post-op label, so the band carries the calendar date instead of reading
+    // "surgery date not set" on a log that has no surgery.
+    text((postOpLabel(dateOf(sxId), date) || fullDate(date)).toUpperCase(), L + 12, {
       bold: true,
       size: 11.5,
       color: [255, 255, 255]

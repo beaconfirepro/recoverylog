@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 import { usePatient } from "@/lib/PatientContext";
-import { Plus, Scissors } from "lucide-react";
+import { isMaintenance } from "@/lib/scope";
+import { Plus, Scissors, HeartPulse } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import SurgeryCard from "@/components/care/SurgeryCard";
 import SurgeryForm from "@/components/care/SurgeryForm";
@@ -11,12 +13,13 @@ import SurgeryForm from "@/components/care/SurgeryForm";
 // Arriving from the orientation checklist with openNewSurgery pops the modal
 // open and seeds the new surgery's tracking toggles.
 export default function Surgeries() {
-  const { surgeries, activeSurgeryId, selectSurgery, canWrite } = usePatient();
+  const { surgeries, activeSurgeryId, selectSurgery, canWrite, patientId, refreshSurgeries } = usePatient();
   const location = useLocation();
   const [expanded, setExpanded] = useState(null);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
   const [prefillTrack, setPrefillTrack] = useState(null);
+  const hasMaintenance = surgeries.some(isMaintenance);
 
   useEffect(() => {
     if (location.state?.openNewSurgery && canWrite) {
@@ -24,6 +27,22 @@ export default function Surgeries() {
       setAdding(true);
     }
   }, [location.state, canWrite]);
+
+  // A patient who already had surgeries before maintenance existed does not
+  // get one auto-created. This is the one place they can start it.
+  const startMaintenance = async () => {
+    const created = await base44.entities.Surgery.create({
+      patient_id: patientId,
+      label: "Maintenance",
+      mode: "maintenance",
+      surgery_date: null,
+      track_before: true,
+      track_after: true,
+      archived: false
+    });
+    await refreshSurgeries();
+    selectSurgery(created.id);
+  };
 
   return (
     <>
@@ -66,6 +85,17 @@ export default function Surgeries() {
               onEdit={() => setEditing(s)}
             />
           ))}
+
+          {canWrite && !hasMaintenance && (
+            <button
+              type="button"
+              onClick={startMaintenance}
+              className="nb-btn w-full h-12 bg-card flex items-center justify-center gap-2"
+            >
+              <HeartPulse className="w-4 h-4 shrink-0" />
+              Start a maintenance log
+            </button>
+          )}
         </div>
       </div>
 
