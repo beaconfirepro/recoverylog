@@ -1,12 +1,13 @@
-// The credential a care team member types to open a patient's log.
+// The two things a care team member types to open a patient's log: the
+// six-character code the patient reads out, and the patient's date of birth.
 //
-// It replaces the patient's name and date of birth, which were never a secret:
-// a sister knows both, and an invitation sent to a mistyped address showed
-// enough of them to guess the rest. A code is known only to the patient and
-// whoever she reads it out to.
+// Neither is enough alone. The date of birth is not a secret — a sister knows
+// it — so the code is what proves the patient meant you. The code alone can be
+// overheard or forwarded, so the date of birth is what proves you are the
+// person she meant to read it to.
 //
-// The invitation email deliberately does not carry it. Holding the address is
-// what identifies you; the code is what proves the patient meant you.
+// The invitation email deliberately carries neither. Holding the address is
+// what identifies you; the other two are what let you in.
 
 // No 0/O, 1/I/L, 5/S, 8/B. Someone is reading this over the phone or off a
 // text message, and a code that has to be spelled out is a code that gets
@@ -41,4 +42,35 @@ export const codeMatches = (row, typed) => {
 export const formatJoinCode = (code) => {
   const c = normalizeJoinCode(code);
   return c.length === LENGTH ? `${c.slice(0, 3)}-${c.slice(3)}` : c;
+};
+
+// The date of birth is checked against a hash, not against a copy of the date.
+// Row security lets an invited account read its own invitation, so a date
+// sitting there in the clear would hand over the very thing it is meant to
+// prove — and an invitation that reached the wrong address would leak the
+// patient's date of birth to a stranger.
+//
+// The code is the salt. Without it the hash cannot be walked back through the
+// forty thousand or so plausible dates, so one factor never gives up the other.
+const encode = (s) => new TextEncoder().encode(s);
+const hex = (buf) =>
+  Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+
+export const normalizeDob = (v) => String(v ?? "").trim().slice(0, 10);
+
+export const dobDigest = async (joinCode, dob) => {
+  const code = normalizeJoinCode(joinCode);
+  const date = normalizeDob(dob);
+  if (code.length !== LENGTH || !date) return null;
+  return hex(await crypto.subtle.digest("SHA-256", encode(`${code}|${date}`)));
+};
+
+export const dobMatches = async (row, typedCode, typedDob) => {
+  const stored = String(row?.dob_check ?? "");
+  // An invitation written before the date of birth was asked for carries no
+  // digest. The code alone opened it then, and the patient can reissue the
+  // invitation to get both factors.
+  if (!stored) return true;
+  const digest = await dobDigest(typedCode, typedDob);
+  return !!digest && digest === stored;
 };
