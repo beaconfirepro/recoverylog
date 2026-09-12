@@ -237,17 +237,15 @@
   /* A green ring around just the heading. The anchor sits on the heading
      itself, inside the card's padding, so the ring is not clipped by the
      card's overflow-hidden and the heading's own colour is left untouched. */
-  .orient-pulse {
-    animation: orient-pulse 1s ease-in-out 5;
+  /* Lifts the heading clear of the backdrop. The lime is on the backdrop
+     rather than here: what the ring is for is saying where the lit area stops,
+     and the lit area is the cutout, not the heading inside it. */
+  .orient-target {
     position: relative;
     z-index: 30;
   }
-  @keyframes orient-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0); }
-    50% { box-shadow: 0 0 0 4px hsl(var(--accent)); }
-  }
-  /* The heading and its ring fade in from the left as the highlight takes
-     hold, rather than snapping on. Runs once, alongside the pulse. */
+  /* The heading fades in from the left as the highlight takes hold, rather
+     than snapping on. Runs once, alongside the ring. */
   .orient-enter {
     animation: orient-enter 280ms ease-out;
   }
@@ -256,12 +254,21 @@
     to { opacity: 1; transform: none; }
   }
   /* A light gray screen over everything except the highlighted heading. The
-     backdrop is a transparent div sized to the heading (plus a little room for
-     the ring); its huge box-shadow washes the rest of the screen gray. It
-     fades in from the left to match the heading's entrance. */
+     backdrop is a transparent div sized to the heading plus a little room; its
+     huge box-shadow washes the rest of the screen gray, and a lime ring on the
+     same element draws the edge where the gray stops. Two shadows on one
+     element, the lime listed first so it paints over the gray rather than
+     under it. It fades in from the left to match the heading's entrance. */
   .orient-backdrop {
-    box-shadow: 0 0 0 100vmax hsl(0 0% 55% / 0.7);
-    animation: orient-backdrop-in 280ms ease-out;
+    box-shadow: 0 0 0 3px hsl(var(--accent)), 0 0 0 100vmax hsl(0 0% 55% / 0.7);
+    animation: orient-backdrop-in 280ms ease-out, orient-ring 1s ease-in-out 5;
+  }
+  /* Breathes between two widths rather than in and out of nothing. The old
+     ring spent a third of every second fully transparent, so the thing meant
+     to say "here" was absent as often as it was present. */
+  @keyframes orient-ring {
+    0%, 100% { box-shadow: 0 0 0 2px hsl(var(--accent) / 0.6), 0 0 0 100vmax hsl(0 0% 55% / 0.7); }
+    50% { box-shadow: 0 0 0 5px hsl(var(--accent)), 0 0 0 100vmax hsl(0 0% 55% / 0.7); }
   }
   @keyframes orient-backdrop-in {
     from { opacity: 0; transform: translateX(-16px); }
