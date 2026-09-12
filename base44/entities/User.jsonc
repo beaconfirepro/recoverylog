@@ -1,6 +1,11 @@
 {
   "name": "User",
   "properties": {
+    "dob": {
+      "description": "This account's date of birth. Entered once on the consents screen, so everyone has one on file before the log opens. The patient's copy also lives on their AppUser row for the care-team second factor.",
+      "format": "date",
+      "type": "string"
+    },
     "patient_id": {
       "description": "Whose log this account reads. Their own if they are the patient, or the patient's if they are on a care team. Blank until a log is opened.",
       "type": "string"

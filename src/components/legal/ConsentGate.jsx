@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { AlertTriangle, Check, ChevronRight, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
+import { base44 } from "@/api/base44Client";
 import { useLegal } from "@/lib/legal";
 import DocReader from "./DocReader";
+import Field from "@/components/Field";
 
 const Spinner = () => (
   <div className="fixed inset-0 flex items-center justify-center">
@@ -31,71 +33,122 @@ function Reading({ doc, onClose }) {
   );
 }
 
-function Asking({ outstanding, accept }) {
-  const { user, logout } = useAuth();
+// The consents screen. A document is agreed only once it has been on screen,
+// and everyone — patient or care team — enters their date of birth here before
+// they go any further. The date is saved to the account, so it is asked once
+// and then held: the gate shows again only when a new document version is
+// published, and the date-of-birth half stays silent the second time.
+function Asking({ outstanding, accept, needsDob }) {
+  const { user, logout, checkUserAuth } = useAuth();
   const [open, setOpen] = useState(null);
   const [read, setRead] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [dob, setDob] = useState("");
+  const [error, setError] = useState("");
 
   const doc = outstanding.find((d) => d.kind === open);
   if (doc) return <Reading doc={doc} onClose={() => setOpen(null)} />;
 
+  const docsPresent = outstanding.length > 0;
   const allRead = outstanding.every((d) => read.includes(d.kind));
+  const dobReady = !needsDob || !!dob;
+  const canAgree = allRead && dobReady && !busy;
 
   const openDoc = (kind) => {
     setOpen(kind);
     setRead((r) => (r.includes(kind) ? r : [...r, kind]));
   };
 
+  const onAgree = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      if (docsPresent) await accept();
+      if (needsDob) {
+        await base44.auth.updateMe({ dob });
+        await checkUserAuth();
+      }
+    } catch (e) {
+      setError(e.message || "Could not save. Try again.");
+      setBusy(false);
+    }
+  };
+
+  const label = busy
+    ? "Saving…"
+    : docsPresent && needsDob
+      ? allRead && dob
+        ? "I agree"
+        : "Open each one and enter your date of birth"
+      : docsPresent
+        ? allRead
+          ? "I agree"
+          : "Open each one to agree"
+        : dob
+          ? "Continue"
+          : "Enter your date of birth";
+
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
           <div className="font-display text-xl uppercase leading-tight break-words flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 shrink-0" /> Before you start
+            <ShieldCheck className="w-5 h-5 shrink-0" /> {docsPresent ? "Before you start" : "Your date of birth"}
           </div>
           <div className="text-sm font-semibold break-words">
-            This log holds health information about you. Read these, then agree to them.
+            {docsPresent
+              ? needsDob
+                ? "This log holds health information about you. Read these, then enter your date of birth and agree."
+                : "This log holds health information about you. Read these, then agree to them."
+              : "We need your date of birth before you go in."}
           </div>
         </div>
 
         <div className="p-4 space-y-3">
-          <div className="space-y-2">
-            {outstanding.map((d) => (
-              <button
-                key={d.kind}
-                type="button"
-                onClick={() => openDoc(d.kind)}
-                className="w-full text-left border-2 rounded-xl bg-background p-3 flex items-center gap-2 min-w-0"
-              >
-                <span className="flex-1 min-w-0">
-                  <span className="block nb-label truncate">{d.title}</span>
-                  <span className="block text-xs font-semibold text-muted-foreground break-words">{d.summary}</span>
-                </span>
-                {read.includes(d.kind) ? (
-                  <Check className="w-5 h-5 shrink-0 text-green-600" />
-                ) : (
-                  <ChevronRight className="w-5 h-5 shrink-0" />
-                )}
-              </button>
-            ))}
-          </div>
+          {docsPresent && (
+            <div className="space-y-2">
+              {outstanding.map((d) => (
+                <button
+                  key={d.kind}
+                  type="button"
+                  onClick={() => openDoc(d.kind)}
+                  className="w-full text-left border-2 rounded-xl bg-background p-3 flex items-center gap-2 min-w-0"
+                >
+                  <span className="flex-1 min-w-0">
+                    <span className="block nb-label truncate">{d.title}</span>
+                    <span className="block text-xs font-semibold text-muted-foreground break-words">{d.summary}</span>
+                  </span>
+                  {read.includes(d.kind) ? (
+                    <Check className="w-5 h-5 shrink-0 text-green-600" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {needsDob && (
+            <Field label="Your date of birth" hint="Required">
+              <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="nb-input" />
+            </Field>
+          )}
+
+          {error && <p className="text-sm font-bold text-destructive break-words">{error}</p>}
 
           {/* Agreeing to something unopened is not agreeing to it. The button
-              stays shut until every document has actually been on screen. */}
+              stays shut until every document has been on screen, and — on a
+              first visit — a date of birth is entered. */}
           <button
             className="nb-btn w-full h-14 bg-primary text-primary-foreground disabled:opacity-40"
-            disabled={!allRead || busy}
-            onClick={async () => {
-              setBusy(true);
-              await accept();
-            }}
+            disabled={!canAgree}
+            onClick={onAgree}
           >
-            {busy ? "Saving…" : allRead ? "I agree" : "Open each one to agree"}
+            {label}
           </button>
 
           <p className="text-xs font-semibold text-muted-foreground break-words">
-            Signed in as {user?.email}. Agreeing records which version you read, and when.
+            Signed in as {user?.email}.{docsPresent ? " Agreeing records which version you read, and when." : ""}
           </p>
 
           <button className="nb-btn w-full h-12 bg-card" onClick={() => logout()}>
@@ -109,8 +162,10 @@ function Asking({ outstanding, accept }) {
 
 // Stands between a signed-in account and the log. Nothing medical is typed in
 // before the terms are agreed, so this sits in front of ClaimAccess rather than
-// behind it.
+// behind it. It also holds until the account has a date of birth — everyone
+// enters one here, once.
 export default function ConsentGate({ children }) {
+  const { user } = useAuth();
   const { loading, error, outstanding, accept, reload } = useLegal();
 
   if (loading) return <Spinner />;
@@ -135,7 +190,9 @@ export default function ConsentGate({ children }) {
     );
   }
 
-  if (outstanding.length > 0) return <Asking outstanding={outstanding} accept={accept} />;
+  if (outstanding.length > 0 || !user?.dob) {
+    return <Asking outstanding={outstanding} accept={accept} needsDob={!user?.dob} />;
+  }
 
   return children;
 }

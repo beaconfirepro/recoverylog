@@ -85,7 +85,9 @@ export default function ClaimAccess() {
   const { user, logout, checkUserAuth } = useAuth();
   const { me, refreshPatient } = usePatient();
   const [role, setRole] = useState(null);
-  const [form, setForm] = useState({ first_name: "", last_name: "", dob: "" });
+  // The patient already entered their date of birth on the consents screen, so
+  // it is prefilled here rather than asked again. They can still change it.
+  const [form, setForm] = useState({ first_name: "", last_name: "", dob: user?.dob || "" });
   const [code, setCode] = useState("");
   const [dob, setDob] = useState("");
   const [error, setError] = useState("");
