@@ -156,5 +156,14 @@ builder's own last commit, not the branch tip, so it can read as tens of
 minutes stale while main is seconds old — and it says nothing about what is
 deployed.
 
+**Nor the `git_commit_hash` a checkpoint returns.** It lags by one. Sync the
+sandbox, take a checkpoint, and it reports the commit the app was on *before*
+the sync; take a second one straight after and that reports the real HEAD.
+Observed four times running, alternating. The checkpoint does capture the
+synced state — the second one is proof, not a fix — so the practical rule is
+either take two and read the second, or ignore the hash and check the build
+stamp. Do not re-sync or re-publish because the first hash looked stale; the
+work is already in it.
+
 If a checkpoint has not published after a long wait, say so plainly and let the
 user publish from the Base44 UI. Do not spend credits to force it.

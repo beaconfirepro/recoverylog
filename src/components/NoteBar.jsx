@@ -15,6 +15,13 @@ import React, { useEffect, useRef, useState } from "react";
 // Changing `text` cross-fades: the old line leaves, the new one arrives. React
 // would otherwise reuse the node and swap the characters, which reads as a
 // glitch rather than a step.
+// Written out rather than built as `notebar-${tone}`: Tailwind reads source
+// text, so an interpolated class name is invisible to it and the rule is
+// dropped from the bundle. That is how the bar shipped with no yellow.
+const TONES = {
+  note: "notebar-note"
+};
+
 export default function NoteBar({ text, show = true, tone = "note", children }) {
   // Held so the outgoing line has something to render while it fades.
   const [shown, setShown] = useState(text);
@@ -38,7 +45,7 @@ export default function NoteBar({ text, show = true, tone = "note", children }) 
       style={{ paddingTop: "calc(var(--safe-t) + 0.5rem)" }}
     >
       <div
-        className={`nb-card notebar notebar-${tone} mx-auto max-w-lg px-4 py-3 flex items-center gap-3`}
+        className={`nb-card notebar ${TONES[tone] || TONES.note} mx-auto max-w-lg px-4 py-3 flex items-center gap-3`}
         role="status"
         aria-live="polite"
       >
