@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { PINNED, QUICK_ORDER } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
-import { detailsMatch } from "@/lib/invite";
+import { codeMatches } from "@/lib/joinCode";
 
 const PatientContext = createContext();
 
@@ -161,8 +161,8 @@ export const PatientProvider = ({ children }) => {
   // and open their log. The check is what turns an invite into access, and the
   // stamp is what stops the care page asking again.
   const claimMembership = useCallback(
-    async (row, form) => {
-      if (!detailsMatch(row, form)) return false;
+    async (row, code) => {
+      if (!codeMatches(row, code)) return false;
       if (!row.claimed_at) {
         await base44.entities.AppUser.update(row.id, { claimed_at: new Date().toISOString() });
       }

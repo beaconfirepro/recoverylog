@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, Plus, Users, X } from "lucide-react";
+import { Check, ChevronRight, Mail, Plus, Users, X } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName, sameEmail } from "@/lib/PatientContext";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import Field from "@/components/Field";
 import { useCareTeam } from "@/lib/careTeam";
-import { maskedDob, maskedName } from "@/lib/invite";
+import { maskedName } from "@/lib/invite";
+import { formatJoinCode, generateJoinCode } from "@/lib/joinCode";
+import { sendInviteEmail } from "@/lib/inviteEmail";
 import Surgeries from "@/components/care/Surgeries";
 
 // Set when a log is opened, so a member is asked which patient once a session
@@ -34,17 +36,16 @@ const nameOf = (row) =>
 
 function Claim({ row, onDone, onCancel }) {
   const { claimMembership } = usePatient();
-  const [form, setForm] = useState({ first_name: "", last_name: "", dob: "" });
+  const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const ready = form.first_name.trim() && form.last_name.trim() && form.dob;
 
   const submit = async () => {
     setBusy(true);
     setError("");
-    const ok = await claimMembership(row, form);
+    const ok = await claimMembership(row, code);
     if (!ok) {
-      setError("Those details don't match the invitation. Check the spelling and the date of birth with the patient.");
+      setError("That code doesn't match this invitation. Ask the patient to read it out again.");
       setBusy(false);
       return;
     }
@@ -52,33 +53,32 @@ function Claim({ row, onDone, onCancel }) {
     onDone();
   };
 
-  const set = (k) => (e) => {
-    setForm({ ...form, [k]: e.target.value });
-    setError("");
-  };
-
   return (
     <div className="border-2 rounded-xl bg-background p-3 space-y-3">
       <p className="text-sm font-semibold break-words">
-        Enter the patient's details to open their log.
+        Enter the join code the patient gave you.
       </p>
-      <div className="grid grid-cols-2 gap-3 min-w-0">
-        <Field label="Patient first name">
-          <input type="text" value={form.first_name} onChange={set("first_name")} className="nb-input" />
-        </Field>
-        <Field label="Patient last name">
-          <input type="text" value={form.last_name} onChange={set("last_name")} className="nb-input" />
-        </Field>
-        <Field label="Patient date of birth" span>
-          <input type="date" value={form.dob} onChange={set("dob")} className="nb-input" />
-        </Field>
-      </div>
+      <Field label="Join code">
+        <input
+          type="text"
+          inputMode="text"
+          autoCapitalize="characters"
+          autoComplete="off"
+          value={code}
+          onChange={(e) => {
+            setCode(e.target.value);
+            setError("");
+          }}
+          placeholder="7K2-QM4"
+          className="nb-input tracking-[0.3em] text-center uppercase"
+        />
+      </Field>
       {error && <p className="text-sm font-bold text-destructive break-words">{error}</p>}
       <div className="flex gap-2 min-w-0">
         <button
           className="nb-btn flex-1 min-w-0 h-12 bg-primary text-primary-foreground disabled:opacity-40"
           onClick={submit}
-          disabled={busy || !ready}
+          disabled={busy || !code.trim()}
         >
           {busy ? "Checking…" : "Open the log"}
         </button>
@@ -96,6 +96,9 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
   const [form, setForm] = useState({ email: "", first_name: "", last_name: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // Shown after the row is written, because the patient has to read it out and
+  // this is the moment she has the person in mind.
+  const [added, setAdded] = useState(null);
 
   const set = (k) => (e) => {
     setForm({ ...form, [k]: e.target.value });
@@ -113,28 +116,71 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
       return;
     }
     setBusy(true);
+    const join_code = generateJoinCode();
     await base44.entities.AppUser.create({
       patient_id: patientId,
       kind: "team_member",
       email,
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
-      // Copied onto their row so they can match against it. Row security does
-      // not let an unlinked account read the patient's own row.
+      join_code,
+      // Copied onto their row so an unopened invitation can say who it is from.
+      // Row security does not let an unlinked account read the patient's own
+      // row.
       match_first_name: patient?.first_name || "",
-      match_last_name: patient?.last_name || "",
-      match_dob: patient?.dob || null
+      match_last_name: patient?.last_name || ""
     });
+    // The invitation tells them it exists and where to go. The code is not in
+    // it: the patient reads that out. A failed send is worth saying so, because
+    // the code alone is no use to someone who was never told to look.
+    try {
+      await sendInviteEmail({
+        to: email,
+        memberFirstName: form.first_name.trim(),
+        patientName: displayName(patient) || "A patient",
+        appUrl: window.location.origin
+      });
+      setAdded({ code: join_code, emailed: true, email });
+    } catch {
+      setAdded({ code: join_code, emailed: false, email });
+    }
     setBusy(false);
-    onDone();
   };
+
+  if (added) {
+    return (
+      <div className="min-w-0 space-y-3">
+        <div>
+          <h2 className="font-display text-xl uppercase leading-tight break-words">Read them this code</h2>
+          <p className="text-sm font-semibold break-words">
+            {added.emailed
+              ? `${added.email} has been sent an invitation. It does not contain the code.`
+              : `The invitation email to ${added.email} did not send. Tell them to sign in at this address.`}
+          </p>
+        </div>
+
+        <div className="border-2 rounded-xl bg-muted p-4 text-center">
+          <div className="font-display text-4xl tracking-[0.2em] break-words">{formatJoinCode(added.code)}</div>
+        </div>
+
+        <p className="text-xs font-semibold text-muted-foreground break-words">
+          Text it, say it, write it down. Without it nothing opens, so anyone who receives the email by mistake
+          still cannot see your log. It stays on the care team list until they use it.
+        </p>
+
+        <button type="button" className="nb-btn w-full h-12 bg-primary text-primary-foreground" onClick={onDone}>
+          Done
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-w-0 space-y-3">
       <div>
         <h2 className="font-display text-xl uppercase leading-tight break-words">Add to care team</h2>
         <p className="text-sm font-semibold break-words">
-          They sign in with this email, then confirm your name and date of birth.
+          They get an invitation at this address. You get a code to read out to them.
         </p>
       </div>
 
@@ -171,6 +217,59 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
           Cancel
         </button>
       </div>
+    </div>
+  );
+}
+
+// An invitation that has not been opened yet. The code is the patient's to hand
+// out, so she can read it back at any time; the email can be sent again for
+// someone who lost it or never saw it.
+function PendingInvite({ member, patient }) {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const resend = async () => {
+    setSending(true);
+    setSent(false);
+    try {
+      await sendInviteEmail({
+        to: member.email,
+        memberFirstName: member.first_name || "",
+        patientName: displayName(patient) || "A patient",
+        appUrl: window.location.origin
+      });
+      setSent(true);
+    } catch {
+      setSent(false);
+    }
+    setSending(false);
+  };
+
+  return (
+    <div className="border-2 rounded-xl bg-muted p-3 space-y-2 min-w-0">
+      <div className="nb-label text-muted-foreground">Not opened yet</div>
+      {member.join_code ? (
+        <>
+          <div className="font-display text-2xl tracking-[0.2em] break-words">{formatJoinCode(member.join_code)}</div>
+          <p className="text-xs font-semibold text-muted-foreground break-words">
+            Read this out to them. It is not in the invitation email.
+          </p>
+        </>
+      ) : (
+        <p className="text-xs font-semibold break-words">
+          This invitation was made before join codes, so it has no code and cannot be opened. Remove them and add
+          them again.
+        </p>
+      )}
+      <button
+        type="button"
+        className="nb-btn w-full h-11 bg-card flex items-center justify-center gap-2"
+        onClick={resend}
+        disabled={sending}
+      >
+        <Mail className="w-4 h-4 shrink-0" />
+        {sending ? "Sending…" : sent ? "Sent again" : "Send the invitation again"}
+      </button>
     </div>
   );
 }
@@ -252,10 +351,9 @@ export default function Care() {
                     <span className="flex-1 min-w-0">
                       <span className="block nb-label truncate">
                         {maskedName(g.row)}
-                        {maskedDob(g.row) ? ` · ${maskedDob(g.row)}` : ""}
                       </span>
                       <span className="block text-xs font-semibold text-muted-foreground break-words">
-                        Confirm the patient's name and date of birth to open it
+                        Enter the join code they gave you to open it
                       </span>
                     </span>
                     <ChevronRight className="w-5 h-5 shrink-0" />
@@ -284,7 +382,7 @@ export default function Care() {
           </div>
           <div className="text-sm font-semibold break-words">
             {isOwner
-              ? "They sign in with this email, confirm your name and date of birth, and can read your log."
+              ? "They sign in with this email, enter the code you read out to them, and can read your log."
               : `Who else helps ${displayName(patient) || "this patient"}.`}
           </div>
         </div>
@@ -293,7 +391,7 @@ export default function Care() {
           {team.length === 0 && (
             <p className="text-sm text-muted-foreground break-words">
               {isOwner
-                ? "Nobody else can see this log. Add someone and they get in once they confirm your name and date of birth."
+                ? "Nobody else can see this log. Add someone and they get in with a code you read out to them."
                 : "Nobody else is on this care team."}
             </p>
           )}
@@ -305,6 +403,7 @@ export default function Care() {
                   <div className="text-sm font-bold truncate">{displayName(m) || m.email}</div>
                   <div className="text-[11px] font-semibold text-muted-foreground truncate">{m.email}</div>
                 </div>
+                {m.claimed_at && <Check className="w-4 h-4 shrink-0 text-muted-foreground" aria-label="Has opened your log" />}
                 {isOwner && (
                   <button
                     type="button"
@@ -316,6 +415,11 @@ export default function Care() {
                   </button>
                 )}
               </div>
+
+              {/* Until they use it, the code is the only thing standing between
+                  the invitation and the log, so the patient can always read it
+                  back rather than starting again. */}
+              {isOwner && !m.claimed_at && <PendingInvite member={m} patient={patient} />}
 
               {/* Taking someone off ends their access to the whole log, so it
                   asks, the way leaving a team does. */}

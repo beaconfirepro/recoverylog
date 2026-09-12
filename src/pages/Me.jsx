@@ -42,14 +42,15 @@ export default function Me() {
     setSaving(true);
     const next = { first_name: first.trim(), last_name: last.trim(), dob: dob || null };
     await base44.entities.AppUser.update(patient.id, next);
-    // Every member row carries a copy of these to match against, so they move
-    // with it. Otherwise a name change would lock the care team out.
+    // Every member row carries a copy of the name so an unopened invitation can
+    // say who it is from. The date of birth is not copied: it is not what opens
+    // the log any more, and it has no business sitting in a row an invitee can
+    // read.
     await Promise.all(
       team.map((m) =>
         base44.entities.AppUser.update(m.id, {
           match_first_name: next.first_name,
-          match_last_name: next.last_name,
-          match_dob: next.dob
+          match_last_name: next.last_name
         })
       )
     );

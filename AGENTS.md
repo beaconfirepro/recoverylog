@@ -51,6 +51,28 @@ were pulled out for exactly that reason (`clock.js` from `TimeInput`,
 `.github/workflows/checks.yml` runs lint, tests and the build on every pull
 request.
 
+## Joining a care team
+
+The patient adds someone by email on Care. That writes a `team_member` AppUser
+row carrying a six-character `join_code` and a copy of the patient's name, and
+sends an invitation through `base44.integrations.Core.SendEmail` (Base44's own
+sender, no key and no provider to configure).
+
+**The email never carries the code.** Holding the address is what identifies
+you; the code is what proves the patient meant you. Put both in one message and
+a single mistyped letter hands over the whole thing. The patient reads the code
+out. The code stays visible to her on the care team list until the invitation is
+opened.
+
+The code replaced the patient's name and date of birth, which were never a
+secret: a sister knows both. Rows written before this have no code and cannot be
+opened; the patient removes the person and adds them again.
+
+**The check is still in the browser**, so it is only as strong as what came
+before it: RLS lets the invited account read its own row, `join_code` included.
+Making it real needs the comparison done in a backend function under the service
+role, which is the same API key that blocks #40 and #48.
+
 ## Shipping (read this before saying anything is done)
 
 **Never call `edit_base44_app`.** It runs the Base44 builder agent and spends
