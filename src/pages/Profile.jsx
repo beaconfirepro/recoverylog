@@ -210,8 +210,8 @@ export default function Profile() {
 
       {isOwner && (
         <div className="nb-card overflow-hidden">
-          <div className="px-4 py-3 border-b-2" data-orient="checkins" style={{ backgroundColor: TYPES[PINNED].color, color: "#fff" }}>
-            <div className="font-display text-xl uppercase leading-tight break-words">Check-in</div>
+          <div className="px-4 py-3 border-b-2" style={{ backgroundColor: TYPES[PINNED].color, color: "#fff" }}>
+            <div className="font-display text-xl uppercase leading-tight break-words" data-orient="checkins">Check-in</div>
             <div className="text-sm font-semibold break-words">The same for every surgery.</div>
           </div>
 
@@ -285,9 +285,9 @@ export default function Profile() {
 
       {isOwner && activeSurgery && (
         <div className="nb-card overflow-hidden">
-          <div className="px-4 py-3 border-b-2 bg-muted space-y-2" data-orient="trackers">
+          <div className="px-4 py-3 border-b-2 bg-muted space-y-2">
             <div>
-              <div className="font-display text-xl uppercase leading-tight break-words">What to track</div>
+              <div className="font-display text-xl uppercase leading-tight break-words" data-orient="trackers">What to track</div>
               <div className="text-sm font-semibold break-words">Each surgery is set up on its own.</div>
             </div>
             {/* The settings below belong to one surgery, so the surgery being
@@ -436,8 +436,8 @@ export default function Profile() {
 
       {isOwner && (
         <div className="nb-card overflow-hidden">
-          <div className="px-4 py-3 border-b-2 bg-muted" data-orient="measurements">
-            <div className="font-display text-xl uppercase leading-tight break-words">Measurements</div>
+          <div className="px-4 py-3 border-b-2 bg-muted">
+            <div className="font-display text-xl uppercase leading-tight break-words" data-orient="measurements">Measurements</div>
             <div className="text-sm font-semibold break-words">
               What the measurements tracker asks for, in this order.
             </div>
@@ -513,8 +513,8 @@ export default function Profile() {
       {isOwner && <MedGroupLibrary />}
 
       <div className="nb-card overflow-hidden">
-        <div className="px-4 py-3 border-b-2 bg-muted" data-orient="pdf">
-          <div className="font-display text-xl uppercase leading-tight break-words">Download a PDF</div>
+        <div className="px-4 py-3 border-b-2 bg-muted">
+          <div className="font-display text-xl uppercase leading-tight break-words" data-orient="pdf">Download a PDF</div>
           <div className="text-sm font-semibold break-words">
             A day or a range. Carries the surgery, goals, care team, garments, med groups, trends,
             red flags and questions.

@@ -379,10 +379,10 @@ export default function Care() {
       {/* Where the care team is managed. It is not in Setup: Setup is how the
           log is configured, and this is who can see it. */}
       <div className="nb-card overflow-hidden">
-        <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2" data-orient="careteam">
+        <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
           <Users className="w-5 h-5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <div className="font-display text-xl uppercase leading-tight break-words">Care team</div>
+            <div className="font-display text-xl uppercase leading-tight break-words" data-orient="careteam">Care team</div>
             <div className="text-sm font-semibold break-words">
               {isOwner
                 ? "They sign in with this email, enter the code you read out to them, and can read your log."

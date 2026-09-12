@@ -234,19 +234,16 @@
      step is about. The ring uses the theme ring colour so it reads in light
      and dark; the card's own 4px ink shadow is kept in each keyframe so the
      brutalist edge does not flicker off while it runs. */
+  /* A green ring around just the heading. The anchor sits on the heading
+     itself, inside the card's padding, so the ring is not clipped by the
+     card's overflow-hidden and the heading's own colour is left untouched. */
   .orient-pulse {
     animation: orient-pulse 1s ease-in-out 5;
-    /* The whole box is not highlighted — only the title bar. A solid green
-       fill with dark type, pulsed with a dark inset edge so it cannot be
-       missed. !important beats the section's own header background/colour
-       (including the pink check-in header) for the five seconds it runs. */
-    background-color: hsl(var(--accent)) !important;
-    color: hsl(var(--accent-foreground)) !important;
     position: relative;
     z-index: 30;
   }
   @keyframes orient-pulse {
-    0%, 100% { box-shadow: inset 0 0 0 0 hsl(var(--foreground) / 0); }
-    50% { box-shadow: inset 0 0 0 3px hsl(var(--foreground)); }
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0); }
+    50% { box-shadow: 0 0 0 4px hsl(var(--accent)); }
   }
 }

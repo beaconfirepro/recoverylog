@@ -5,8 +5,8 @@ import DrugLookup from "./DrugLookup";
 
 const Card = ({ title, blurb, orient, children }) => (
   <div className="nb-card overflow-hidden">
-    <div className="px-4 py-3 border-b-2 bg-muted" data-orient={orient}>
-      <div className="font-display text-xl uppercase leading-tight break-words">{title}</div>
+    <div className="px-4 py-3 border-b-2 bg-muted">
+      <div className="font-display text-xl uppercase leading-tight break-words" data-orient={orient}>{title}</div>
       <div className="text-sm font-semibold break-words">{blurb}</div>
     </div>
     <div className="p-4 space-y-3">{children}</div>
