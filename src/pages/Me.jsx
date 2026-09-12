@@ -1,3 +1,4 @@
+/* global __BUILD_COMMIT__, __BUILD_TIME__ */
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { LogOut } from "lucide-react";
@@ -10,6 +11,8 @@ import LegalSection from "@/components/legal/LegalSection";
 import DeleteAccount from "@/components/DeleteAccount";
 import Field from "@/components/Field";
 import { THEMES, useTheme } from "@/lib/theme";
+import { save } from "@/lib/saving";
+import { teamCopyError } from "@/lib/saveNotes";
 
 const Row = ({ label, value }) => (
   <div className="flex items-baseline gap-3 py-1.5 border-b-2 last:border-b-0 min-w-0">
@@ -41,19 +44,37 @@ export default function Me() {
   const savePatient = async () => {
     setSaving(true);
     const next = { first_name: first.trim(), last_name: last.trim(), dob: dob || null };
-    await base44.entities.AppUser.update(patient.id, next);
-    // Every member row carries a copy of the name so an unopened invitation can
-    // say who it is from. The date of birth is not copied: it is not what opens
-    // the log any more, and it has no business sitting in a row an invitee can
-    // read.
-    await Promise.all(
-      team.map((m) =>
-        base44.entities.AppUser.update(m.id, {
-          match_first_name: next.first_name,
-          match_last_name: next.last_name
-        })
-      )
+    await save(
+      async () => {
+        await base44.entities.AppUser.update(patient.id, next);
+        // Every member row carries a copy of the name so an unopened invitation
+        // can say who it is from. The date of birth is not copied: it is not
+        // what opens the log any more, and it has no business sitting in a row
+        // an invitee can read.
+        //
+        // allSettled rather than all: a row that will not take must not hide
+        // the ones that did, and the half-done case has to be said out loud —
+        // her log would say one name while an unopened invitation said another,
+        // and the invitee is the one who cannot tell which is right.
+        const copies = await Promise.allSettled(
+          team.map((m) =>
+            base44.entities.AppUser.update(m.id, {
+              match_first_name: next.first_name,
+              match_last_name: next.last_name
+            })
+          )
+        );
+        const failed = copies.filter((c) => c.status === "rejected").length;
+        if (failed) throw teamCopyError(failed, copies.length);
+      },
+      {
+        what: "Your details",
+        saved: "Your name is updated everywhere it appears.",
+        retry: savePatient
+      }
     );
+    // Read back either way: this is the only thing that says which name is
+    // actually stored, and after a half-done save that matters most.
     await refreshPatient();
     setSaving(false);
   };
@@ -133,6 +154,14 @@ export default function Me() {
       <LegalSection />
 
       <DeleteAccount isOwner={isOwner} />
+
+      {/* What is actually deployed, for reading off the phone rather than
+          trusting the Base44 editor's "last commit". It used to sit under the
+          day on Today, where every pixel is meant for the patient rather than
+          for whoever is checking a deploy. select-all so one tap copies it. */}
+      <p className="pt-2 text-center text-[10px] font-mono text-muted-foreground select-all">
+        {__BUILD_COMMIT__} · {__BUILD_TIME__.slice(0, 16).replace("T", " ")}Z
+      </p>
     </div>
   );
 }

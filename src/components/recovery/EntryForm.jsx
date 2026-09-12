@@ -163,6 +163,10 @@ export default function EntryForm({ type, entry, onSave, onCancel, onDelete, sav
 
       <NoteField value={note} onChange={setNote} />
 
+      {/* The whole row waits on the write. Cancelling mid-save would take the
+          form off screen while the entry is still in flight, and a second tap
+          on Delete would ask the backend to remove a row it has already
+          removed. */}
       <div className="col-span-2 flex gap-2 min-w-0">
         <button
           className="nb-btn flex-1 min-w-0 h-14 bg-primary text-primary-foreground"
@@ -171,11 +175,15 @@ export default function EntryForm({ type, entry, onSave, onCancel, onDelete, sav
         >
           {saving ? "Saving…" : "Save"}
         </button>
-        <button className="nb-btn h-14 px-4 shrink-0 bg-card" onClick={onCancel}>
+        <button className="nb-btn h-14 px-4 shrink-0 bg-card" onClick={onCancel} disabled={saving}>
           Cancel
         </button>
         {onDelete && (
-          <button className="nb-btn h-14 px-4 shrink-0 bg-destructive text-destructive-foreground" onClick={onDelete}>
+          <button
+            className="nb-btn h-14 px-4 shrink-0 bg-destructive text-destructive-foreground"
+            onClick={onDelete}
+            disabled={saving}
+          >
             Delete
           </button>
         )}

@@ -1,11 +1,16 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { CalendarDays, History as HistoryIcon, SlidersHorizontal, TrendingUp, UserRound, Users } from "lucide-react";
 import { usePatient, displayName } from "@/lib/PatientContext";
+import { announceNow, currentAnnouncements, subscribeAnnouncements } from "@/lib/announce";
 
 const NAV = [
   { to: "/", label: "Today", icon: CalendarDays, match: (p) => p === "/" || p.startsWith("/day") },
-  { to: "/history", label: "History", icon: HistoryIcon, match: (p) => p.startsWith("/history") },
+  // "Day by Day" rather than "History": it is her own week, not an archive.
+  // At 375pt each of the five tabs gets 75px and the label measures about
+  // 59px in Outfit 800 at 10px, so it holds one line — and if a wider font
+  // ever pushes it to two, icon and two 10px lines still sit inside h-16.
+  { to: "/history", label: "Day by Day", icon: HistoryIcon, match: (p) => p.startsWith("/history") },
   { to: "/trends", label: "Trends", icon: TrendingUp, match: (p) => p.startsWith("/trends") },
   // Care holds both lists: who is on the team, and the surgeries.
   { to: "/care", label: "Care", icon: Users, match: (p) => p.startsWith("/care") },
@@ -37,8 +42,44 @@ export default function Layout() {
   const greeting = patient?.first_name ? `Hi ${patient.first_name}!` : "";
   useTabScroll(pathname);
 
+  // What the app just did, in words, for a screen reader that was told none of
+  // it before. Anything in the tree can write here through @/lib/announce. A
+  // toast says its own text out loud as it appears, so saves and failures
+  // announce themselves and are deliberately not repeated here; this carries
+  // what no toast covers — the log switch below, and a success that confirms
+  // itself on the page rather than in a toast.
+  const [live, setLive] = useState(currentAnnouncements);
+  useEffect(() => subscribeAnnouncements(setLive), []);
+
+  // Whose medical record is on screen is the one announcement that interrupts.
+  // switchPatient lives in PatientContext, which this file does not touch, so
+  // the switch is read off the patient changing underneath the header — which
+  // is exactly the moment the record on screen changed. The first log to arrive
+  // is not a switch, so nothing is said about it.
+  const announced = useRef(null);
+  useEffect(() => {
+    const id = patient?.id || null;
+    if (!id) return;
+    const before = announced.current;
+    announced.current = id;
+    if (before && before !== id) {
+      announceNow(`Now viewing ${who || "an unnamed patient"}'s log.`);
+    }
+    // `who` is read, not watched: a rename is not a switch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patient?.id]);
+
   return (
     <div className="min-h-screen">
+      {/* Two regions, because they are read differently: the polite one waits
+          its turn, the assertive one cuts in. aria-atomic so the whole sentence
+          is read rather than the words that changed in it. */}
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {live.polite}
+      </div>
+      <div className="sr-only" role="alert" aria-live="assertive" aria-atomic="true">
+        {live.assertive}
+      </div>
       {/* Sticky rather than scrolled away: the bar carries whose log this is,
           which a care-team member needs at any point down a long day. */}
       <header

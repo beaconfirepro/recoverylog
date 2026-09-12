@@ -13,6 +13,7 @@ import {
 } from "@/lib/recovery";
 import { asRows } from "@/lib/recoveryUtils";
 import { buildRecoveryPdf } from "@/lib/recoveryPdf";
+import { save } from "@/lib/saving";
 import Field from "@/components/Field";
 import TimeInput from "@/components/recovery/TimeInput";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
@@ -43,12 +44,22 @@ export default function Profile() {
   const [savingTracking, setSavingTracking] = useState(false);
   const selected = trackedTypes(activeSurgery);
 
-  const patchSurgery = async (fields) => {
-    if (!activeSurgery) return;
+  // Every toggle on this page is a write, and none of them said a word when
+  // one failed: the switch flicked back on the next read and that was the whole
+  // report. The retry defaults to sending the same fields again, and a caller
+  // holding its own copy of the value passes its own so the retry puts that
+  // copy back too.
+  const patchSurgery = async (fields, retry) => {
+    if (!activeSurgery) return false;
     setSavingTracking(true);
-    await base44.entities.Surgery.update(activeSurgery.id, fields);
+    const res = await save(() => base44.entities.Surgery.update(activeSurgery.id, fields), {
+      what: "Your tracking",
+      saved: "This surgery keeps the change.",
+      retry: retry || (() => patchSurgery(fields))
+    });
     await refreshSurgeries();
     setSavingTracking(false);
+    return res.ok;
   };
 
   // The check-in is not one of the buttons you turn off, so it is configured
@@ -71,17 +82,31 @@ export default function Profile() {
     ? patient.checkin_measures
     : CHECKIN_MEASURES.map((m) => m.key);
 
-  const patchPatient = async (fields) => {
-    if (!patient) return;
+  const patchPatient = async (fields, retry) => {
+    if (!patient) return false;
     setSavingCheckin(true);
-    await base44.entities.AppUser.update(patient.id, fields);
+    const res = await save(() => base44.entities.AppUser.update(patient.id, fields), {
+      what: "Your setup",
+      saved: "The change is saved.",
+      retry: retry || (() => patchPatient(fields))
+    });
     await refreshPatient();
     setSavingCheckin(false);
+    return res.ok;
   };
 
+  // The editor holds the times itself, so a failed write has to put the rows
+  // back: leaving a time on screen that was never saved is how a check-in ends
+  // up asking at an hour nothing is stored against. The retry re-applies the
+  // new rows first, so a save that works on the second try leaves the editor
+  // agreeing with the record again.
   const setSlots = (next) => {
-    setSlotsLocal(next);
-    patchPatient({ checkin_slots: next });
+    const previous = slots;
+    const attempt = async () => {
+      setSlotsLocal(next);
+      if (!(await patchPatient({ checkin_slots: next }, attempt))) setSlotsLocal(previous);
+    };
+    attempt();
   };
 
   // Empty means the built-in set, the same way the check-in slots work.
@@ -96,11 +121,12 @@ export default function Profile() {
     patchPatient({ measurements: next });
   };
 
-  const addSpot = () => {
+  // The box keeps what was typed until the write lands: clearing it first and
+  // then failing loses the name as well as the spot.
+  const addSpot = async () => {
     const name = newSpot.trim();
     if (!name || spots.includes(name)) return;
-    setNewSpot("");
-    patchPatient({ measurements: [...spots, name] });
+    if (await patchPatient({ measurements: [...spots, name] })) setNewSpot("");
   };
 
   const toggleMeasure = (key) => {
@@ -150,38 +176,52 @@ export default function Profile() {
   const generate = async () => {
     setBusy(true);
     setDone(false);
-    const wanted = scope === "all" ? surgeries : surgeries.filter((sx) => sx.id === activeSurgeryId);
-    // One read per surgery rather than a filter the backend cannot express as
-    // "any of these".
-    const per = await Promise.all(
-      wanted.map((sx) =>
-        Promise.all([
-          base44.entities.RecoveryDay.filter({ surgery_id: sx.id }, "date", 500),
-          base44.entities.RecoveryEntry.filter({ surgery_id: sx.id }, "created_date", 3000)
-        ])
-      )
-    );
-    const [team, garments, medGroups] = await Promise.all([
-      base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 50),
-      base44.entities.Garment.list("sort_order", 100),
-      base44.entities.MedGroup.list("sort_order", 100)
-    ]);
+    const build = async () => {
+      const wanted = scope === "all" ? surgeries : surgeries.filter((sx) => sx.id === activeSurgeryId);
+      // One read per surgery rather than a filter the backend cannot express as
+      // "any of these".
+      const per = await Promise.all(
+        wanted.map((sx) =>
+          Promise.all([
+            base44.entities.RecoveryDay.filter({ surgery_id: sx.id }, "date", 500),
+            base44.entities.RecoveryEntry.filter({ surgery_id: sx.id }, "created_date", 3000)
+          ])
+        )
+      );
+      const [team, garments, medGroups] = await Promise.all([
+        base44.entities.AppUser.filter({ patient_id: patientId, kind: "team_member" }, "created_date", 50),
+        base44.entities.Garment.list("sort_order", 100),
+        base44.entities.MedGroup.list("sort_order", 100)
+      ]);
 
-    const doc = buildRecoveryPdf({
-      from,
-      to,
-      days: per.flatMap(([d]) => asRows(d)),
-      entries: per.flatMap(([, e]) => asRows(e)),
-      patientName: displayName(patient),
-      surgeries: wanted,
-      team: asRows(team),
-      garments: asRows(garments),
-      medGroups: asRows(medGroups),
-      groupBy
+      const doc = buildRecoveryPdf({
+        from,
+        to,
+        days: per.flatMap(([d]) => asRows(d)),
+        entries: per.flatMap(([, e]) => asRows(e)),
+        patientName: displayName(patient),
+        surgeries: wanted,
+        team: asRows(team),
+        garments: asRows(garments),
+        medGroups: asRows(medGroups),
+        groupBy
+      });
+      doc.save(`lipnode-${from}_to_${to}.pdf`);
+    };
+    // Quiet on success: the line under the button already says it arrived, so
+    // this only announces it for a screen reader, which cannot see that line.
+    // On failure it is the same toast as everything else — a PDF that silently
+    // never appeared looked identical to one still being built.
+    const res = await save(build, {
+      what: "The PDF",
+      saved: "The PDF is downloaded.",
+      quiet: true,
+      title: "The PDF didn't build",
+      advice: "Tap Retry to build it again.",
+      retry: generate
     });
-    doc.save(`lipnode-${from}_to_${to}.pdf`);
     setBusy(false);
-    setDone(true);
+    setDone(res.ok);
   };
 
   return (

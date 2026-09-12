@@ -183,8 +183,15 @@ export default function CheckinStack({ cfg, data, setField, time, setTime, onSav
         )}
       </div>
 
+      {/* Everything waits on the write: a cancel mid-save takes the check-in off
+          screen while it is still in flight, and a second tap on Delete asks
+          the backend to remove a row it has already removed. */}
       <div className="flex gap-2 mt-4 min-w-0">
-        <button className="nb-btn h-14 px-4 shrink-0 bg-card" onClick={() => (step === 0 ? onCancel() : go(step - 1))}>
+        <button
+          className="nb-btn h-14 px-4 shrink-0 bg-card"
+          onClick={() => (step === 0 ? onCancel() : go(step - 1))}
+          disabled={saving}
+        >
           {step === 0 ? "Cancel" : "Back"}
         </button>
         {last ? (
@@ -201,7 +208,11 @@ export default function CheckinStack({ cfg, data, setField, time, setTime, onSav
           </button>
         )}
         {onDelete && (
-          <button className="nb-btn h-14 px-4 shrink-0 bg-destructive text-destructive-foreground" onClick={onDelete}>
+          <button
+            className="nb-btn h-14 px-4 shrink-0 bg-destructive text-destructive-foreground"
+            onClick={onDelete}
+            disabled={saving}
+          >
             Delete
           </button>
         )}
