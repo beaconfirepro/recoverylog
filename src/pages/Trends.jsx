@@ -176,7 +176,7 @@ export default function Trends() {
               </BarChart>
             </ResponsiveContainer>
             {!totalsHeading.length && (
-              <p className="text-[11px] font-semibold text-muted-foreground break-words">
+              <p className="text-2xs font-semibold text-muted-foreground break-words">
                 {all
                   ? "Goals belong to one record. Pick a single record above to see them here."
                   : "Set a water or protein goal in Setup and it draws as a line here."}

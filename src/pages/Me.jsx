@@ -10,7 +10,7 @@ import SignInMethod from "@/components/legal/SignInMethod";
 import LegalSection from "@/components/legal/LegalSection";
 import DeleteAccount from "@/components/DeleteAccount";
 import Field from "@/components/Field";
-import { THEMES, useTheme } from "@/lib/theme";
+import { THEMES, TEXT_SIZES, useTheme, useTextSize } from "@/lib/theme";
 import { save } from "@/lib/saving";
 import { teamCopyError } from "@/lib/saveNotes";
 
@@ -29,6 +29,7 @@ export default function Me() {
   const { me, patient, isOwner, refreshPatient } = usePatient();
   const { team } = useCareTeam();
   const { theme, choose } = useTheme();
+  const { size, choose: chooseSize } = useTextSize();
 
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -131,21 +132,51 @@ export default function Me() {
       <div className="nb-card overflow-hidden">
         <div className="px-4 py-3 border-b-2 bg-muted">
           <div className="font-display text-xl uppercase leading-tight break-words">Appearance</div>
-          <div className="text-sm font-semibold break-words">How the app looks on this device.</div>
+          <div className="text-sm font-semibold break-words">How the app looks on this device. Not shared with your care team.</div>
         </div>
-        <div className="p-4 flex gap-1.5">
-          {THEMES.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => choose(t)}
-              aria-pressed={theme === t}
-              className="nb-chip flex-1 justify-center capitalize"
-              style={theme === t ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
-            >
-              {t}
-            </button>
-          ))}
+        <div className="p-4 space-y-4">
+          <div className="space-y-1.5">
+            <div className="nb-label">Light or dark</div>
+            <div className="flex gap-1.5">
+              {THEMES.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => choose(t)}
+                  aria-pressed={theme === t}
+                  className="nb-chip flex-1 justify-center capitalize"
+                  style={theme === t ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Safari does not pass iOS Dynamic Type through to a web app, so
+              turning system text up does nothing here unless the app offers it
+              itself. Swelling, painkillers and crying all make near vision
+              worse, and this app is read in all three states. */}
+          <div className="space-y-1.5">
+            <div className="nb-label">Text size</div>
+            <div className="flex gap-1.5">
+              {TEXT_SIZES.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => chooseSize(t.key)}
+                  aria-pressed={size === t.key}
+                  className="nb-chip flex-1 justify-center"
+                  style={size === t.key ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs font-semibold text-muted-foreground break-words">
+              Changes the whole app on this device, straight away.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -159,7 +190,7 @@ export default function Me() {
           trusting the Base44 editor's "last commit". It used to sit under the
           day on Today, where every pixel is meant for the patient rather than
           for whoever is checking a deploy. select-all so one tap copies it. */}
-      <p className="pt-2 text-center text-[10px] font-mono text-muted-foreground select-all">
+      <p className="pt-2 text-center text-2xs font-mono text-muted-foreground select-all">
         {__BUILD_COMMIT__} · {__BUILD_TIME__.slice(0, 16).replace("T", " ")}Z
       </p>
     </div>

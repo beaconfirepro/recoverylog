@@ -112,7 +112,7 @@ export default function Splash() {
         <div className="nb-card p-4 space-y-2">
           {features.map((f) => (
             <div key={f} className="flex items-start gap-2">
-              <span className="shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-bold" style={{ backgroundColor: "hsl(var(--accent))", borderColor: "hsl(var(--foreground))" }}>✓</span>
+              <span className="shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center text-2xs font-bold" style={{ backgroundColor: "hsl(var(--accent))", borderColor: "hsl(var(--foreground))" }}>✓</span>
               <p className="text-sm font-semibold break-words">{f}</p>
             </div>
           ))}

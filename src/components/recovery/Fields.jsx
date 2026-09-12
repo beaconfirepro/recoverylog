@@ -460,7 +460,7 @@ export function IncisionsField({ field, areas, value, onChange }) {
                     type="button"
                     onClick={() => setLevel(area, cur.level === level ? undefined : level)}
                     aria-pressed={cur.level === level}
-                    className="h-10 border-2 rounded-lg font-heading text-[11px] uppercase"
+                    className="h-10 border-2 rounded-lg font-heading text-2xs uppercase"
                     style={cur.level === level ? { backgroundColor: tone, color: level === "Minor" ? "#1A1024" : "#fff" } : {}}
                   >
                     {level}

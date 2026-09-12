@@ -45,7 +45,7 @@ export default function SurgeryCard({ surgery, active, open, canWrite, onToggle,
         </span>
         {maint && !active && (
           <span
-            className="nb-chip px-2 py-0.5 text-[10px] shrink-0"
+            className="nb-chip px-2 py-0.5 text-2xs shrink-0"
             style={{ backgroundColor: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}
           >
             Maintenance
@@ -53,7 +53,7 @@ export default function SurgeryCard({ surgery, active, open, canWrite, onToggle,
         )}
         {s.cancelled && (
           <span
-            className="nb-chip px-2 py-0.5 text-[10px] shrink-0"
+            className="nb-chip px-2 py-0.5 text-2xs shrink-0"
             style={{ backgroundColor: "hsl(var(--destructive))", color: "hsl(var(--destructive-foreground))" }}
           >
             Cancelled

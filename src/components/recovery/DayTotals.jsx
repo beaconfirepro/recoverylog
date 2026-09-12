@@ -80,7 +80,7 @@ export default function DayTotals({ totals, day, surgery }) {
               <span className="font-heading text-sm">{r.value}</span>
             </div>
             {r.needsGoal && (
-              <p className="text-[11px] font-semibold text-muted-foreground">Set a goal in Setup.</p>
+              <p className="text-2xs font-semibold text-muted-foreground">Set a goal in Setup.</p>
             )}
             {!!r.frac && (
               <div className="h-3 border-2 rounded-full mt-1 overflow-hidden bg-muted">
@@ -97,10 +97,10 @@ export default function DayTotals({ totals, day, surgery }) {
       {/* Two shapes need naming once, or they are two shapes. */}
       {raised.length > 0 && (
         <div className="mt-3 pt-2 border-t-2 flex flex-wrap gap-x-4 gap-y-1">
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+          <span className="flex items-center gap-1.5 text-2xs font-semibold text-muted-foreground">
             <Flag mine={false} className="w-4 h-4" title="" /> raised by your entries
           </span>
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+          <span className="flex items-center gap-1.5 text-2xs font-semibold text-muted-foreground">
             <Flag mine className="w-4 h-4" title="" /> raised by you
           </span>
         </div>

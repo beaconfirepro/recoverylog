@@ -127,14 +127,14 @@ export default function Layout() {
           <span className="font-display uppercase tracking-widest text-sm shrink-0">LipNode</span>
           <span className="flex items-center gap-2 min-w-0">
           {isOwner ? (
-            <span className="text-[10px] font-body opacity-60 truncate">{greeting}</span>
+            <span className="text-2xs font-body opacity-60 truncate">{greeting}</span>
           ) : (
             // A care-team member can be in more than one person's log. Whose it
             // is has to be on screen, not something they infer.
             <span className="flex items-center gap-1.5 min-w-0">
-              <span className="text-[9px] font-heading uppercase tracking-wider opacity-60 shrink-0">Viewing</span>
+              <span className="text-xs font-heading uppercase tracking-wider opacity-70 shrink-0">Viewing</span>
               <span
-                className="text-[10px] font-heading uppercase tracking-wide truncate px-1.5 py-0.5 rounded"
+                className="text-xs font-heading uppercase tracking-wide truncate px-1.5 py-0.5 rounded"
                 style={{ backgroundColor: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" }}
               >
                 {who || "unnamed patient"}
@@ -200,7 +200,7 @@ export default function Layout() {
                 style={active ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : { color: "hsl(var(--background))" }}
               >
                 <Icon className="w-5 h-5" />
-                <span className="font-heading text-[10px] uppercase tracking-wide">{n.label}</span>
+                <span className="font-heading text-2xs uppercase tracking-wide">{n.label}</span>
               </Link>
             );
           })}

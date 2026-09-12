@@ -183,7 +183,7 @@ export default function History() {
                 </span>
                 {label && <span className="text-sm font-semibold text-muted-foreground shrink-0">{niceDate(date)}</span>}
                 {all && (
-                  <span className="text-[10px] font-semibold text-muted-foreground shrink-0">
+                  <span className="text-xs font-semibold shrink-0">
                     {Array.from(new Set(es.map((e) => e.surgery_id)))
                       .map((id) => recordLabel(scopeRecords.find((r) => r.id === id)))
                       .join(" · ")}

@@ -455,12 +455,12 @@ export default function Care() {
                 >
                   <span className="flex-1 min-w-0">
                     <span className="block text-sm font-bold truncate">{displayName(m) || m.email}</span>
-                    <span className="block text-[11px] font-semibold text-muted-foreground truncate">{m.email}</span>
+                    <span className="block text-2xs font-semibold text-muted-foreground truncate">{m.email}</span>
                     {/* The one thing standing between an invitation and the
                         whole log used to be three taps deep, with nothing on
                         this row to say it was there. */}
                     {isOwner && !m.claimed_at && m.join_code && (
-                      <span className="block text-[11px] font-semibold text-muted-foreground truncate">
+                      <span className="block text-2xs font-semibold text-muted-foreground truncate">
                         Waiting — code {formatJoinCode(m.join_code)}
                       </span>
                     )}

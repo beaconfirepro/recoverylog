@@ -34,6 +34,8 @@
         try {
           var t = localStorage.getItem("recoverylog.theme");
           if (t === "dark" || t === "light") document.documentElement.classList.add(t);
+          var s = { large: 115, largest: 130 }[localStorage.getItem("recoverylog.textSize")];
+          if (s) document.documentElement.style.fontSize = s + "%";
         } catch (e) {
           /* Storage blocked. The media query answers instead, which is the
              same thing "system" does. */

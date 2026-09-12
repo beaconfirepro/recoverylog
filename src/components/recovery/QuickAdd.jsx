@@ -29,7 +29,7 @@ const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, ...handl
         type="button"
         onClick={onClick}
         tabIndex={arranging ? -1 : 0}
-        className={`nb-btn w-full min-h-16 py-1.5 flex-col gap-0.5 text-[9px] leading-tight !rounded-xl ${
+        className={`nb-btn w-full min-h-16 py-1.5 flex-col gap-0.5 text-xs leading-tight !rounded-xl ${
           arranging ? "outline outline-2 outline-dashed outline-offset-2" : ""
         }`}
         style={{

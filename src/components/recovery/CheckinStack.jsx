@@ -83,7 +83,7 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
           <span className="font-semibold text-muted-foreground">Drag or tap the bar to set a level</span>
         ) : (
           <>
-            <span className="font-heading text-[11px] uppercase tracking-widest text-muted-foreground">
+            <span className="font-heading text-2xs uppercase tracking-widest text-muted-foreground">
               {field.label} {value}
             </span>
             {field.levels?.[value]}
@@ -155,7 +155,7 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
         </div>
       </div>
 
-      <div className="w-full flex justify-between mt-1 font-heading text-[11px] text-muted-foreground">
+      <div className="w-full flex justify-between mt-1 font-heading text-2xs text-muted-foreground">
         <span>0</span>
         <span>10</span>
       </div>

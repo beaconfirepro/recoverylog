@@ -301,7 +301,7 @@ export default function Profile() {
                 <Plus className="w-4 h-4" />
                 Add a time
               </button>
-              <p className="text-[11px] font-semibold text-muted-foreground break-words">
+              <p className="text-2xs font-semibold text-muted-foreground break-words">
                 The time picks the slot when you open the form.
               </p>
             </div>
@@ -322,7 +322,7 @@ export default function Profile() {
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] font-semibold text-muted-foreground break-words">
+              <p className="text-2xs font-semibold text-muted-foreground break-words">
                 Turning one off keeps what is already recorded.
               </p>
             </div>
@@ -357,7 +357,7 @@ export default function Profile() {
           </div>
 
           <div className="p-4 space-y-3">
-            <p className="text-[11px] font-semibold text-muted-foreground break-words">
+            <p className="text-2xs font-semibold text-muted-foreground break-words">
               History shows a tracker on each day's card. Turning one off keeps what is already logged.
             </p>
             <div className="flex items-center gap-2 min-w-0 pb-1 border-b-2">
@@ -411,7 +411,7 @@ export default function Profile() {
 
             <div className="border-t-2 pt-3 space-y-2">
               <div className="nb-label">Goals</div>
-              <p className="text-[11px] font-semibold text-muted-foreground break-words">
+              <p className="text-2xs font-semibold text-muted-foreground break-words">
                 Leave one blank for no target.
               </p>
               {[TYPES.water.goal, BODYWORK_GOAL].map((g) => (
@@ -468,7 +468,7 @@ export default function Profile() {
                 >
                   <span className="min-w-0">
                     <span className="block truncate">{label}</span>
-                    <span className="block text-[10px] font-semibold opacity-70 truncate">{hint}</span>
+                    <span className="block text-2xs font-semibold opacity-70 truncate">{hint}</span>
                   </span>
                   <span className="font-heading text-xs shrink-0">
                     {activeSurgery[key] !== false ? "ON" : "OFF"}

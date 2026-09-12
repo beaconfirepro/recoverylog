@@ -131,7 +131,7 @@ export default function SurgeryForm({ surgery, prefillTrack, onSaved, onCancel }
                   style={draft[key] !== false ? { backgroundColor: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" } : {}}
                 >
                   <span className="block text-xs truncate">{label}</span>
-                  <span className="block text-[10px] font-semibold opacity-80 truncate">{hint} · {draft[key] !== false ? "ON" : "OFF"}</span>
+                  <span className="block text-2xs font-semibold opacity-80 truncate">{hint} · {draft[key] !== false ? "ON" : "OFF"}</span>
                 </button>
               ))}
             </div>
