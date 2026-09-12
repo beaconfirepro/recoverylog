@@ -571,23 +571,137 @@ export const checkinConfig = (patient) => {
 // surgeon said something else enters it on the record and that wins.
 export const FEVER_DEFAULT = 101.5;
 
+// Where the explanations came from, said on the card rather than buried. They
+// are adapted from published patient guidance, not written by the surgeons who
+// gave this list, and a patient is entitled to know which before she acts on
+// one.
+export const RED_FLAG_SOURCES =
+  "Adapted from published patient guidance from the Cleveland Clinic, Johns Hopkins Medicine, the CDC and " +
+  "the American Society of Plastic Surgeons.";
+
+export const RED_FLAG_DISCLAIMER =
+  "This is not medical advice and is no substitute for treatment or for your surgeon's own instructions. " +
+  "If you are not sure, call.";
+
+// Each item carries what to look for, roughly when it counts, and whether the
+// app can raise it for her. Without them a patient meets twelve clinical
+// phrases and two buttons, and "urine dropped off or dark all day" needs a
+// yardstick or she is guessing — in whichever direction she happens to guess.
 export const RED_FLAG_ITEMS = [
   // "The surgeon's number" is not a number, and a patient cannot answer a
   // question against it. This one line names the threshold actually in force,
   // so it carries a placeholder the record fills in. Read it through
   // flagLabel() — never render `label` directly.
-  { key: "fever", label: "Fever over {n} °F", from: "fever_threshold", fallback: FEVER_DEFAULT },
-  { key: "calf", label: "Calf pain, swelling, or warmth on one side" },
-  { key: "chest", label: "Chest pain or short of breath" },
-  { key: "redness", label: "Redness spreading, or skin hot or hard" },
-  { key: "drainage", label: "Drainage foul or pus-like" },
-  { key: "bleeding", label: "Bright red bleeding restarted after slowing" },
-  { key: "dizzy", label: "Dizzy on standing" },
-  { key: "urine", label: "Urine dropped off or dark all day" },
-  { key: "pain", label: "Pain suddenly worse, not better" },
-  { key: "bowel", label: "No BM for 3+ days" },
-  { key: "garment", label: "Numbness or color change under garment" },
-  { key: "confusion", label: "Confused or hard to wake" }
+  {
+    key: "fever",
+    label: "Fever over {n} °F",
+    from: "fever_threshold",
+    fallback: FEVER_DEFAULT,
+    body: [
+      "A temperature at or above the baseline set in Setup, taken when you have not just had a hot drink or a hot shower. Put your surgeon's number in that field.",
+      "One reading at or over the baseline is enough to call. A low-grade rise in the first day or two is common; a fever that arrives later, or climbs, is the one that matters.",
+      "The app will raise this when a temperature you log comes in over the baseline. You can override it."
+    ]
+  },
+  {
+    key: "calf",
+    label: "Calf pain, swelling, or warmth on one side",
+    body: [
+      "One calf bigger, tighter, warmer or sorer than the other. Compare them: the point is the difference between your two legs, not how either feels on its own. It may hurt only when you stand or walk.",
+      "Any clear difference between one side and the other. Both legs swelling after surgery is expected. One leg is not.",
+      "The app will raise this when you mark a calf on the body map. You can override it."
+    ]
+  },
+  {
+    key: "chest",
+    label: "Chest pain or short of breath",
+    body: [
+      "Pain in your chest, being out of breath doing something that did not make you out of breath yesterday, a racing heart, or coughing up blood.",
+      "Straight away, at any point in your recovery — not only in the first week. This one does not wait for the office to open.",
+      "The app cannot see this. No tracker measures your breathing, so it is always yours to answer."
+    ]
+  },
+  {
+    key: "redness",
+    label: "Redness spreading, or skin hot or hard",
+    body: [
+      "Redness that reaches past the edge of the incision onto ordinary skin, or an area hot to the touch, or hard rather than puffy. Photograph it: the useful question is whether it is bigger than yesterday, and a photo answers that better than memory.",
+      "When it is spreading, not when it is merely present. A thin pink line along a closed incision is expected. Redness marching outward is not.",
+      "The app will raise this from your incision entries. You can override it."
+    ]
+  },
+  {
+    key: "drainage",
+    label: "Drainage foul or pus-like",
+    body: [
+      "Fluid that smells bad, or that has gone from thin and pink-tinged to thick, cloudy, yellow, green or grey.",
+      "Smell alone is enough. Thin pink or straw-coloured fluid, sometimes a lot of it, is normal after this surgery. Cloudy, thick or smelly is not, however small the amount.",
+      "The app will raise this from your drainage and incision entries. You can override it."
+    ]
+  },
+  {
+    key: "bleeding",
+    label: "Bright red bleeding restarted after slowing",
+    body: [
+      "Fresh bright red blood soaking a dressing after the bleeding had already settled down.",
+      "When it restarts, or when it soaks through a dressing faster than you can change it. Old blood is dark and expected; bright red and new, after things had calmed, is the change worth a phone call.",
+      "The app will raise this from your drainage entries. You can override it."
+    ]
+  },
+  {
+    key: "dizzy",
+    label: "Dizzy on standing",
+    body: [
+      "The room going grey or swimmy when you stand, needing to hold on to something, or nearly fainting.",
+      "When it keeps happening, or when it is bad enough that you have to sit back down. A moment of light-headedness on day one is common; every time you stand, on day five, is not.",
+      "The app will raise this when you log feeling dizzy during movement. You can override it."
+    ]
+  },
+  {
+    key: "urine",
+    label: "Urine dropped off or dark all day",
+    body: [
+      "Going much less often than usual despite drinking, or urine that stays dark — tea-coloured, brown or pink — across a whole day rather than just first thing.",
+      "When drinking more does not clear it by the end of the day. Concentrated first-morning urine is ordinary; all day, or brown or pink at any point, is not.",
+      "The app will raise this from your urine entries. You can override it."
+    ]
+  },
+  {
+    key: "pain",
+    label: "Pain suddenly worse, not better",
+    body: [
+      "Pain that jumps up instead of easing off, pain in one spot much worse than everywhere else, or pain your medication stops touching when it was working before.",
+      "When the direction changes. Recovery pain trends downward with bad days in it; a step up, especially in one place, is different from a bad day.",
+      "The app will raise this when a check-in puts pain at 8 or above. You can override it."
+    ]
+  },
+  {
+    key: "bowel",
+    label: "No BM for 3+ days",
+    body: [
+      "Three full days with nothing, counting from the last one and not from surgery.",
+      "At three days. Pain medication slows everything down, so the plan is usually made in advance — but it stops being a nuisance and becomes a problem if it is left. Call sooner if you also have a swollen belly, cramping, or you are being sick.",
+      "The app will raise this by counting the days since your last logged bowel movement. You can override it."
+    ]
+  },
+  {
+    key: "garment",
+    label: "Numbness or color change under garment",
+    body: [
+      "Skin past the edge of the garment — fingers, toes, ankles — gone numb, pale, blue or cold. Pins and needles that do not settle when you move. A garment that has rolled, bunched or dug in.",
+      "When the numbness or the colour does not come back within a few minutes of loosening the garment. Patchy numbness over an area that was operated on is expected as nerves recover; a cold or colourless hand or foot is not.",
+      "The app will raise this when you log numbness or a pale, cold area on the skin map. You can override it."
+    ]
+  },
+  {
+    key: "confusion",
+    label: "Confused or hard to wake",
+    body: [
+      "Someone muddled about where they are or what day it is, slurring, unusually sleepy, or hard to rouse. This is the one on the list that somebody else usually notices first.",
+      "Straight away. Being tired and foggy on pain medication is expected; not making sense, or not waking properly, is not.",
+      "The app cannot see this. No tracker measures how awake you are, so it is always yours to answer — and it is worth telling whoever is looking after you that it is on the list."
+    ]
+  }
 ];
 
 // What to show for a red flag on the card, in the PDF, and in the day totals.

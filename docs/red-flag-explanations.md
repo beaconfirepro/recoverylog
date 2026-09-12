@@ -1,15 +1,24 @@
 # Red flag explanations — draft for clinical review
 
-> **This is a draft. It has not been reviewed by a clinician and must not ship
-> until it has been.** The twelve red flags are the surgeons' list. These
-> explanations are written from published patient-facing guidance (sources at the
-> end), not from the surgeons who gave you the list, and they may not match what
-> those surgeons meant by each line. Every threshold below is the one general
-> guidance uses; a surgeon's own number for their own patient wins.
+> **Approved to ship, with attribution rather than clinical sign-off.** The
+> twelve red flags are the surgeons' list. These explanations are not: they are
+> adapted from published patient guidance (sources at the end), and every
+> threshold below is the one that guidance uses. So the app says where they came
+> from, and says plainly that they are no substitute for treatment or for a
+> surgeon's own instructions. A surgeon's own number for their own patient wins,
+> and the fever line points at the field where hers goes rather than naming one.
+>
+> The two strings the app carries are `RED_FLAG_SOURCES` and
+> `RED_FLAG_DISCLAIMER` in `src/lib/recovery.js`, next to the explanations
+> themselves so they cannot drift apart.
 
-Content for issue #105. Intended as the `body` of each entry in
-`RED_FLAG_ITEMS` (`src/lib/recovery.js:569`), shown behind a tap-to-expand on
-the red flag card using the question-mark-and-tooltip pattern settled in #118.
+Content for issue #105. Now lives as the `body` of each entry in
+`RED_FLAG_ITEMS` (`src/lib/recovery.js`). This file stays as the source the
+wording was drafted and reviewed in, and as the place the citations are kept in
+full — the app carries one short attribution line, not eleven URLs.
+
+**How it surfaces on the card is still open.** The content and the strings are
+in; nothing reads them yet.
 
 ## Rules these were written to
 
