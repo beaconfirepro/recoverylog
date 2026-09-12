@@ -6,6 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { isMaintenance } from "@/lib/scope";
 import { telHref } from "@/lib/phone";
 import TimeInput from "@/components/recovery/TimeInput";
+import HelpHint from "@/components/help/HelpHint";
 
 // How long a note sits unsent before it is written. Long enough that typing a
 // sentence is one write rather than forty, short enough that putting the phone
@@ -158,6 +159,15 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
       <div className="flex items-center justify-between mb-1 gap-2">
         <h2 className="font-heading text-sm uppercase tracking-wider flex items-center gap-1.5">
           <AlertTriangle className="w-4 h-4 text-destructive" /> Red flag check
+          <HelpHint label="Red flags">
+            <p>
+              Twelve things that most often mean call someone after this surgery. Your surgeons gave the list.
+            </p>
+            <p>
+              Answer them once a day. A sparkle means something you logged looks like a yes — tap either answer
+              to override it. The app only ever suggests yes, so it can never talk you out of a flag.
+            </p>
+          </HelpHint>
         </h2>
         <span className="text-xs font-bold text-muted-foreground shrink-0">
           {answered}/{RED_FLAG_ITEMS.length} answered

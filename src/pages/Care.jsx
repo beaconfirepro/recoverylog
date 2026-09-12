@@ -11,6 +11,7 @@ import { maskedName } from "@/lib/invite";
 import { dobDigest, formatJoinCode, generateJoinCode } from "@/lib/joinCode";
 import { sendInviteEmail } from "@/lib/inviteEmail";
 import Surgeries from "@/components/care/Surgeries";
+import HelpHint from "@/components/help/HelpHint";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
 
 // Set when a log is opened, so a member is asked which patient once a session
@@ -67,8 +68,18 @@ function Claim({ row, onDone, onCancel }) {
 
   return (
     <div className="border-2 rounded-xl bg-background p-3 space-y-3">
-      <p className="text-sm font-semibold break-words">
-        Enter the code the patient read out to you, and their date of birth.
+      <p className="text-sm font-semibold break-words flex items-center gap-1.5">
+        <span className="min-w-0">Enter the code the patient read out to you, and their date of birth.</span>
+        <HelpHint label="Why a code and a date of birth">
+          <p>
+            The email tells you the log exists. The code proves the patient meant you. Their date of birth
+            proves you are the person she meant to read it to.
+          </p>
+          <p>
+            The invitation email carries neither, so an invitation that reaches the wrong inbox opens nothing.
+            Case and the dash in the code do not matter.
+          </p>
+        </HelpHint>
       </p>
       <Field label="Join code">
         <input

@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient } from "@/lib/PatientContext";
 import Field from "@/components/Field";
+import HelpHint from "@/components/help/HelpHint";
 import { codeMatches, dobMatches } from "@/lib/joinCode";
 import { WRONG_ANSWER } from "@/pages/Care";
 
@@ -70,6 +71,20 @@ export default function ClaimAccess() {
 
   const joinCode = (
     <div className="space-y-3 min-w-0">
+      <div className="flex items-center gap-1.5">
+        <span className="nb-label">How you get in</span>
+        <HelpHint label="Why a code and a date of birth">
+          <p>
+            The email tells you the log exists. The code proves the patient meant you. Their date of birth
+            proves you are the person she meant to read it to.
+          </p>
+          <p>
+            The invitation email carries neither, so an invitation that reaches the wrong inbox opens nothing.
+            Case and the dash in the code do not matter.
+          </p>
+        </HelpHint>
+      </div>
+
       <Field label="Join code">
         <input
           type="text"

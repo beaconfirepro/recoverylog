@@ -1,0 +1,52 @@
+{
+  "name": "HelpDoc",
+  "type": "object",
+  "required": ["kind", "version", "title", "body"],
+  "properties": {
+    "kind": {
+      "description": "Which audience this answers for. A patient owns a log; a care team member reads one. They are kept apart because the answers differ and reading the wrong half is how someone concludes the app cannot do something it can.",
+      "enum": ["patient", "care_team"],
+      "type": "string"
+    },
+    "version": {
+      "description": "Version of this page, as a date. Unlike a LegalDoc version this is bookkeeping only — help is not consent, so changing it asks nobody to agree to anything.",
+      "type": "string"
+    },
+    "title": {
+      "description": "Heading shown in the help list and at the top of the page.",
+      "type": "string"
+    },
+    "summary": {
+      "description": "One line describing who this half is for, shown next to its title before it is opened.",
+      "type": "string"
+    },
+    "body": {
+      "description": "The page itself. Same plain-text format DocReader renders for the legal documents: a line in capitals ending in a colon is a section heading, a line ending in a question mark is a question, everything else is a paragraph.",
+      "type": "string"
+    },
+    "current": {
+      "default": false,
+      "description": "True on the one row per kind the app serves. Older versions stay for the record.",
+      "type": "boolean"
+    }
+  },
+  // Same shape as LegalDoc, and for the same reason: everyone signed in reads
+  // it, nobody but an admin writes it. Help that any account could rewrite, in
+  // a table every account reads, is a place to put something a frightened
+  // person will act on.
+  //
+  // The read rule is a tautology because it has to be. Rules must compare
+  // against a user template variable rather than a constant, so "anyone" is
+  // spelled as "created it, or did not".
+  "rls": {
+    "read": {
+      "$or": [
+        { "created_by_id": "{{user.id}}" },
+        { "created_by_id": { "$ne": "{{user.id}}" } }
+      ]
+    },
+    "create": { "user_condition": { "role": "admin" } },
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
+}

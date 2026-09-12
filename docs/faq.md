@@ -1,302 +1,44 @@
 # LipNode FAQ
 
-Content for an in-app help page. Two audiences, kept apart: a patient owns a
-log, a care team member reads one. Every answer below describes what the app
-does **today**, at the commit this file was written against. Where an answer
-depends on something not yet built, it says so rather than promising it.
+**The FAQ now lives in the app.** This file is a pointer, not a second copy.
 
-The join answers describe the two-factor join decided in #71: the six-character
-code and the patient's date of birth. Both screens now ask for both, and
-`linkPatient` checks both under the service role, so these answers match the app.
+The content is seeded into the `HelpDoc` table from
+[`base44/seed/help-docs.json`](../base44/seed/help-docs.json), split into two
+rows that are deliberately kept apart:
 
-Suggested placement: **You → Help & FAQ**, with deep links into the two
-sections. Link the join-code questions from the join-code screen, and the
-red-flag questions from the red flag check.
+| `kind` | Title | For |
+| --- | --- | --- |
+| `patient` | For patients | Someone who owns a log |
+| `care_team` | For care team members | Someone reading one |
 
-Tone rules used here: second person, plain words, no hedging, no reassurance
-the app cannot deliver. A question is phrased the way someone would actually
-ask it, not the way the feature is named.
+It is read at **You → Help & FAQ** (`src/components/help/HelpSection.jsx`,
+through `src/lib/help.js`) and rendered by the same `DocReader` as the legal
+documents. Two question-mark hints link into it from the screens that actually
+raise the questions: the join-code forms and the red flag card.
 
----
+## Why it is a seeded record rather than this file
 
-## For patients
+Help goes stale every time the app changes underneath it — more often than the
+legal documents do. A record can be corrected without a deploy. A markdown file
+in the repo can only be corrected by shipping.
 
-### Getting started
+Unlike a `LegalDoc` this is not consent: nothing is version-gated, nothing is
+recorded against an account, and a failed read hides the help rather than
+stopping the app. Somebody not finding an answer is a bad afternoon; the consent
+gate failing open is a different kind of problem.
 
-**What is LipNode?**
-A daily logbook for your own body. You record what goes in, what comes out,
-how you feel, what you measure, and what you want to ask your surgeon. The app
-totals it up, watches for a short list of warning signs, and turns any stretch
-of days into a PDF you can hand over at an appointment.
+## Editing it
 
-**Is this my medical record?**
-No. Nothing you write here reaches your surgeon, your clinic, or your chart.
-Your surgeon sees it only if you show them or hand them the PDF. It is your
-own record of your own days.
+Edit `base44/seed/help-docs.json` and re-seed. The body is plain text in
+`DocReader`'s format:
 
-**Do I need to have had surgery to use it?**
-No. Pick a maintenance log instead and your days run by calendar date with no
-surgery day to count from. You can add a surgery later and keep the
-maintenance log alongside it.
+- a line in capitals ending in a colon is a section heading
+- a short line on its own ending in a question mark is a question
+- everything else is a paragraph
 
-**What is "day zero"?**
-The date of your surgery. Once you have entered it, every day is labelled by
-its distance from that date, so "Post-op day 9" reads the same to you and to
-your surgeon. A maintenance log has no day zero and uses the calendar date.
+Keep every question to one short line, or it renders as body text.
 
-**Can I track two surgeries at once?**
-Yes. Each surgery keeps its own days, its own trackers and its own goals. A
-chip row at the top of Today, History and Trends switches between them, or
-shows all of them on one timeline.
+## Still open
 
-### Logging your days
-
-**How do I log something?**
-Open Today and tap a tile. Each tile opens one short form. The check-in is the
-wide button at the top: it asks one measure per screen so a bad morning is
-still a handful of taps.
-
-**Can I change which tiles I see?**
-Yes. Setup → What to track turns each tracker on or off, per surgery. To
-reorder the tiles themselves, press and hold any tile on Today until the grid
-goes dashed, then drag them, or use the X to take one off.
-
-**Can I log something for yesterday?**
-Open the day from History and log into it there. A day you never touched does
-not currently appear in History, so there is no way to open it — if you miss a
-day entirely, the day stays empty. *(Known gap. A date picker is the fix.)*
-
-**Can I fix or delete an entry?**
-Tap the entry on the day's timeline. The form reopens with what you saved, and
-Delete removes it. Deleting is immediate and cannot be undone.
-
-**What does turning a tracker off do to what I already logged?**
-Nothing. It hides the tile and stops it appearing on the day card. Everything
-already recorded stays, and comes back if you turn the tracker on again.
-
-**Why does the check-in ask at set times?**
-Because a score is only comparable to another score taken at the same point in
-the day. Setup → Check-in is where you name the times; the form pre-selects
-whichever one has most recently passed.
-
-**What are goals for?**
-A goal turns a number into a fraction. "46 oz" tells you less than "46 of 64
-oz", so a tracker with a goal gets a bar on Day totals. Leave a goal blank and
-that tracker just reports the number. Goals are set per surgery in Setup.
-
-### Red flags
-
-**What is the red flag check?**
-Twelve questions about the things that most often mean "call someone" after
-surgery. You answer them once a day. Your answers, the time, whether you called,
-and what you did about it all land in the PDF.
-
-**Why is a question already answered when I open it?**
-Because something you logged that day looks like a yes. A question answered
-that way is marked with a sparkle and a line saying which entry it came from.
-It is a suggestion, not a verdict — tap either answer and it becomes yours.
-The app only ever suggests "yes"; it never answers "no" for you.
-
-**What should I do if I answer yes?**
-Use your surgeon's instructions first — they know your operation. As a general
-rule: **if you cannot breathe, have chest pain, are confused or cannot be
-woken, that is emergency services, not the office.** For anything else, call
-the number on your discharge papers. Write down in the app what you did, so
-the next person who reads the log knows.
-
-**Does the app call anyone for me?**
-No. It never contacts your surgeon, your clinic, or emergency services. It
-records what you decided.
-
-**What fever number does it use?**
-Whatever you put in the "Call if fever over" field on your surgery or
-maintenance log. If you leave it blank the app falls back to 101.5 °F, which is
-the line most surgeons give — but it is not yours until you enter yours. The
-red flag question names whichever number is in force, so you always know what
-you are answering against.
-
-### Your care team
-
-**Who can see my log?**
-You, and only the people you add yourself. Nobody else.
-
-**How do I add someone?**
-Care → Care team → **+**. Enter their email and name. They get an invitation
-email, and you get a six-character code. Your own date of birth has to be on
-your account, because it is the second thing they need.
-
-**What does someone need to open my log?**
-Two things: the six-character code, and your date of birth. Neither one works
-without the other.
-
-**Why is the code not in the email?**
-Because the email alone would be enough to open your log. Having their address
-is what identifies them; the code and your date of birth are what let them in.
-If any of that travelled in the same message, one mistyped address would hand
-over everything. Read the code out, text it, or write it down, and tell them
-your date of birth the same way.
-
-**Where do I find the code again?**
-Care → Care team. Anyone who has not opened the log yet shows their code on
-their row, so you do not have to go looking. Tap the row to send the invitation
-email again. Your date of birth is the other half, and it is on the You screen.
-
-**What can a care team member do?**
-Read. All of it — every entry, every day, every red flag, your measurements and
-your photos. They cannot add, edit or delete anything, and they cannot add
-other people.
-
-**Can I give someone write access?**
-Not today. Every care team member is read-only.
-
-**How do I remove someone?**
-Care → Care team, tap their row, Remove. Their access ends immediately. You can
-add them again later, which issues a new code.
-
-**They say it doesn't work.**
-Codes are not case-sensitive and the dash is optional, so `7k2qm4` and `7K2-QM4`
-are the same code. Check they are typing your date of birth and not their own.
-The app does not say which of the two was wrong, on purpose: telling someone
-guessing which half to keep working on is telling them too much. If it still
-fails, remove them and add them again — an invitation created before codes
-existed has none and cannot be opened.
-
-### Sharing and export
-
-**How do I show my surgeon?**
-Setup → Download a PDF. Pick a day or a range, and it builds on your phone. It
-carries the surgery details, your goals, the care team, garments, med groups,
-trends, red flags and your questions.
-
-**Where does the PDF go?**
-Wherever you send it. Once it leaves the app it is an ordinary file and the app
-has no say in where it ends up.
-
-**Why is there a limit on the date range?**
-Because past a point the PDF would have to drop days to fit, and a record meant
-for a surgeon that silently misses days is worse than one you have to build in
-two halves.
-
-### Your account
-
-**Can I use this on more than one device?**
-Yes. Your log lives on your account, so signing in anywhere shows the same
-days. Your appearance choice and the tile order are per device.
-
-**Can I install it like an app?**
-On iPhone: open it in Safari, tap the Share button, then **Add to Home
-Screen**. It then opens full-screen with no browser bar. Safari never offers
-this by itself, so you have to go and get it.
-
-**Does it work without signal?**
-Not reliably. Entries save to your account as you make them, so a drop-out can
-lose whatever you were saving. If you are somewhere with bad signal, check the
-entry appeared on the timeline before moving on.
-
-**How do I delete everything?**
-You → Delete my account. It asks you to type your email address, then removes
-your login and the whole log: every entry, every day, every surgery, your
-measurements, garments, med groups and your care team's access. Permanent, no
-undo.
-
-**Who do I contact about a problem?**
-The privacy policy carries the address to write to. *(There is no route from
-inside the app yet. HELP-3 is a contact form that sends the message for you,
-so no address has to be listed here.)*
-
----
-
-## For care team members
-
-### Getting in
-
-**Someone added me. What do I do?**
-Create an account with the email address they used, sign in, and enter two
-things: the six-character code they read out to you, and their date of birth.
-That opens their log.
-
-**Why do I need a code and their date of birth?**
-The email tells you the log exists, and holding that address is what identifies
-you. The code proves the patient meant you. Their date of birth proves you are
-the person she read the code out to. Neither is enough alone — a date of birth
-is not a secret, and a code can be overheard or forwarded — and the email
-carries neither, so an invitation that reaches the wrong inbox opens nothing.
-
-**Where do I get the code and the date?**
-Both from the patient, out loud or by text. Not from the app, not from the
-email, and nobody else can look either of them up for you.
-
-**It isn't working.**
-Case and the dash don't matter in the code, and the date has to be the
-patient's own date of birth, not yours. You will not be told which of the two
-was wrong. If it still fails, ask them to check the code on their Care page —
-and if the row shows no code at all, ask them to remove you and add you
-again.
-
-**I signed in and it says I'm not on a log.**
-Nobody has added you yet, or they used a different email address. Only the
-patient can add you; there is no way to request access from inside the app. Ask
-them to add the exact address you signed in with.
-
-**Can I be on more than one person's care team?**
-Yes. You → Logs you help with lists every one you have opened. One is open at
-a time, and the top of the screen always names whose log you are reading.
-
-### What you can do
-
-**What can I see?**
-Everything in that patient's log: every entry, the timeline, day totals, the
-red flag check and what they wrote about it, their questions for the surgeon,
-their measurements, and any photos they attached.
-
-**Can I add or change anything?**
-No. Every care team member is read-only. You cannot log an entry, answer a red
-flag, or edit anything the patient wrote.
-
-**Can I log on their behalf when they're asleep?**
-Not in the app. Write it down and have them enter it, or have them hand you
-their own signed-in phone.
-
-**Can I add other people to the team?**
-No. Only the patient can.
-
-**Can I export the PDF?**
-Yes, from Setup, for the log you have open. Treat it as their health
-information: it is theirs, not yours, and where it goes after you export it is
-on you.
-
-### Reading a log well
-
-**Where should I start?**
-Today, then Day totals, then the red flag check. Totals say whether the day
-went the way it should; the red flag check says whether anything needs a phone
-call.
-
-**What do the flag colours mean?**
-On Day totals, an orange flag was raised by the patient's own entries; a red
-flag was raised by the patient answering the question herself. Both count.
-
-**What does "Post-op day 9" mean?**
-Nine days since the surgery date on that record. A maintenance log has no
-surgery date and shows the calendar date instead.
-
-**Their log looks worrying. What do I do?**
-Talk to them, and get them to call their surgeon's office — the number is on
-the surgery record in Care. If it looks like an emergency, call emergency
-services. The app notifies nobody; if you saw it, you are the notification.
-
-### Your account
-
-**Am I in their log as a person?**
-Yes. Your name and email are on their care team list, along with whether you
-have opened it. They can remove you at any time, which ends your access
-immediately.
-
-**How do I step away?**
-You → Logs you help with → Leave this care team. That ends your access to that
-log. It does not touch anything the patient recorded, and they can add you
-again later.
-
-**What happens if I delete my account?**
-Your login goes, and you come off every care team you are on. The patients'
-logs are untouched.
+`HelpHint` links to the You screen rather than deep-linking to the relevant
+answer — see #118. The Contact us form the patient page mentions is #119.
