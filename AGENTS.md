@@ -73,6 +73,43 @@ before it: RLS lets the invited account read its own row, `join_code` included.
 Making it real needs the comparison done in a backend function under the service
 role, which is the same API key that blocks #40 and #48.
 
+## Backend functions, and the one key that blocks them
+
+`base44/functions/*/entry.ts` is **not deployed by committing it**. Deploying
+needs `npx base44 functions deploy`, which needs either `npx base44 login`
+(interactive, so no agent can do it) or `BASE44_API_KEY` in the environment.
+
+Two functions are written, committed, and have never run:
+
+| Function | What it closes |
+| --- | --- |
+| `deleteAccount` | Delete my account. Purges six tables scoped to the patient group, removes the care team's rows, deletes the login last so a failure leaves an empty account rather than orphaned medical records. |
+| `linkPatient` | Issues #39 and #40. Decides which log an account can see, under the service role: starting a log, opening an invitation with the join code, and switching between logs already opened. |
+
+### Why `linkPatient` matters
+
+Everything downstream rests on `patient_id`, and today the browser writes it
+with `updateMe`. So does `write_patient_id`, which is the only thing making a
+care team read-only. Both are editable by anyone with a console, and the join
+code that guards the first is compared in the browser too. Read-only is an
+honest default that stops accidents; it is not a boundary until this runs.
+
+### The day the key lands
+
+1. `export BASE44_API_KEY=...`
+2. `npx base44 functions deploy`
+3. Three edits, all replacing an `updateMe` with a function call:
+   - `src/components/ClaimAccess.jsx` → `startLog` becomes
+     `base44.functions.invoke("linkPatient", { action: "start", first_name, last_name, dob })`,
+     and `claim` becomes `{ action: "claim", join_code: code }`.
+   - `src/lib/PatientContext.jsx` → `claimMembership` calls
+     `{ action: "claim", join_code: code }`; `switchPatient` calls
+     `{ action: "switch", patient_id: id }`; the `updateMe` in `load()` goes.
+   - `src/pages/Care.jsx` needs no change: it already goes through
+     `claimMembership` and `switchPatient`.
+4. Then, and only then, lock `patient_id` and `write_patient_id` on `User` so
+   the browser cannot write them. Doing this before step 3 locks everyone out.
+
 ## Shipping (read this before saying anything is done)
 
 **Never call `edit_base44_app`.** It runs the Base44 builder agent and spends
