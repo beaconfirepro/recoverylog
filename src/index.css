@@ -246,4 +246,10 @@
     0%, 100% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0); }
     50% { box-shadow: 0 0 0 4px hsl(var(--accent)); }
   }
+  /* A light gray screen over everything except the highlighted heading. The
+     backdrop is a transparent div sized to the heading (plus a little room for
+     the ring); its huge box-shadow washes the rest of the screen gray. */
+  .orient-backdrop {
+    box-shadow: 0 0 0 100vmax hsl(0 0% 55% / 0.7);
+  }
 }
