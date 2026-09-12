@@ -28,6 +28,7 @@ export const ORIENTATION_ITEMS = [
     body: "The check-in rates pain, swelling, mobility, mood, nausea and energy on one swipe screen. It works best at the same times each day.",
     kind: "nav",
     target: "/profile",
+    highlight: "checkins",
     cta: "Set up my check-ins"
   },
   {
@@ -37,6 +38,7 @@ export const ORIENTATION_ITEMS = [
     body: "Turn trackers on or off, choose what shows on the mini log, and set goals for water, nutrients, exercise and bodywork. Come back and tick this done once you have.",
     kind: "nav",
     target: "/profile",
+    highlight: "trackers",
     cta: "Customize trackers"
   },
   {
@@ -46,6 +48,7 @@ export const ORIENTATION_ITEMS = [
     body: "A dated log of your measurements is kept in setup.",
     kind: "nav",
     target: "/profile",
+    highlight: "measurements",
     cta: "Set up measurements"
   },
   {
@@ -53,6 +56,7 @@ export const ORIENTATION_ITEMS = [
     n: 5,
     question: "Are you wearing compression?",
     kind: "yesno",
+    highlight: "garments",
     yes: { target: "/profile", cta: "Add my garments" }
   },
   {
@@ -60,6 +64,7 @@ export const ORIENTATION_ITEMS = [
     n: 6,
     question: "Do you take regular meds?",
     kind: "yesno",
+    highlight: "meds",
     yes: { target: "/profile", cta: "Add my med groups" }
   },
   {
@@ -69,6 +74,7 @@ export const ORIENTATION_ITEMS = [
     body: "They can view or update your log based on the permissions you give, and you can remove them at any time.",
     kind: "nav",
     target: "/care",
+    highlight: "careteam",
     cta: "Add a care team member"
   },
   {
@@ -77,6 +83,7 @@ export const ORIENTATION_ITEMS = [
     question: "Log your first check-in.",
     kind: "nav",
     target: "/",
+    highlight: "firstcheckin",
     cta: "Open today"
   },
   {
@@ -86,6 +93,7 @@ export const ORIENTATION_ITEMS = [
     body: "A day or a range, ready for a consultation.",
     kind: "nav",
     target: "/profile",
+    highlight: "pdf",
     cta: "Open the PDF report"
   },
   {
@@ -94,6 +102,7 @@ export const ORIENTATION_ITEMS = [
     question: "Understand the red flags and customize your home screen.",
     kind: "nav",
     target: "/profile",
+    highlight: "trackers",
     cta: "Open setup"
   }
 ];

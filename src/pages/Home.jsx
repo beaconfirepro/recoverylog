@@ -8,6 +8,7 @@ import { usePatient } from "@/lib/PatientContext";
 import { loadOrientation, saveOrientation, allDone } from "@/lib/orientation";
 import OrientationChecklist from "@/components/orientation/OrientationChecklist";
 import OrientationFab from "@/components/orientation/OrientationFab";
+import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
 
 export default function Home() {
   const { isOwner, patientId, surgeries } = usePatient();
@@ -27,6 +28,9 @@ export default function Home() {
   // openedByFab is a transient re-open — not persisted — so a surgery existing
   // still collapses the checklist to the button until the user taps it.
   const [openedByFab, setOpenedByFab] = useState(false);
+
+  // Pulses the section a checklist step points at when the step lands here.
+  useOrientationHighlight();
 
   // A maintenance record is a Surgery row, so "has a surgery" is not the same
   // as "has a real surgery". The checklist stays front-and-centre until a real
@@ -56,13 +60,14 @@ export default function Home() {
       return;
     }
     if (item.kind === "yesno" && choice === "yes") {
-      navigate(item.yes.target);
+      navigate(item.yes.target, { state: item.highlight ? { orient: item.highlight } : null });
       setState({ ...state, items: { ...state.items, [item.key]: true } });
       return;
     }
     if (item.target) {
-      navigate(item.target);
+      navigate(item.target, { state: item.highlight ? { orient: item.highlight } : null });
       setState({ ...state, items: { ...state.items, [item.key]: true } });
+      setOpenedByFab(false);
     }
   };
 

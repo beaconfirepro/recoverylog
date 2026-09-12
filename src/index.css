@@ -230,4 +230,17 @@
   .nb-label {
     @apply block font-heading text-xs uppercase tracking-wide;
   }
+  /* A ~5s pulse used by the orientation checklist to point at the section a
+     step is about. The ring uses the theme ring colour so it reads in light
+     and dark; the card's own 4px ink shadow is kept in each keyframe so the
+     brutalist edge does not flicker off while it runs. */
+  .orient-pulse {
+    animation: orient-pulse 1s ease-in-out 5;
+    position: relative;
+    z-index: 30;
+  }
+  @keyframes orient-pulse {
+    0%, 100% { box-shadow: 4px 4px 0 hsl(var(--foreground)); }
+    50% { box-shadow: 0 0 0 8px hsl(var(--ring) / 0.65), 4px 4px 0 hsl(var(--foreground)); }
+  }
 }

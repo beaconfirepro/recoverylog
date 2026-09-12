@@ -11,6 +11,7 @@ import { maskedName } from "@/lib/invite";
 import { formatJoinCode, generateJoinCode } from "@/lib/joinCode";
 import { sendInviteEmail } from "@/lib/inviteEmail";
 import Surgeries from "@/components/care/Surgeries";
+import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
 
 // Set when a log is opened, so a member is asked which patient once a session
 // rather than on every navigation. sessionStorage rather than local: a new
@@ -279,6 +280,7 @@ function PendingInvite({ member, patient }) {
 // this is the only screen that shows more than one.
 export default function Care() {
   const navigate = useNavigate();
+  useOrientationHighlight();
   const { user } = useAuth();
   const { me, patient, patientId, groups, isOwner, switchPatient } = usePatient();
   const { team, reload: loadTeam } = useCareTeam();
@@ -376,7 +378,7 @@ export default function Care() {
 
       {/* Where the care team is managed. It is not in Setup: Setup is how the
           log is configured, and this is who can see it. */}
-      <div className="nb-card overflow-hidden">
+      <div className="nb-card overflow-hidden" data-orient="careteam">
         <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
           <Users className="w-5 h-5 shrink-0" />
           <div className="flex-1 min-w-0">

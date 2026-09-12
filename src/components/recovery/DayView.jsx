@@ -181,7 +181,7 @@ export default function DayView({ date, startCollapsed }) {
         onPickRecord={(id) => setScope({ all: false, ids: [id] })}
       />
 
-      <div>
+      <div data-orient="firstcheckin">
         <button
           type="button"
           onClick={() => setAddOpen((o) => !o)}
