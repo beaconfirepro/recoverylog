@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  CHECKIN_MEASURES,
-  DEFAULT_CHECKIN_SLOTS,
-  MEASUREMENTS,
-  checkinConfig,
-  checkinSlots,
-  defaultSlot,
-  measurementSpots
+  CHECKIN_MEASURES, DEFAULT_CHECKIN_SLOTS, FEVER_DEFAULT, MEASUREMENTS, RED_FLAG_ITEMS, checkinConfig, checkinSlots, defaultSlot, flagLabel, measurementSpots
 } from "@/lib/recovery";
 import { BODY_PARTS, MARKS } from "@/lib/bodyMap";
 import { trackedTypes } from "@/lib/PatientContext";
@@ -146,5 +140,39 @@ describe("the body map", () => {
 
   it("still names both calves, which the calf red flag matches on", () => {
     expect(BODY_PARTS.filter((p) => p.endsWith("calf"))).toHaveLength(2);
+  });
+});
+
+describe("flagLabel", () => {
+  const fever = RED_FLAG_ITEMS.find((i) => i.key === "fever");
+  const calf = RED_FLAG_ITEMS.find((i) => i.key === "calf");
+
+  it("names the number the record actually carries", () => {
+    expect(flagLabel(fever, { fever_threshold: 100.4 })).toBe("Fever over 100.4 °F");
+    expect(flagLabel(fever, { fever_threshold: 102 })).toBe("Fever over 102 °F");
+  });
+
+  it("falls back to the number the check measures against", () => {
+    // The failure that matters: a card reading "Fever over {n}" or "Fever over
+    // the surgeon's number" asks a question a patient cannot answer.
+    expect(flagLabel(fever, null)).toBe(`Fever over ${FEVER_DEFAULT} °F`);
+    expect(flagLabel(fever, {})).toBe(`Fever over ${FEVER_DEFAULT} °F`);
+    expect(flagLabel(fever, { fever_threshold: null })).toBe(`Fever over ${FEVER_DEFAULT} °F`);
+  });
+
+  it("never leaves a placeholder on screen", () => {
+    for (const item of RED_FLAG_ITEMS) {
+      expect(flagLabel(item, null)).not.toContain("{n}");
+      expect(flagLabel(item, { fever_threshold: 99 })).not.toContain("{n}");
+    }
+  });
+
+  it("leaves the eleven that do not vary alone", () => {
+    expect(flagLabel(calf, { fever_threshold: 102 })).toBe(calf.label);
+  });
+
+  it("copes with nothing", () => {
+    expect(flagLabel(null, null)).toBe("");
+    expect(flagLabel(undefined, {})).toBe("");
   });
 });

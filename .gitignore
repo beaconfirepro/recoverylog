@@ -30,3 +30,6 @@ dist-ssr
 .env
 .vite
 base44/.app.jsonc
+
+# Worktrees a subagent works in. Never part of the tree they are working on.
+.claude/worktrees/

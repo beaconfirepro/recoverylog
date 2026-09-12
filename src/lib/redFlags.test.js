@@ -20,9 +20,9 @@ describe("fever", () => {
       .toBeUndefined();
   });
 
-  it("falls back to 100.4 when the surgery has no number", () => {
-    expect(suggestFlags([entry("temp", { temp: 100.4 })], null, null, DAY).fever?.answer).toBe("yes");
-    expect(suggestFlags([entry("temp", { temp: 100.3 })], null, null, DAY).fever).toBeUndefined();
+  it("falls back to 101.5 when the surgery has no number", () => {
+    expect(suggestFlags([entry("temp", { temp: 101.5 })], null, null, DAY).fever?.answer).toBe("yes");
+    expect(suggestFlags([entry("temp", { temp: 101.4 })], null, null, DAY).fever).toBeUndefined();
   });
 });
 

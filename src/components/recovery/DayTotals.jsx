@@ -1,18 +1,27 @@
 import React from "react";
-import { RED_FLAG_ITEMS, goalFor, nutrientGoals } from "@/lib/recovery";
+import { RED_FLAG_ITEMS, flagLabel, goalFor, nutrientGoals } from "@/lib/recovery";
 
-// Raised by the day's own entries, or raised by her. Drawn rather than set as
-// an emoji because there is no deep-orange flag in the emoji set, and the
-// colour is the whole point: it says who noticed.
+// Raised by the day's own entries, or raised by her.
+//
+// This used to be two colours and nothing else, which is a distinction a good
+// number of people cannot make at 20px — and the fallback was a <title>, which
+// is a hover tooltip, and there is no hover on a phone. So the two also differ
+// in shape: the swallowtail is the app reading her entries, the straight
+// pennant is her own answer. Both survive greyscale, and the key underneath
+// makes them learnable rather than guessable.
 const AUTO = "#E8590C";
 const MINE = "#E01E37";
 
-function Flag({ color, title }) {
+function Flag({ mine, title, className = "w-5 h-5" }) {
   return (
-    <svg viewBox="0 0 24 24" className="w-5 h-5" role="img" aria-label={title}>
+    <svg viewBox="0 0 24 24" className={className} role="img" aria-label={title}>
       <title>{title}</title>
       <path d="M5 3v18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" fill="none" />
-      <path d="M6.5 4h11l-2.5 4 2.5 4h-11z" fill={color} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      {mine ? (
+        <path d="M6.5 4h11v8h-11z" fill={MINE} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      ) : (
+        <path d="M6.5 4h11l-2.5 4 2.5 4h-11z" fill={AUTO} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      )}
     </svg>
   );
 }
@@ -50,8 +59,8 @@ export default function DayTotals({ totals, day, surgery }) {
           {raised.map((f) => (
             <Flag
               key={f.key}
-              color={sources[f.key] === "auto" ? AUTO : MINE}
-              title={`${f.label} — ${sources[f.key] === "auto" ? "raised by your entries" : "raised by you"}`}
+              mine={sources[f.key] !== "auto"}
+              title={`${flagLabel(f, surgery)} — ${sources[f.key] === "auto" ? "raised by your entries" : "raised by you"}`}
             />
           ))}
         </span>
@@ -71,7 +80,7 @@ export default function DayTotals({ totals, day, surgery }) {
               <span className="font-heading text-sm">{r.value}</span>
             </div>
             {r.needsGoal && (
-              <p className="text-[11px] font-semibold text-muted-foreground">Set a goal in Profile.</p>
+              <p className="text-[11px] font-semibold text-muted-foreground">Set a goal in Setup.</p>
             )}
             {!!r.frac && (
               <div className="h-3 border-2 rounded-full mt-1 overflow-hidden bg-muted">
@@ -84,6 +93,18 @@ export default function DayTotals({ totals, day, surgery }) {
           </div>
         ))}
       </div>
+
+      {/* Two shapes need naming once, or they are two shapes. */}
+      {raised.length > 0 && (
+        <div className="mt-3 pt-2 border-t-2 flex flex-wrap gap-x-4 gap-y-1">
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+            <Flag mine={false} className="w-4 h-4" title="" /> raised by your entries
+          </span>
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+            <Flag mine className="w-4 h-4" title="" /> raised by you
+          </span>
+        </div>
+      )}
     </div>
   );
 }

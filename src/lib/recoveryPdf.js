@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import { dateRange, fullDate, postOpLabel } from "@/lib/dates";
-import { TYPES, RED_FLAG_ITEMS } from "@/lib/recovery";
+import { TYPES, RED_FLAG_ITEMS, FEVER_DEFAULT, flagLabel } from "@/lib/recovery";
 import { computeTotals, sortEntries } from "@/lib/daySummary";
 
 // The app's palette. The page itself stays white so this prints without
@@ -275,7 +275,10 @@ export function buildRecoveryPdf({
       kv("Procedure", sx.procedure);
       kv("Surgeon", sx.surgeon);
       kv("Office", sx.office_phone);
-      kv("Call if fever over", sx.fever_threshold != null ? `${sx.fever_threshold} F` : null);
+      // The fallback is what the red flag check actually measures against when
+      // the record carries no number, so the PDF states it rather than leaving
+      // the row out and letting a surgeon assume nothing is set.
+      kv("Call if fever over", `${sx.fever_threshold ?? FEVER_DEFAULT} F`);
       kv("Notes", sx.notes);
 
       const goals = sx.goals || {};
@@ -488,7 +491,11 @@ export function buildRecoveryPdf({
       } else {
         yesKeys.forEach((k) => {
           const det = (day.red_flag_details || {})[k] || {};
-          const label = RED_FLAG_ITEMS.find((i) => i.key === k)?.label || k;
+          // Through flagLabel, not off .label: the fever line carries a
+          // placeholder that only the record can fill in, and a surgeon
+          // reading "Fever over {n}" in a PDF learns nothing.
+          const item = RED_FLAG_ITEMS.find((i) => i.key === k);
+          const label = item ? flagLabel(item, sx) : k;
           const line = `${label}${det.time ? ` at ${det.time}` : ""}${det.office_called ? " · office called" : ""}`;
           doc.setFont("helvetica", "bold");
           doc.setFontSize(9);
