@@ -63,7 +63,7 @@ export default function Surgeries() {
         <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
           <Scissors className="w-5 h-5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <div className="font-display text-xl uppercase leading-tight break-words">Surgeries</div>
+            <div className="font-display text-xl uppercase leading-tight break-words">Logs</div>
             <div className="text-sm font-semibold break-words">Each keeps its own days.</div>
           </div>
           {canWrite && (
@@ -79,9 +79,13 @@ export default function Surgeries() {
         </div>
 
         <div className="p-4 space-y-2">
+          {/* A maintenance patient has no surgery date for her days to count
+              from, and telling her they will is how the old empty state read to
+              everyone who is not having an operation. */}
           {surgeries.length === 0 && (
             <p className="text-sm text-muted-foreground break-words">
-              No surgeries yet. Tap + to add one and your days start counting from its date.
+              Nothing here yet. Tap + to add a surgery and your days count from its date, or start a
+              maintenance log below and they run by calendar date.
             </p>
           )}
           {activeSurgeries.map((s) => (
