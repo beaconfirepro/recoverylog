@@ -48,6 +48,13 @@ Logic worth testing belongs in `src/lib`, not inside a component. Two modules
 were pulled out for exactly that reason (`clock.js` from `TimeInput`,
 `invite.js` from `Care`), and one of them turned out to have a real hole in it.
 
+The backend functions are tested too, without deploying them.
+`base44/functions/__tests__/fakeBase44.js` stands a small in-memory backend in
+place of the SDK (vitest aliases `npm:@base44/sdk` to it), so a function can be
+run here. It honours the page size `filter()` is asked for and throws on
+deleting a row that is not there, because both of those are what the real one
+does and both have already caught a bug.
+
 `.github/workflows/checks.yml` runs lint, tests and the build on every pull
 request.
 
