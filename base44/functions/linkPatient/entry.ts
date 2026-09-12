@@ -3,15 +3,22 @@ import { createClientFromRequest } from "npm:@base44/sdk";
 // Which log an account can see is decided here, under the service role, and
 // nowhere else.
 //
-// Two things set it: starting your own log, and opening an invitation with the
-// join code the patient read out. Both used to happen in the browser, which
-// meant the tenancy key and the credential that guards it were both writable
-// by whoever held a console. Everything downstream rests on patient_id, so
-// that was the whole security model in one editable field.
+// Two things set it: starting your own log, and opening an invitation. Both
+// used to happen in the browser, which meant the tenancy key and the
+// credentials that guard it were all writable by whoever held a console.
+// Everything downstream rests on patient_id, so that was the whole security
+// model in one editable field.
 //
-// Doing it here closes both. The join code is compared against a row the
-// caller cannot read through this path, and patient_id is written by the
-// service role rather than by updateMe.
+// Doing it here closes it. Both factors are compared against rows the caller
+// cannot read through this path, and patient_id is written by the service role
+// rather than by updateMe.
+//
+// An invitation takes two things: the six-character code the patient reads out,
+// and the patient's date of birth. The browser checks the date against a
+// code-salted digest, because an invited account can read its own row and a
+// readable date would defeat the point of asking for it. Here there is no such
+// constraint: the service role reads the patient's own row, so this compares
+// the real date and the digest is never consulted.
 
 const LENGTH = 6;
 
@@ -24,6 +31,19 @@ const codesMatch = (stored: string, typed: string) => {
   let diff = 0;
   for (let i = 0; i < LENGTH; i += 1) diff |= stored.charCodeAt(i) ^ typed.charCodeAt(i);
   return diff === 0;
+};
+
+// Both sides come from a date input, so they are already YYYY-MM-DD; the slice
+// is for a stored value that picked up a time component somewhere.
+const asDate = (v: unknown) => String(v ?? "").trim().slice(0, 10);
+
+const datesMatch = (stored: unknown, typed: unknown) => {
+  const a = asDate(stored);
+  const b = asDate(typed);
+  // A patient row with no date of birth must not be openable by typing
+  // nothing. She adds one before she can invite anybody.
+  if (a.length !== 10) return false;
+  return a === b;
 };
 
 export default async function (req: Request): Promise<Response> {
@@ -68,10 +88,28 @@ export default async function (req: Request): Promise<Response> {
         (r: { kind?: string; join_code?: string; patient_id?: string }) =>
           r.kind === "team_member" && r.patient_id && codesMatch(normalize(r.join_code), typed)
       );
+
+      // The second factor, against the patient's own row rather than against
+      // anything on the invitation. An invitation written before the date was
+      // asked for still opens on the code alone: refusing those outright would
+      // lock out a care team that is already helping.
+      let dobOk = false;
+      if (invite) {
+        if (!invite.dob_check) {
+          dobOk = true;
+        } else {
+          const patient = await admin.entities.AppUser.get(invite.patient_id);
+          dobOk = datesMatch(patient?.dob, dob);
+        }
+      }
+
       // Deliberately the same message whether the invitation is missing, has no
-      // code, or the code is wrong. Telling them which would say whether an
-      // invitation exists for an address.
-      if (!invite) return Response.json({ error: "That code does not match an invitation." }, { status: 403 });
+      // code, the code is wrong, or the date is wrong. Telling them which would
+      // say whether an invitation exists for an address — and telling them the
+      // code was right turns two factors back into one.
+      if (!invite || !dobOk) {
+        return Response.json({ error: "That does not match an invitation." }, { status: 403 });
+      }
 
       if (!invite.claimed_at) {
         await admin.entities.AppUser.update(invite.id, { claimed_at: new Date().toISOString() });

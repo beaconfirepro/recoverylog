@@ -59,7 +59,10 @@ describe("claiming an invitation", () => {
   it("refuses a wrong code and links nothing", async () => {
     const [status, out] = await call({ action: "claim", join_code: "7K2QM5" });
     expect(status).toBe(403);
-    expect(out.error).toBe("That code does not match an invitation.");
+    // No longer names the factor: the date of birth is the second one,
+    // and saying "code" would tell a holder of a forwarded code that the
+    // code was the part that worked.
+    expect(out.error).toBe("That does not match an invitation.");
     expect(login("u_jane").patient_id).toBeUndefined();
   });
 
@@ -165,5 +168,66 @@ describe("the edges", () => {
     setBackend({ me: JANE(), tables: world() });
     expect((await call({ action: "grant" }))[0]).toBe(400);
     expect((await call({}))[0]).toBe(400);
+  });
+});
+
+// An invitation issued since the date of birth became the second factor
+// carries a dob_check. This function never consults that digest — it reads the
+// patient's own row under the service role and compares the real date — but
+// the flag is what tells it there is a second factor to check at all.
+describe("the date of birth factor", () => {
+  const twoFactor = () => {
+    const w = world();
+    w.AppUser.find((r) => r.id === "p_deb").dob = "1974-03-09";
+    w.AppUser.find((r) => r.id === "m_deb").dob_check = "any-non-empty-digest";
+    return w;
+  };
+
+  beforeEach(() => setBackend({ me: JANE(), tables: twoFactor() }));
+
+  it("opens the log when both factors are right", async () => {
+    const [status, out] = await call({ action: "claim", join_code: "7K2QM4", dob: "1974-03-09" });
+    expect(status).toBe(200);
+    expect(out.patient_id).toBe("p_deb");
+  });
+
+  it("refuses the right code with the wrong date", async () => {
+    // The failure that matters: a forwarded code must not be enough.
+    expect((await call({ action: "claim", join_code: "7K2QM4", dob: "1974-03-08" }))[0]).toBe(403);
+    expect((await call({ action: "claim", join_code: "7K2QM4", dob: "1975-03-09" }))[0]).toBe(403);
+  });
+
+  it("refuses the right code with no date at all", async () => {
+    expect((await call({ action: "claim", join_code: "7K2QM4" }))[0]).toBe(403);
+    expect((await call({ action: "claim", join_code: "7K2QM4", dob: "" }))[0]).toBe(403);
+  });
+
+  it("refuses the right date with the wrong code", async () => {
+    expect((await call({ action: "claim", join_code: "7K2QM5", dob: "1974-03-09" }))[0]).toBe(403);
+  });
+
+  it("says the same thing whichever factor was wrong", async () => {
+    // Naming the failed factor would tell someone holding a forwarded code
+    // that the code is right, which turns two factors back into one.
+    const badCode = (await call({ action: "claim", join_code: "ZZZZ22", dob: "1974-03-09" }))[1].error;
+    const badDate = (await call({ action: "claim", join_code: "7K2QM4", dob: "1900-01-01" }))[1].error;
+    expect(badCode).toBe(badDate);
+  });
+
+  it("will not open a log whose patient has no date of birth on file", async () => {
+    // Otherwise an empty date would match an empty stored date and the second
+    // factor would be no factor.
+    const w = twoFactor();
+    delete w.AppUser.find((r) => r.id === "p_deb").dob;
+    setBackend({ me: JANE(), tables: w });
+    expect((await call({ action: "claim", join_code: "7K2QM4", dob: "" }))[0]).toBe(403);
+    expect((await call({ action: "claim", join_code: "7K2QM4", dob: "1974-03-09" }))[0]).toBe(403);
+  });
+
+  it("still opens an invitation written before the second factor existed", async () => {
+    // Those rows carry no dob_check. Refusing them would lock out a care team
+    // that is already helping.
+    setBackend({ me: JANE(), tables: world() });
+    expect((await call({ action: "claim", join_code: "7K2QM4" }))[0]).toBe(200);
   });
 });

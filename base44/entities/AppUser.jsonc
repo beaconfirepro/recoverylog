@@ -39,6 +39,10 @@
       "format": "date",
       "type": "string"
     },
+    "dob_check": {
+      "description": "On a team_member row: a SHA-256 digest of the patient's date of birth salted with this row's join_code, used as the second factor when opening the log. Never the date itself — row security lets an invited account read its own row, so a date sitting here in the clear would hand over the thing it is meant to prove, and an invitation that reached the wrong address would leak it to a stranger. Absent on rows written before the second factor, which still open on the code alone.",
+      "type": "string"
+    },
     "email": {
       "description": "Base44 login email. This is what links the row to a real signed-in account.",
       "type": "string"
@@ -48,7 +52,7 @@
       "type": "string"
     },
     "join_code": {
-      "description": "On a team_member row: the six-character code the patient reads out, and the only thing that opens the log. Never sent in the invitation email. Absent on rows written before codes existed, which can no longer be opened.",
+      "description": "On a team_member row: the six-character code the patient reads out. One of the two things that open the log, alongside dob_check. Never sent in the invitation email. Absent on rows written before codes existed, which can no longer be opened.",
       "type": "string"
     },
     "kind": {
@@ -64,7 +68,7 @@
       "type": "string"
     },
     "match_dob": {
-      "description": "Unused. Invitations no longer carry a date of birth; kept only for rows written before join codes.",
+      "description": "Unused, and must stay that way. The date of birth is the second factor again, but it is checked through dob_check rather than stored here: a readable date on an invitation row defeats the point of asking for it. Kept only for rows written before join codes.",
       "format": "date",
       "type": "string"
     },

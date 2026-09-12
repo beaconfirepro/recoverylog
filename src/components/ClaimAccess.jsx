@@ -3,7 +3,8 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient } from "@/lib/PatientContext";
 import Field from "@/components/Field";
-import { codeMatches } from "@/lib/joinCode";
+import { codeMatches, dobMatches } from "@/lib/joinCode";
+import { WRONG_ANSWER } from "@/pages/Care";
 
 // Shown to a signed-in account not yet linked to a patient, in one of three
 // states: someone the patient has already invited, someone starting their own
@@ -14,6 +15,7 @@ export default function ClaimAccess() {
   const [role, setRole] = useState(null);
   const [form, setForm] = useState({ first_name: "", last_name: "", dob: "" });
   const [code, setCode] = useState("");
+  const [dob, setDob] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -23,8 +25,11 @@ export default function ClaimAccess() {
   const claim = async () => {
     setBusy(true);
     setError("");
-    if (!codeMatches(invite, code)) {
-      setError("That code doesn't match your invitation. Ask the patient to read it out again.");
+    // One message for both factors, and the same one the care page uses.
+    // Saying which one was wrong would tell someone holding a forwarded code
+    // that the code is right, which turns two factors back into one.
+    if (!codeMatches(invite, code) || !(await dobMatches(invite, code, dob))) {
+      setError(WRONG_ANSWER);
       setBusy(false);
       return;
     }
@@ -81,12 +86,24 @@ export default function ClaimAccess() {
         />
       </Field>
 
+      <Field label="Their date of birth">
+        <input
+          type="date"
+          value={dob}
+          onChange={(e) => {
+            setDob(e.target.value);
+            setError("");
+          }}
+          className="nb-input"
+        />
+      </Field>
+
       {error && <p className="text-sm font-bold text-destructive break-words">{error}</p>}
 
       <button
         className="nb-btn w-full h-14 bg-primary text-primary-foreground disabled:opacity-40"
         onClick={claim}
-        disabled={busy || !code.trim()}
+        disabled={busy || !code.trim() || !dob}
       >
         {busy ? "Checking…" : "Open the log"}
       </button>
@@ -118,13 +135,13 @@ export default function ClaimAccess() {
   );
 
   let heading = "Find the log";
-  let blurb = `Signed in as ${user?.email}. Enter the join code the patient gave you.`;
+  let blurb = `Signed in as ${user?.email}. Enter the code the patient read out to you, and their date of birth.`;
   if (!me && !role) {
     heading = "Whose log is this";
     blurb = `Signed in as ${user?.email}. This account is not on a recovery log yet.`;
   } else if (!me && role === "patient") {
     heading = "Start your log";
-    blurb = "Your name and date of birth are what your care team will use to find you.";
+    blurb = "Your date of birth is the second thing your care team confirms to get in, alongside a code you read out to them.";
   } else if (!me && role === "team_member") {
     heading = "Ask to be added";
     blurb = `Signed in as ${user?.email}.`;
