@@ -21,7 +21,14 @@ const BLANK = {
 // page so the list stays a list.
 export default function SurgeryForm({ surgery, prefillTrack, onSaved, onCancel }) {
   const { patientId, selectSurgery, refreshSurgeries } = usePatient();
-  const [draft, setDraft] = useState({ ...BLANK, ...(surgery || {}) });
+  const [draft, setDraft] = useState(() => {
+    const base = { ...BLANK, ...(surgery || {}) };
+    if (!surgery) {
+      base.track_before = prefillTrack?.track_before ?? true;
+      base.track_after = prefillTrack?.track_after ?? true;
+    }
+    return base;
+  });
   const [saving, setSaving] = useState(false);
 
   const set = (k, v) => setDraft((d) => ({ ...d, [k]: v }));
@@ -39,7 +46,9 @@ export default function SurgeryForm({ surgery, prefillTrack, onSaved, onCancel }
       surgeon: draft.surgeon || null,
       office_phone: draft.office_phone || null,
       fever_threshold: draft.fever_threshold === "" ? null : draft.fever_threshold,
-      notes: draft.notes || null
+      notes: draft.notes || null,
+      track_before: draft.track_before !== false,
+      track_after: draft.track_after !== false
     };
     if (draft.id) {
       await base44.entities.Surgery.update(draft.id, fields);
@@ -48,8 +57,6 @@ export default function SurgeryForm({ surgery, prefillTrack, onSaved, onCancel }
         ...fields,
         mode: "surgery",
         patient_id: patientId,
-        track_before: prefillTrack?.track_before ?? true,
-        track_after: prefillTrack?.track_after ?? true,
         archived: false
       });
       selectSurgery(created.id);
@@ -131,6 +138,23 @@ export default function SurgeryForm({ surgery, prefillTrack, onSaved, onCancel }
                 className="nb-input"
               />
             </Field>
+            <div className="col-span-2 grid grid-cols-2 gap-2">
+              {[
+                ["track_before", "Track before", "Baseline run-up"],
+                ["track_after", "Track after", "Recovery"]
+              ].map(([key, label, hint]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => set(key, !(draft[key] !== false))}
+                  className="nb-btn h-14 px-2 flex-col items-center justify-center gap-0.5 text-center"
+                  style={draft[key] !== false ? { backgroundColor: "hsl(var(--accent))", color: "hsl(var(--accent-foreground))" } : {}}
+                >
+                  <span className="block text-xs truncate">{label}</span>
+                  <span className="block text-[10px] font-semibold opacity-80 truncate">{hint} · {draft[key] !== false ? "ON" : "OFF"}</span>
+                </button>
+              ))}
+            </div>
           </>
         )}
         <Field label="Notes" span>

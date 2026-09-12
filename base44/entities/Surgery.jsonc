@@ -15,6 +15,19 @@
       "description": "Hidden from the picker but its days are kept.",
       "type": "boolean"
     },
+    "cancelled": {
+      "default": false,
+      "description": "True when the patient has cancelled this surgery. It drops out of the day, history and trends pickers and the All scope, and moves to a Cancelled section on Care. Its logged days are kept. Restore clears this, the reason and the timestamp.",
+      "type": "boolean"
+    },
+    "cancelled_reason": {
+      "description": "Why the surgery was cancelled, in the patient's words. Required to cancel; cleared on restore.",
+      "type": "string"
+    },
+    "cancelled_at": {
+      "description": "When the surgery was cancelled, as an ISO timestamp. Cleared on restore.",
+      "type": "string"
+    },
     "fever_threshold": {
       "type": "number"
     },

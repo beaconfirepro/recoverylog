@@ -32,7 +32,7 @@ export default function Home() {
   // as "has a real surgery". The checklist stays front-and-centre until a real
   // surgery exists or it is minimised, so a no-surgery patient is not dropped
   // onto a blank day by the auto-created maintenance record.
-  const hasRealSurgery = surgeries.some((s) => s.mode !== "maintenance" && !s.archived);
+  const hasRealSurgery = surgeries.some((s) => s.mode !== "maintenance" && !s.archived && !s.cancelled);
   const active = isOwner && !state.dismissed && !allDone(state);
   const expanded =
     active && (!state.minimized && !hasRealSurgery ? true : openedByFab || forceOpen);

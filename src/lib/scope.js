@@ -36,10 +36,14 @@ export const isMaintenance = (record) => record?.mode === "maintenance";
 // The maintenance record, if the patient has one.
 export const maintenanceRecord = (surgeries) => surgeries.find(isMaintenance) || null;
 
+// Surgeries the patient has cancelled. They stay out of the pickers but are
+// listed in their own section on Care so the record and its reason are kept.
+export const cancelledRecords = (surgeries) => surgeries.filter((s) => s.cancelled);
+
 // Records that appear in the picker: every record that is not archived,
 // maintenance first so the no-surgery baseline reads first.
 export const choosableRecords = (surgeries) =>
-  surgeries.filter((s) => !s.archived).sort((a, b) => {
+  surgeries.filter((s) => !s.archived && !s.cancelled).sort((a, b) => {
     const am = isMaintenance(a) ? 0 : 1;
     const bm = isMaintenance(b) ? 0 : 1;
     return am - bm;
@@ -49,7 +53,7 @@ export const choosableRecords = (surgeries) =>
 export const recordsInScope = (scope, surgeries) => {
   if (!scope) return [];
   if (scope.all) return choosableRecords(surgeries);
-  return surgeries.filter((s) => scope.ids.includes(s.id) && !s.archived);
+  return surgeries.filter((s) => scope.ids.includes(s.id) && !s.archived && !s.cancelled);
 };
 
 export const isAll = (scope) => !!scope?.all;
@@ -70,7 +74,7 @@ export const defaultScope = (surgeries) => {
 export const resolveScope = (stored, surgeries) => {
   if (!stored) return defaultScope(surgeries);
   if (stored.all) return choosableRecords(surgeries).length ? stored : defaultScope(surgeries);
-  const live = (stored.ids || []).filter((id) => surgeries.some((s) => s.id === id && !s.archived));
+  const live = (stored.ids || []).filter((id) => surgeries.some((s) => s.id === id && !s.archived && !s.cancelled));
   if (!live.length) return defaultScope(surgeries);
   return { all: false, ids: live };
 };

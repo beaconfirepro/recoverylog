@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { usePatient } from "@/lib/PatientContext";
-import { isMaintenance } from "@/lib/scope";
-import { Plus, Scissors, HeartPulse } from "lucide-react";
+import { isMaintenance, cancelledRecords } from "@/lib/scope";
+import { Plus, Scissors, HeartPulse, Ban } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import SurgeryCard from "@/components/care/SurgeryCard";
 import SurgeryForm from "@/components/care/SurgeryForm";
+import CancelSurgeryDialog from "@/components/care/CancelSurgeryDialog";
 
 // The surgeries on the open log. The + in the header opens a modal to add one;
 // tapping a card opens it to show the details, and makes it the active surgery.
@@ -18,8 +19,20 @@ export default function Surgeries() {
   const [expanded, setExpanded] = useState(null);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [cancelling, setCancelling] = useState(null);
   const [prefillTrack, setPrefillTrack] = useState(null);
   const hasMaintenance = surgeries.some(isMaintenance);
+  const activeSurgeries = surgeries.filter((s) => !s.cancelled);
+  const cancelled = cancelledRecords(surgeries);
+
+  const restoreSurgery = async (s) => {
+    await base44.entities.Surgery.update(s.id, {
+      cancelled: false,
+      cancelled_reason: null,
+      cancelled_at: null
+    });
+    await refreshSurgeries();
+  };
 
   useEffect(() => {
     if (location.state?.openNewSurgery && canWrite) {
@@ -71,7 +84,7 @@ export default function Surgeries() {
               No surgeries yet. Tap + to add one and your days start counting from its date.
             </p>
           )}
-          {surgeries.map((s) => (
+          {activeSurgeries.map((s) => (
             <SurgeryCard
               key={s.id}
               surgery={s}
@@ -83,6 +96,7 @@ export default function Surgeries() {
                 selectSurgery(s.id);
               }}
               onEdit={() => setEditing(s)}
+              onCancel={() => setCancelling(s)}
             />
           ))}
 
@@ -98,6 +112,34 @@ export default function Surgeries() {
           )}
         </div>
       </div>
+
+      {canWrite && cancelled.length > 0 && (
+        <div className="nb-card overflow-hidden">
+          <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
+            <Ban className="w-5 h-5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="font-display text-xl uppercase leading-tight break-words">Cancelled</div>
+              <div className="text-sm font-semibold break-words">
+                Out of the active log. Restore one to bring it back.
+              </div>
+            </div>
+          </div>
+          <div className="p-4 space-y-2">
+            {cancelled.map((s) => (
+              <SurgeryCard
+                key={s.id}
+                surgery={s}
+                active={false}
+                open={expanded === s.id}
+                canWrite={canWrite}
+                onToggle={() => setExpanded(expanded === s.id ? null : s.id)}
+                onEdit={() => setEditing(s)}
+                onRestore={() => restoreSurgery(s)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <Dialog
         open={adding}
@@ -128,6 +170,18 @@ export default function Surgeries() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
           {editing && <SurgeryForm surgery={editing} onSaved={() => setEditing(null)} onCancel={() => setEditing(null)} />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!cancelling} onOpenChange={(o) => !o && setCancelling(null)}>
+        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
+          {cancelling && (
+            <CancelSurgeryDialog
+              surgery={cancelling}
+              onDone={() => setCancelling(null)}
+              onCancel={() => setCancelling(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>
