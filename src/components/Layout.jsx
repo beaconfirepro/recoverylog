@@ -6,6 +6,7 @@ import { announceNow, currentAnnouncements, subscribeAnnouncements } from "@/lib
 import { RESTORE_TIMEOUT_MS, canRestore, worthRestoring } from "@/lib/tabScroll";
 import { useOffline } from "@/lib/offline";
 import GuidedTours from "@/components/orientation/GuidedTours";
+import OrientationFabGlobal from "@/components/orientation/OrientationFabGlobal";
 
 const NAV = [
   { to: "/", label: "Today", icon: CalendarDays, match: (p) => p === "/" || p.startsWith("/day") },
@@ -228,6 +229,7 @@ export default function Layout() {
         </div>
       </nav>
       <GuidedTours />
+      <OrientationFabGlobal />
     </div>
   );
 }
