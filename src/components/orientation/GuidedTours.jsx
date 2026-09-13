@@ -224,7 +224,33 @@ export default function GuidedTours() {
 
     const place = (el) => {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
-      timers.current.push(setTimeout(() => begin(el), SETTLE_MS));
+      // Wait for the smooth scroll to settle before showing the spotlight, so it
+      // appears at the row's final position instead of sliding in while the
+      // scroll is still moving. The note stays up during the wait.
+      let began = false;
+      const go = () => {
+        if (began || cancelled) return;
+        began = true;
+        begin(el);
+      };
+      let last = window.scrollY;
+      let idle = 0;
+      const settle = () => {
+        if (cancelled || began) return;
+        const y = window.scrollY;
+        if (y === last) {
+          idle += 1;
+          if (idle >= 3) { go(); return; }
+        } else {
+          idle = 0;
+          last = y;
+        }
+        timers.current.push(setTimeout(settle, 16));
+      };
+      timers.current.push(setTimeout(settle, 16));
+      // Hard ceiling so a browser that never reports a still scroll still shows
+      // the spotlight, just a little later.
+      timers.current.push(setTimeout(go, 1000));
     };
 
     const poll = () => {
