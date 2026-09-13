@@ -12,6 +12,7 @@ import { dobDigest, formatJoinCode, generateJoinCode } from "@/lib/joinCode";
 import { sendInviteEmail } from "@/lib/inviteEmail";
 import HelpHint from "@/components/help/HelpHint";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
+import StartOwnLog from "@/components/care/StartOwnLog";
 
 // Set when a log is opened, so a member is asked which patient once a session
 // rather than on every navigation. sessionStorage rather than local: a new
@@ -543,6 +544,8 @@ export default function Care() {
           })}
         </div>
       </div>
+
+      {!isOwner && <StartOwnLog />}
 
       <Dialog open={adding} onOpenChange={(o) => !o && setAdding(false)}>
         <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto">
