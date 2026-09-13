@@ -375,6 +375,7 @@ export default function Profile() {
               value={activeSurgeryId || ""}
               onChange={(e) => selectSurgery(e.target.value)}
               className="nb-select"
+              data-gtour="trackers-surgery-select"
             >
               {surgeries
                 .filter((x) => !x.archived || x.id === activeSurgeryId)
@@ -420,6 +421,7 @@ export default function Profile() {
                       aria-label={`Track ${cfg.label}`}
                       onClick={() => toggleType(t)}
                       disabled={savingTracking}
+                      data-gtour={t === "water" ? "trackers-water-toggle" : undefined}
                       className="w-14 h-8 shrink-0 border-2 rounded-full relative"
                       style={on ? { backgroundColor: cfg.color } : { backgroundColor: "hsl(var(--muted))" }}
                     >
@@ -435,6 +437,7 @@ export default function Profile() {
                       aria-describedby={on ? undefined : "track-gate"}
                       onClick={() => toggleHistory(t)}
                       disabled={savingTracking || !on}
+                      data-gtour={t === "water" ? "trackers-water-card" : undefined}
                       className="w-14 h-8 shrink-0 grid place-items-center disabled:opacity-30"
                     >
                       <span
@@ -465,6 +468,7 @@ export default function Profile() {
                     defaultValue={goals[g.key] ?? ""}
                     onBlur={(e) => setGoal(g.key, e.target.value)}
                     disabled={savingTracking}
+                    data-gtour={g.key === "water" ? "trackers-water-goal" : undefined}
                     className="nb-input w-24 shrink-0"
                   />
                   <span className="nb-label w-8 shrink-0 text-muted-foreground">{g.unit}</span>

@@ -55,8 +55,10 @@ const CHECKIN_NOTES = [
 
 const TRACKER_NOTES = [
   "Each surgery is set up on its own. Turn trackers on or off, and choose what shows on the day card.",
-  "Water is on here. A tracker with a goal draws a bar on the day page — the number is this entry, the fill is the day's total against the goal.",
-  "Set a goal and the day page shows your progress toward it. Water, nutrients and bodywork each take one."
+  "Pick which surgery to set up here — each keeps its own trackers.",
+  "Turn on Water. A tracker with a goal draws a bar on the day page — the number is this entry, the fill is the day's total against the goal.",
+  "Tick Card to show Water on each day's card.",
+  "Set a goal — 64 oz — and the day page shows your progress toward it."
 ];
 
 const MEASUREMENT_NOTES = [
@@ -188,12 +190,19 @@ export const TOURS = {
     ]
   },
 
+  // The trackers tour drives the real form: it opens the surgery picker, turns
+  // Water on, ticks the Card box, and types 64 into the goal. These are real
+  // writes the patient keeps — water with a 64 oz goal is a sensible default,
+  // not sample data to clean up. clickIfOff and typeIfEmpty stop a re-run from
+  // undoing what the patient already set.
   trackers: {
     path: "/profile",
     steps: [
-      { target: "trackers-header", mark: "spot", note: TRACKER_NOTES[0], ms: 3200 },
-      { target: "trackers-water", mark: "circle", note: TRACKER_NOTES[1], ms: 3800 },
-      { target: "trackers-goals", mark: "spot", note: TRACKER_NOTES[2], ms: 3400 }
+      { target: "trackers-header", mark: "spot", note: TRACKER_NOTES[0], ms: 3200, waitFor: true },
+      { target: "trackers-surgery-select", mark: "circle", note: TRACKER_NOTES[1], ms: 3400, waitFor: true, openSelect: true, clickAt: 2000, markAt: 400 },
+      { target: "trackers-water-toggle", mark: "circle", note: TRACKER_NOTES[2], ms: 4200, waitFor: true, click: true, clickAt: 2600, clickIfOff: true, markAt: 400, markGone: 3800 },
+      { target: "trackers-water-card", mark: "arrow", note: TRACKER_NOTES[3], ms: 3600, waitFor: true, waitForEnabled: true, click: true, clickAt: 2600, clickIfOff: true, markAt: 400 },
+      { target: "trackers-water-goal", mark: "spot", note: TRACKER_NOTES[4], ms: 4600, waitFor: true, waitForEnabled: true, type: ["trackers-water-goal"], values: { "trackers-water-goal": "64" }, typeIfEmpty: true, blur: true, markAt: 400 }
     ]
   },
 

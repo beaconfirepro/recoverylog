@@ -262,13 +262,15 @@
   .gtour-circle {
     position: fixed;
     z-index: 70;
-    color: hsl(330 100% 66%);
+    box-sizing: border-box;
+    border: 3px solid hsl(330 100% 66%);
+    border-radius: 50%;
     pointer-events: none;
+    animation: gtour-circle-in 0.3s ease-out;
   }
-  .gtour-circle-path {
-    stroke-dasharray: 320;
-    stroke-dashoffset: 320;
-    animation: gtour-draw 0.3s ease-out forwards;
+  @keyframes gtour-circle-in {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: none; }
   }
   @keyframes gtour-draw {
     to { stroke-dashoffset: 0; }

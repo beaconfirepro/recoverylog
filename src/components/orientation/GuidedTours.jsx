@@ -41,17 +41,12 @@ const Arrow = ({ box }) => (
   </div>
 );
 
+// A plain div with a pink border and border-radius: 50%. The old SVG circle
+// used preserveAspectRatio="none", which stretched the 100×100 viewBox to fill
+// a wide row and turned the ring into a flat, broken-looking ellipse. A div
+// always renders a complete, closed ring no matter the box shape.
 const Circle = ({ box }) => (
-  <svg className="gtour-circle" style={box} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-    <path
-      className="gtour-circle-path"
-      d="M50 5 C75 5 95 25 95 50 C95 75 75 95 50 95 C25 95 5 75 5 50 C5 25 25 5 50 5 Z"
-      stroke="currentColor"
-      strokeWidth="4"
-      fill="none"
-      vectorEffect="non-scaling-stroke"
-    />
-  </svg>
+  <div className="gtour-circle" style={box} aria-hidden="true" />
 );
 
 export default function GuidedTours() {
@@ -135,6 +130,9 @@ export default function GuidedTours() {
         if (cancelled) return;
         const el = document.querySelector(`[data-gtour="${CSS.escape(id)}"]`);
         if (!el) return;
+        // typeIfEmpty stops a re-run from overwriting a goal the patient already
+        // set. The first run has a blank field, so the value lands.
+        if (step.typeIfEmpty && el.value && el.value.trim() !== "") return;
         const val = (step.values && step.values[id]) || "";
         let k = 0;
         const tick = () => {
@@ -144,6 +142,9 @@ export default function GuidedTours() {
             k += 1;
             timers.current.push(setTimeout(tick, TYPE_MS));
           } else {
+            // The water goal saves on blur, not input, so the typed value never
+            // lands unless the field loses focus after the last character.
+            if (step.blur) el.blur();
             i += 1;
             if (i < ids.length) timers.current.push(setTimeout(() => typeField(ids[i]), 200));
           }
@@ -169,8 +170,14 @@ export default function GuidedTours() {
     };
 
     const findTarget = () => {
-      if (step.find === "row") return findRow();
-      return document.querySelector(`[data-gtour="${CSS.escape(step.target)}"]`);
+      let el;
+      if (step.find === "row") el = findRow();
+      else el = document.querySelector(`[data-gtour="${CSS.escape(step.target)}"]`);
+      // A step can ask to wait until a control is enabled — the card checkbox
+      // stays disabled until the tracker toggle's save lands, so polling for
+      // the element alone would find it and then click a disabled button.
+      if (el && step.waitForEnabled && el.disabled) return null;
+      return el;
     };
 
     // Re-read the target's rect on every frame and write it straight to the
@@ -206,12 +213,20 @@ export default function GuidedTours() {
         timers.current.push(setTimeout(() => { if (!cancelled) setMarkVisible(false); }, step.markGone));
       }
       if (Array.isArray(step.type) && step.type.length) startType();
-      if (step.click) {
+      if (step.click || step.openSelect) {
         const clickId = step.clickTarget || step.target;
         timers.current.push(setTimeout(() => {
           if (cancelled) return;
           const t = step.find === "row" ? findRow() : document.querySelector(`[data-gtour="${CSS.escape(clickId)}"]`);
-          if (t) t.click();
+          if (!t) return;
+          // clickIfOff stops a re-run from toggling an already-on tracker back
+          // off: the switch and the card checkbox both carry aria-checked.
+          if (step.clickIfOff && t.getAttribute("aria-checked") === "true") return;
+          if (step.openSelect) {
+            try { t.showPicker(); } catch { t.click(); }
+          } else {
+            t.click();
+          }
         }, step.clickAt));
       }
       startRaf(el, arrowEl);
