@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { usePatient } from "@/lib/PatientContext";
 import { PROVIDER_TYPES } from "@/lib/providers";
 import Field from "@/components/Field";
+import ProviderSelect from "@/components/care/ProviderSelect";
 
 // The add-appointment form used inside the Day page dialog. The same fields as
 // the care page's appointment card, without the list — just the form, so it
@@ -33,9 +34,10 @@ export default function AppointmentForm({ onDone }) {
   return (
     <div className="space-y-3">
       <h2 className="font-display text-xl uppercase break-words">Add appointment</h2>
-      <Field label="Provider name" span>
-        <input type="text" value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} placeholder="Dr. Smith" className="nb-input" />
-      </Field>
+      <ProviderSelect
+        value={form.provider_name}
+        onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+      />
       <Field label="Type" span>
         <select value={form.provider_type} onChange={(e) => setForm({ ...form, provider_type: e.target.value })} className="nb-select">
           <option value="">Select a type</option>

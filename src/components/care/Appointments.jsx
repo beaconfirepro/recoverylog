@@ -7,6 +7,7 @@ import { niceDate } from "@/lib/dates";
 import { showTime } from "@/components/recovery/Fields";
 import { PROVIDER_TYPES } from "@/lib/providers";
 import Field from "@/components/Field";
+import ProviderSelect from "@/components/care/ProviderSelect";
 
 // Appointments are typed in by provider name — no invitation, no care team
 // row. The type dropdown is the same list offered on a care team member, so a
@@ -72,9 +73,10 @@ export default function Appointments() {
       <div className="p-4 space-y-2">
         {adding && (
           <div className="border-2 rounded-xl bg-background p-3 space-y-3">
-            <Field label="Provider name" span>
-              <input type="text" value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} placeholder="Dr. Smith" className="nb-input" />
-            </Field>
+            <ProviderSelect
+              value={form.provider_name}
+              onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+            />
             <Field label="Type" span>
               <select value={form.provider_type} onChange={(e) => setForm({ ...form, provider_type: e.target.value })} className="nb-select">
                 <option value="">Select a type</option>
