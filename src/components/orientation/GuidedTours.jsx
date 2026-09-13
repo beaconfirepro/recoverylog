@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
-import { TOURS } from "@/lib/gtours";
+import { TOURS, tourCtx } from "@/lib/gtours";
+import { usePatient } from "@/lib/PatientContext";
 
 // The shared guided-tour engine. One component, mounted in Layout, runs
 // whichever tour the orientation checklist asked for (location.state.orient).
@@ -54,6 +55,9 @@ export default function GuidedTours() {
   const navigate = useNavigate();
   const key = location.state?.orient;
   const config = key ? TOURS[key] : null;
+  const { patientId, activeSurgery } = usePatient();
+  tourCtx.patientId = patientId;
+  tourCtx.surgery = activeSurgery;
 
   const [running, setRunning] = useState(false);
   const [activeConfig, setActiveConfig] = useState(null);

@@ -53,6 +53,7 @@ export default function DrugLookup({ onPick, onCancel }) {
           onChange={(e) => setTerm(e.target.value)}
           placeholder="Search for a medicine"
           className="nb-input"
+          data-gtour="meds-drug-search"
         />
         {busy && <Loader2 className="w-4 h-4 shrink-0 animate-spin" />}
       </div>

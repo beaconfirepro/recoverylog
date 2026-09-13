@@ -144,6 +144,7 @@ function Group({ group, update, remove }) {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        data-gtour="meds-group"
         className="w-full flex items-center gap-2 min-w-0 p-3 text-left"
       >
         <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${open ? "rotate-90" : ""}`} />
@@ -180,7 +181,7 @@ function Group({ group, update, remove }) {
             />
           ) : (
             <div className="flex items-center gap-2 min-w-0">
-              <button type="button" onClick={() => setLooking(true)} className="nb-chip gap-1.5 bg-muted">
+              <button type="button" onClick={() => setLooking(true)} data-gtour="meds-add-med" className="nb-chip gap-1.5 bg-muted">
                 <Plus className="w-3.5 h-3.5" /> Add a medicine
               </button>
               <button type="button" onClick={() => remove(group.id)} className="nb-chip ml-auto shrink-0 bg-muted">
@@ -230,8 +231,9 @@ export function MedGroupLibrary() {
           onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), save())}
           placeholder="e.g. AM Meds, PRN Pain"
           className="nb-input"
+          data-gtour="meds-add-input"
         />
-        <button type="button" onClick={save} className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground">
+        <button type="button" onClick={save} data-gtour="meds-add-btn" className="nb-btn h-12 px-4 shrink-0 bg-accent text-accent-foreground">
           <Plus className="w-5 h-5" />
         </button>
       </div>

@@ -117,6 +117,14 @@ export default function DayView({ date, startCollapsed }) {
     load();
   }, [load]);
 
+  // React to entry changes from anywhere — a guided tour creating a sample
+  // temp entry to demonstrate a red-flag sparkle, or another tab logging
+  // something — so the day page stays live without a manual refresh.
+  useEffect(() => {
+    const unsubscribe = base44.entities.RecoveryEntry.subscribe(() => load());
+    return unsubscribe;
+  }, [load]);
+
   // Nothing to log against: no record at all (a care team member on a patient
   // with none yet). Maintenance makes this rare, but it is still reachable.
   if (!scopeRecords.length || !focused) {

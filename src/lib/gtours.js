@@ -1,6 +1,12 @@
 import { base44 } from "@/api/base44Client";
 import { asRows } from "@/lib/recoveryUtils";
 import { inviteSuppressed } from "@/lib/inviteEmail";
+import { FEVER_DEFAULT } from "@/lib/recovery";
+import { todayStr, nowTime } from "@/lib/dates";
+
+// Set by GuidedTours on each render so a tour's onStart/cleanup can reach the
+// current patient and active surgery without going through React context.
+export const tourCtx = { patientId: null, surgery: null };
 
 // Guided tours for the orientation checklist, in the garment tour's shape: each
 // step lights one thing, optionally marks it, and — for the steps that need it
@@ -21,9 +27,9 @@ const GARMENT_NOTES = [
 ];
 
 const CARE_NOTES = [
-  "Add other people to your care team. This can be a partner, a caregiver, a provider, or even another patient that you want to share your journey with.",
+  "Add people to your care team like a partner, a caregiver, or a provider.",
   "Click + to invite the person via email.",
-  "They will need to sign up for the app with that email address or already use that one.",
+  "The care team member will need to sign up for the app with the email you invited them.",
   "To see your info, they need this invite code, your first and last name, and birthdate.",
   "To see if they have accepted the invite, click the title to expand it.",
   "If they need the invitation resent, click here to resend it.",
@@ -68,9 +74,11 @@ const MEASUREMENT_NOTES = [
 
 const MEDS_NOTES = [
   "Group your medicines so the Med tracker brings them up already ticked.",
-  "Tap a group to open it, then add medicines to it — helpful for meds you take together.",
-  "Set a frequency — daily, weekly, or monthly — for each medicine.",
-  "Add a group with the green button."
+  "Type a name for a new group, like AM Meds or PRN Pain.",
+  "Tap the green button to add it.",
+  "Tap a group to open it and see its medicines.",
+  "Add a medicine to the group.",
+  "Search for a medicine by name. Nothing is saved until you pick one."
 ];
 
 const PDF_NOTES = [
@@ -125,34 +133,33 @@ export const TOURS = {
     rowSelector: '[data-gtour="careteam-row"]',
     rowMatch: SAMPLE_EMAIL,
     steps: [
-      { target: "careteam-header", mark: "spot", note: CARE_NOTES[0], ms: 4400 },
-      { target: "careteam-add", mark: "circle", note: CARE_NOTES[1], ms: 3000, markAt: 400, click: true, clickAt: 2000 },
+      { target: "careteam-header", mark: "spot", note: CARE_NOTES[0], waitFor: true },
+      { target: "careteam-add", mark: "circle", note: CARE_NOTES[1], waitFor: true, click: true, clickAt: 600, markAt: 400 },
       {
         target: "careteam-email",
         mark: "spot",
         note: CARE_NOTES[2],
-        ms: 8000,
+        waitFor: true,
         type: ["careteam-email", "careteam-first", "careteam-last"],
         values: { "careteam-email": SAMPLE_EMAIL, "careteam-first": "Sample", "careteam-last": "Smith" },
         click: true,
         clickTarget: "careteam-submit",
-        clickAt: 7200
+        clickAt: 2600
       },
       {
         target: "careteam-code",
         waitFor: true,
         mark: "spot",
         note: CARE_NOTES[3],
-        ms: 4400,
         markAt: 600,
         arrowTarget: "careteam-done",
         click: true,
         clickTarget: "careteam-done",
         clickAt: 3600
       },
-      { target: "careteam-row", waitFor: true, find: "row", mark: "spot", note: CARE_NOTES[4], ms: 3000, click: true, clickAt: 2200 },
-      { target: "careteam-resend", waitFor: true, mark: "arrow", note: CARE_NOTES[5], ms: 3200, markAt: 400 },
-      { target: "careteam-remove", waitFor: true, mark: "circle", note: CARE_NOTES[6], ms: 3600, markAt: 400 }
+      { target: "careteam-row", waitFor: true, find: "row", mark: "spot", note: CARE_NOTES[4], click: true, clickAt: 2200 },
+      { target: "careteam-resend", waitFor: true, mark: "arrow", note: CARE_NOTES[5], markAt: 400 },
+      { target: "careteam-remove", waitFor: true, mark: "circle", note: CARE_NOTES[6], markAt: 400 }
     ],
     // The tour drives the real form, which would send a real invitation to a
     // made-up address. Suppress the send for the whole run; the form still shows
@@ -219,18 +226,27 @@ export const TOURS = {
   meds: {
     path: "/profile",
     steps: [
-      { target: "meds-header", mark: "spot", note: MEDS_NOTES[0], ms: 3400, waitFor: true },
-      { target: "meds-list", mark: "spot", note: MEDS_NOTES[1], ms: 3800, waitFor: true },
-      { target: "meds-list", mark: "spot", note: MEDS_NOTES[2], ms: 3400, waitFor: true },
-      { target: "meds-add", mark: "arrow", note: MEDS_NOTES[3], ms: 3400, waitFor: true }
-    ]
+      { target: "meds-header", mark: "spot", note: MEDS_NOTES[0], waitFor: true },
+      { target: "meds-add-input", mark: "spot", note: MEDS_NOTES[1], waitFor: true, type: ["meds-add-input"], values: { "meds-add-input": "Sample Group" }, blur: true, markAt: 400 },
+      { target: "meds-add-btn", mark: "arrow", note: MEDS_NOTES[2], waitFor: true, click: true, clickAt: 1200, markAt: 400 },
+      { target: "meds-group", mark: "circle", note: MEDS_NOTES[3], waitFor: true, click: true, clickAt: 1200, markAt: 400 },
+      { target: "meds-add-med", mark: "arrow", note: MEDS_NOTES[4], waitFor: true, click: true, clickAt: 1200, markAt: 400 },
+      { target: "meds-drug-search", mark: "spot", note: MEDS_NOTES[5], waitFor: true, type: ["meds-drug-search"], values: { "meds-drug-search": "gabapentin" }, blur: true, markAt: 400 }
+    ],
+    cleanup: async () => {
+      const rows = asRows(await base44.entities.MedGroup.list("sort_order", 100));
+      const mine = rows.filter((g) => g.name === "Sample Group");
+      for (const g of mine) {
+        try { await base44.entities.MedGroup.delete(g.id); } catch { /* already gone */ }
+      }
+    }
   },
 
   pdf: {
     path: "/profile",
     steps: [
       { target: "pdf-header", mark: "spot", note: PDF_NOTES[0], ms: 3200, waitFor: true },
-      { target: "pdf-all-records", mark: "circle", note: PDF_NOTES[1], ms: 3600, waitFor: true, click: true, clickAt: 2200, clickIfOff: true, markAt: 400 },
+      { target: "pdf-all-records", mark: "circle", note: PDF_NOTES[1], waitFor: true, click: true, clickAt: 600, clickIfOff: true, markAt: 400 },
       { target: "pdf-by-record", mark: "spot", note: PDF_NOTES[2], ms: 4400, waitFor: true },
       { target: "pdf-download", mark: "arrow", note: PDF_NOTES[3], ms: 3600, waitFor: true }
     ]
@@ -244,16 +260,48 @@ export const TOURS = {
   firstcheckin: {
     path: "/",
     steps: [
-      { target: "firstcheckin-toggle", mark: "spot", note: FIRSTCHECKIN_NOTES[0], ms: 3000, waitFor: true },
-      { target: "firstcheckin-checkin", mark: "circle", note: FIRSTCHECKIN_NOTES[1], ms: 3600, waitFor: true }
+      { target: "firstcheckin-toggle", mark: "spot", note: FIRSTCHECKIN_NOTES[0], waitFor: true },
+      { target: "firstcheckin-checkin", mark: "circle", note: FIRSTCHECKIN_NOTES[1], waitFor: true, click: true, clickAt: 1500, markAt: 400 }
     ]
   },
 
   redflags: {
     path: "/",
     steps: [
-      { target: "redflags-card", mark: "spot", note: REDFLAG_NOTES[0], ms: 3600, waitFor: true },
-      { target: "redflags-card", mark: "spot", note: REDFLAG_NOTES[1], ms: 3800, waitFor: true }
-    ]
+      { target: "redflags-card", mark: "spot", note: REDFLAG_NOTES[0], waitFor: true },
+      { target: "redflags-card", mark: "spot", note: REDFLAG_NOTES[1], waitFor: true }
+    ],
+    // Create a temp entry with a high fever so the red-flag card shows a
+    // sparkle — the thing the second note is explaining. The entry is
+    // deleted again when the tour ends, however it ends.
+    onStart: async () => {
+      const { patientId, surgery } = tourCtx;
+      if (!patientId || !surgery) return;
+      const threshold = surgery.fever_threshold || FEVER_DEFAULT;
+      try {
+        await base44.entities.RecoveryEntry.create({
+          date: todayStr(),
+          type: "temp",
+          patient_id: patientId,
+          surgery_id: surgery.id,
+          mode: surgery.mode,
+          entry_time: nowTime(),
+          data: { temp: String(threshold + 2) },
+          client_id: "gtour-redflag"
+        });
+      } catch { /* best-effort demo */ }
+    },
+    cleanup: async () => {
+      const { patientId } = tourCtx;
+      if (!patientId) return;
+      const entries = asRows(
+        await base44.entities.RecoveryEntry.filter({ patient_id: patientId, type: "temp", date: todayStr() }, "-created_date", 50)
+      );
+      for (const e of entries) {
+        if (e.client_id === "gtour-redflag") {
+          try { await base44.entities.RecoveryEntry.delete(e.id); } catch { /* already gone */ }
+        }
+      }
+    }
   }
 };
