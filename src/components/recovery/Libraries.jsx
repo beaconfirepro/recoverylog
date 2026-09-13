@@ -196,18 +196,19 @@ export function MedGroupLibrary() {
       title="My med groups"
       blurb="Offered on the Med tracker, with everything in the group already ticked."
       orient="meds"
+      gtour="meds-header"
     >
       {rows.length === 0 && (
         <p className="text-sm text-muted-foreground break-words">
           No med groups yet. Add one and it is offered on the Med tracker, with everything in it ticked.
         </p>
       )}
-      <div className="space-y-2">
+      <div className="space-y-2" data-gtour="meds-list">
         {rows.map((g) => (
           <Group key={g.id} group={g} update={update} remove={remove} />
         ))}
       </div>
-      <div className="flex gap-2 min-w-0">
+      <div className="flex gap-2 min-w-0" data-gtour="meds-add">
         <input
           type="text"
           value={name}

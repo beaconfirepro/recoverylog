@@ -57,13 +57,14 @@ export default function Profile() {
   // report. The retry defaults to sending the same fields again, and a caller
   // holding its own copy of the value passes its own so the retry puts that
   // copy back too.
-  const patchSurgery = async (fields, retry) => {
+  const patchSurgery = async (fields, opts = {}) => {
     if (!activeSurgery) return false;
     setSavingTracking(true);
     const res = await save(() => base44.entities.Surgery.update(activeSurgery.id, fields), {
       what: "Your tracking",
       saved: "This surgery keeps the change.",
-      retry: retry || (() => patchSurgery(fields))
+      retry: opts.retry || (() => patchSurgery(fields, opts)),
+      quiet: opts.quiet
     });
     await refreshSurgeries();
     setSavingTracking(false);
@@ -90,13 +91,14 @@ export default function Profile() {
     ? patient.checkin_measures
     : CHECKIN_MEASURES.map((m) => m.key);
 
-  const patchPatient = async (fields, retry) => {
+  const patchPatient = async (fields, opts = {}) => {
     if (!patient) return false;
     setSavingCheckin(true);
     const res = await save(() => base44.entities.AppUser.update(patient.id, fields), {
       what: "Your setup",
       saved: "The change is saved.",
-      retry: retry || (() => patchPatient(fields))
+      retry: opts.retry || (() => patchPatient(fields, opts)),
+      quiet: opts.quiet
     });
     await refreshPatient();
     setSavingCheckin(false);
@@ -112,7 +114,7 @@ export default function Profile() {
     const previous = slots;
     const attempt = async () => {
       setSlotsLocal(next);
-      if (!(await patchPatient({ checkin_slots: next }, attempt))) setSlotsLocal(previous);
+      if (!(await patchPatient({ checkin_slots: next }, { retry: attempt }))) setSlotsLocal(previous);
     };
     attempt();
   };
@@ -140,7 +142,7 @@ export default function Profile() {
   const toggleMeasure = (key) => {
     const next = measures.includes(key) ? measures.filter((k) => k !== key) : [...measures, key];
     // Stored in the order the check-in asks, so the form never reshuffles.
-    patchPatient({ checkin_measures: CHECKIN_MEASURES.filter((m) => next.includes(m.key)).map((m) => m.key) });
+    patchPatient({ checkin_measures: CHECKIN_MEASURES.filter((m) => next.includes(m.key)).map((m) => m.key) }, { quiet: true });
   };
 
   // A goal turns that tracker's pill into a bar on the day page. Only the three
@@ -162,7 +164,7 @@ export default function Profile() {
   const onHistory = activeSurgery?.history_types || [];
   const toggleHistory = (t) => {
     const next = onHistory.includes(t) ? onHistory.filter((x) => x !== t) : [...onHistory, t];
-    patchSurgery({ history_types: QUICK_ORDER.filter((x) => next.includes(x)) });
+    patchSurgery({ history_types: QUICK_ORDER.filter((x) => next.includes(x)) }, { quiet: true });
   };
 
   const toggleType = (t) => {
@@ -172,7 +174,8 @@ export default function Profile() {
     patchSurgery(
       selected.includes(t)
         ? { tracked_types: next, history_types: onHistory.filter((x) => x !== t) }
-        : { tracked_types: next }
+        : { tracked_types: next },
+      { quiet: true }
     );
   };
 
@@ -275,6 +278,7 @@ export default function Profile() {
               for every surgery" is the half that answers what the card is. */}
           <div
             data-tour="checkin-card"
+            data-gtour="checkin-card"
             className="px-4 py-3 border-b-2"
             style={{ backgroundColor: TYPES[PINNED].color, color: "#fff" }}
           >
@@ -283,7 +287,7 @@ export default function Profile() {
           </div>
 
           <div className="p-4 space-y-4">
-            <div className="space-y-2" data-tour="checkin-times">
+            <div className="space-y-2" data-tour="checkin-times" data-gtour="checkin-times">
               <div className="nb-label">How often, and when</div>
               {/* Only the first row carries checkin-remove. The tour circles one
                   of these and one is the point: the line says "delete any you
@@ -310,6 +314,7 @@ export default function Profile() {
                     onClick={() => setSlots(slots.filter((_, j) => j !== i))}
                     disabled={savingCheckin || slots.length === 1}
                     data-tour={i === 0 ? "checkin-remove" : undefined}
+                    data-gtour={i === 0 ? "checkin-remove" : undefined}
                     className="nb-btn w-11 shrink-0 bg-card"
                   >
                     <X className="w-4 h-4" />
@@ -321,6 +326,7 @@ export default function Profile() {
                 onClick={() => setSlots([...slots, { label: "", time: "" }])}
                 disabled={savingCheckin}
                 data-tour="checkin-add"
+                data-gtour="checkin-add"
                 className="nb-btn w-full h-11 bg-accent text-accent-foreground flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
@@ -331,7 +337,7 @@ export default function Profile() {
               </p>
             </div>
 
-            <div className="border-t-2 pt-3 space-y-2" data-tour="checkin-records">
+            <div className="border-t-2 pt-3 space-y-2" data-tour="checkin-records" data-gtour="checkin-records">
               <div className="nb-label">What it records</div>
               <div className="flex flex-wrap gap-1.5">
                 {CHECKIN_MEASURES.map((m) => (
@@ -357,7 +363,7 @@ export default function Profile() {
 
       {isOwner && activeSurgery && (
         <div className="nb-card overflow-hidden">
-          <div className="px-4 py-3 border-b-2 bg-muted space-y-2">
+          <div className="px-4 py-3 border-b-2 bg-muted space-y-2" data-gtour="trackers-header">
             <div>
               <div className="font-display text-xl uppercase leading-tight break-words" data-orient="trackers">What to track</div>
               <div className="text-sm font-semibold break-words">Each surgery is set up on its own.</div>
@@ -404,7 +410,7 @@ export default function Profile() {
                 if (!cfg) return null;
                 const on = selected.includes(t);
                 return (
-                  <div key={t} className="flex items-center gap-2 min-w-0 py-1.5">
+                  <div key={t} className="flex items-center gap-2 min-w-0 py-1.5" data-gtour={t === "water" ? "trackers-water" : undefined}>
                     <span className="w-4 h-4 shrink-0 border-2 rounded-md" style={{ backgroundColor: cfg.color }} />
                     <span className="flex-1 min-w-0 truncate text-sm font-semibold">{cfg.label}</span>
                     <button
@@ -443,7 +449,7 @@ export default function Profile() {
               })}
             </div>
 
-            <div className="border-t-2 pt-3 space-y-2">
+            <div className="border-t-2 pt-3 space-y-2" data-gtour="trackers-goals">
               <div className="nb-label">Goals</div>
               <p className="text-2xs font-semibold text-muted-foreground break-words">
                 Leave one blank for no target.
@@ -517,7 +523,7 @@ export default function Profile() {
 
       {isOwner && (
         <div className="nb-card overflow-hidden">
-          <div className="px-4 py-3 border-b-2 bg-muted">
+          <div className="px-4 py-3 border-b-2 bg-muted" data-gtour="measurements-header">
             <div className="font-display text-xl uppercase leading-tight break-words" data-orient="measurements">Measurements</div>
             <div className="text-sm font-semibold break-words">
               What the measurements tracker asks for, in this order.
@@ -525,7 +531,7 @@ export default function Profile() {
           </div>
 
           <div className="p-4 space-y-3">
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5" data-gtour="measurements-spots">
               {MEASUREMENTS.map((m) => {
                 const on = spots.includes(m.name);
                 return (
@@ -564,7 +570,7 @@ export default function Profile() {
               </div>
             )}
 
-            <div className="flex gap-2 min-w-0">
+            <div className="flex gap-2 min-w-0" data-gtour="measurements-add">
               <input
                 type="text"
                 value={newSpot}
@@ -594,7 +600,7 @@ export default function Profile() {
       {isOwner && <MedGroupLibrary />}
 
       <div className="nb-card overflow-hidden">
-        <div className="px-4 py-3 border-b-2 bg-muted">
+        <div className="px-4 py-3 border-b-2 bg-muted" data-gtour="pdf-header">
           <div className="font-display text-xl uppercase leading-tight break-words" data-orient="pdf">Download a PDF</div>
           <div className="text-sm font-semibold break-words">
             A day or a range. Carries the surgery, goals, care team, garments, med groups, trends,
@@ -602,7 +608,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="p-4 grid grid-cols-2 gap-3 min-w-0">
+        <div className="p-4 grid grid-cols-2 gap-3 min-w-0" data-gtour="pdf-range">
           <Field label="From">
             <input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className="nb-input" />
           </Field>
@@ -674,6 +680,7 @@ export default function Profile() {
 
           <button
             className="col-span-2 nb-btn w-full h-14 bg-primary text-primary-foreground"
+            data-gtour="pdf-download"
             onClick={generate}
             disabled={busy || !from || !to || tooWide}
           >

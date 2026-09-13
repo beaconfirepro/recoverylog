@@ -1,19 +1,14 @@
 // Guided tours: what each orientation step actually shows you.
 //
-// The single highlight — grey the screen, ring one heading — answers "where is
-// it". It cannot answer "what do I do with it", and for a setup screen that is
-// the whole question. A patient who lands on Check-in sees four times already
-// filled in and no way to tell whether that is a suggestion, a requirement, or
-// something she has already done.
-//
-// So a tour is a list of steps over one screen. Each step lights one thing,
-// optionally marks it, and says one line about it. The data lives here, apart
-// from the renderer, because the wording is the part that gets revised and
-// nobody should have to read animation code to change a sentence.
-//
-// `target` is a [data-tour] attribute in the page. A step whose target is not
-// on screen is skipped rather than guessed at — see the renderer — so a tour
-// stays honest when a screen changes under it.
+// The tours themselves live in gtours.js and run through the GuidedTours
+// engine (mounted in the layout, so they work on any page). This file keeps
+// the helpers that the highlight hook and the legacy TourOverlay still import,
+// and answers the two questions the orientation system asks: does this key
+// have a tour (so the plain ring stands down), and — for the legacy renderer —
+// which tour. Every real tour now returns null here, because GuidedTours owns
+// the screen.
+
+import { TOURS as GTOURS } from "@/lib/gtours";
 
 // How a step marks its target.
 //   spot   — light it and grey everything else. The default.
@@ -21,58 +16,15 @@
 //   arrow  — spot, plus an arrow pointing down at it. For a thing to press.
 export const MARKS = ["spot", "circle", "arrow"];
 
-// Long enough to read the line and look at what it points at. The line is the
-// slower of the two, so these are set off the words rather than the drawing.
-const READ_MS = 3200;
-const SHORT_MS = 2600;
+// The simple-tour registry is empty on purpose: every orientation tour runs
+// through GuidedTours. Kept as an empty object so imports that read it (and
+// the tests) still resolve.
+export const TOURS = {};
 
-export const TOURS = {
-  checkins: [
-    {
-      target: "checkin-card",
-      mark: "spot",
-      note: "Go to Setup to set the names and times for your check-ins.",
-      ms: READ_MS
-    },
-    {
-      target: "checkin-times",
-      mark: "spot",
-      note: "Four default times have been already set.",
-      ms: SHORT_MS
-    },
-    {
-      target: "checkin-remove",
-      mark: "circle",
-      tone: "pink",
-      note: "Delete any that you don't need.",
-      ms: SHORT_MS
-    },
-    {
-      target: "checkin-add",
-      mark: "arrow",
-      tone: "purple",
-      note: "Add any that you may want.",
-      ms: SHORT_MS
-    },
-    {
-      target: "checkin-records",
-      mark: "spot",
-      note:
-        "Scroll down to select which of the check-in areas you want to use by toggling them pink for on and white for off.",
-      ms: 4200
-    },
-    {
-      target: "checkin-records",
-      mark: "spot",
-      note: "Turning these off does not lose existing data.",
-      ms: READ_MS
-    }
-  ]
-};
+export const hasTour = (key) => !!GTOURS[key];
 
-export const tourFor = (key) => TOURS[key] || null;
-
-export const hasTour = (key) => Array.isArray(TOURS[key]) && TOURS[key].length > 0;
+// The legacy TourOverlay renderer is no longer handed a tour; GuidedTours is.
+export const tourFor = () => null;
 
 // The step at an index, or null past the end. Null is how the renderer learns
 // the tour is over, so it is a real answer rather than a guard.

@@ -63,7 +63,7 @@ export default function Surgeries() {
   return (
     <>
       <div className="nb-card overflow-hidden">
-        <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
+        <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2" data-gtour="surgeries-header">
           <Scissors className="w-5 h-5 shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="font-display text-xl uppercase leading-tight break-words">Surgery Logs</div>
@@ -74,6 +74,7 @@ export default function Surgeries() {
               type="button"
               className="nb-btn h-9 w-9 shrink-0 bg-card p-0"
               aria-label="Add a surgery"
+              data-gtour="surgeries-add"
               onClick={() => setAdding(true)}
             >
               <Plus className="w-4 h-4" />

@@ -10,12 +10,13 @@ const GLIDE_EASE = "cubic-bezier(0.2, 0.9, 0.3, 1)";
 const stillMotion = () =>
   typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, ...handlers }) => {
+const Tile = ({ type, arranging, dragging, onClick, onRemove, innerRef, gtour, ...handlers }) => {
   const c = TYPES[type];
   const Icon = c.icon;
   return (
     <div
       ref={innerRef}
+      data-gtour={gtour}
       // Selection, the callout and the scroll are suppressed only while the
       // grid is being arranged. Outside that a long press on a tile does what
       // the phone says it does.
@@ -235,6 +236,7 @@ export default function QuickAdd({ types, onAdd, onReorder, canWrite = true, arr
       <button
         type="button"
         onClick={() => onAdd(PINNED)}
+        data-gtour="firstcheckin-checkin"
         className="nb-btn w-full min-h-16 py-2 gap-2 !rounded-xl"
         style={{ backgroundColor: pinned.color, color: pinned.darkText ? "#1A1024" : "#fff" }}
       >
@@ -253,6 +255,7 @@ export default function QuickAdd({ types, onAdd, onReorder, canWrite = true, arr
               innerRef={(el) => (tiles.current[i] = el)}
               onClick={() => !arranging && onAdd(t)}
               onRemove={() => remove(t)}
+              gtour={t === "water" ? "firstcheckin-water" : t === "med" ? "firstcheckin-med" : undefined}
               onPointerDown={onPointerDown(i)}
               onPointerMove={onPointerMove}
               onPointerUp={endDrag}

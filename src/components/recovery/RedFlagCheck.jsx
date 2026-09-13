@@ -159,7 +159,7 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
   const yesCount = Object.keys(answers).filter((k) => answers[k] === "yes").length;
 
   return (
-    <div className="nb-card p-4" style={yesCount > 0 ? { borderColor: "hsl(var(--destructive))", borderWidth: 3 } : {}}>
+    <div className="nb-card p-4" data-gtour="redflags-card" style={yesCount > 0 ? { borderColor: "hsl(var(--destructive))", borderWidth: 3 } : {}}>
       <div className="flex items-center justify-between mb-1 gap-2">
         <h2 className="font-heading text-sm uppercase tracking-wider flex items-center gap-1.5">
           <AlertTriangle className="w-4 h-4 text-destructive" /> Red flag check

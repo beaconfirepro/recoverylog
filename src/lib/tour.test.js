@@ -1,50 +1,49 @@
 import { describe, expect, it } from "vitest";
 import { MARKS, TOURS, buttonLabel, hasTour, isLastStep, movesTo, stepAt, tourFor } from "@/lib/tour";
+import { TOURS as GTOURS } from "@/lib/gtours";
 
-describe("the check-in tour", () => {
-  const t = TOURS.checkins;
-
-  it("runs the six steps it was written for", () => {
-    expect(t).toHaveLength(6);
-  });
-
-  it("gives every step a target, a mark it knows, a line and a duration", () => {
-    for (const s of t) {
-      expect(typeof s.target).toBe("string");
-      expect(s.target.length).toBeGreaterThan(0);
-      expect(MARKS).toContain(s.mark);
-      expect(typeof s.note).toBe("string");
-      expect(s.note.length).toBeGreaterThan(0);
-      expect(s.ms).toBeGreaterThan(0);
+describe("the tour registry", () => {
+  it("has a guided tour for every orientation step that promises one", () => {
+    for (const k of [
+      "surgery", "checkins", "trackers", "measurements", "meds",
+      "garments", "careteam", "firstcheckin", "pdf", "redflags"
+    ]) {
+      expect(hasTour(k), k).toBe(true);
     }
   });
 
-  it("says the lines in the order they were written", () => {
-    expect(t.map((s) => s.note)).toEqual([
-      "Go to Setup to set the names and times for your check-ins.",
-      "Four default times have been already set.",
-      "Delete any that you don't need.",
-      "Add any that you may want.",
-      "Scroll down to select which of the check-in areas you want to use by toggling them pink for on and white for off.",
-      "Turning these off does not lose existing data."
-    ]);
+  it("does not invent a tour for an unknown key", () => {
+    expect(hasTour("nope")).toBe(false);
+  });
+
+  it("leaves the simple-tour registry empty — every tour runs through GuidedTours", () => {
+    expect(Object.keys(TOURS)).toHaveLength(0);
+    expect(tourFor("checkins")).toBeNull();
   });
 });
 
-describe("tourFor", () => {
-  it("finds a tour that exists", () => {
-    expect(tourFor("checkins")).toBe(TOURS.checkins);
-  });
+describe("every guided tour", () => {
+  for (const [key, tour] of Object.entries(GTOURS)) {
+    describe(key, () => {
+      it("has a path and at least one step", () => {
+        expect(typeof tour.path).toBe("string");
+        expect(tour.path.length).toBeGreaterThan(0);
+        expect(Array.isArray(tour.steps)).toBe(true);
+        expect(tour.steps.length).toBeGreaterThan(0);
+      });
 
-  it("answers null for an orientation item with no tour, rather than an empty one", () => {
-    expect(tourFor("garments")).toBeNull();
-    expect(tourFor(undefined)).toBeNull();
-  });
-
-  it("hasTour agrees", () => {
-    expect(hasTour("checkins")).toBe(true);
-    expect(hasTour("garments")).toBe(false);
-  });
+      it("gives every step a target, a mark it knows, a line and a duration", () => {
+        for (const s of tour.steps) {
+          expect(typeof s.target, `${key} step target`).toBe("string");
+          expect(s.target.length, `${key} step target`).toBeGreaterThan(0);
+          expect(MARKS, `${key} step mark`).toContain(s.mark);
+          expect(typeof s.note, `${key} step note`).toBe("string");
+          expect(s.note.length, `${key} step note`).toBeGreaterThan(0);
+          expect(s.ms, `${key} step ms`).toBeGreaterThan(0);
+        }
+      });
+    });
+  }
 });
 
 describe("stepAt", () => {

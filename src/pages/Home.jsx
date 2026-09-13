@@ -120,7 +120,10 @@ export default function Home() {
     }
     if (item.target) {
       navigate(item.target, { state: item.highlight ? { orient: item.highlight } : null });
-      setState({ ...state, items: { ...state.items, [item.key]: true } });
+      // firstcheckin and redflags target today, where the things they point at
+      // live inside DayView — which the checklist covers while it is expanded.
+      // Minimize so the day page is the one on screen for the tour.
+      setState({ ...state, minimized: item.target === "/" ? true : state.minimized, items: { ...state.items, [item.key]: true } });
       setOpenedByFab(false);
     }
   };

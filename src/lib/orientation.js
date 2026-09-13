@@ -101,9 +101,9 @@ export const ORIENTATION_ITEMS = [
     n: 10,
     question: "Understand the red flags and customize your home screen.",
     kind: "nav",
-    target: "/profile",
-    highlight: "trackers",
-    cta: "Open setup"
+    target: "/",
+    highlight: "redflags",
+    cta: "See the red flag check"
   }
 ];
 
