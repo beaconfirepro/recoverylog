@@ -336,8 +336,9 @@ export default function RedFlagCheck({ day, suggestions = {}, onSaved, canWrite 
         style={{ borderColor: "hsl(var(--destructive))" }}
       >
         <p className="text-sm font-bold break-words" style={{ color: "hsl(var(--destructive))" }}>
-          Every one of these is on the list because your surgeon wants to hear about it. If any of them is
-          happening, call.
+          These are common red flag items. Be sure to verify with your surgeon or providers what
+          constitutes emergency or urgent in your situation. The below is no substitute for medical
+          advice.
         </p>
         <p className="text-sm font-semibold break-words">
           If you cannot breathe, have chest pain, are confused or cannot be woken, call emergency services. Do
