@@ -235,15 +235,9 @@ export default function GuidedTours() {
         }, step.clickAt));
       }
       startRaf(el, arrowEl);
-      // waitForTap steps do not auto-advance — the Next button in the note bar
-      // moves on, so the patient can read and interact at her own pace.
-      if (!step.waitForTap) {
-        timers.current.push(setTimeout(() => {
-          if (cancelled) return;
-          if (phase === activeConfig.steps.length - 1) { finish(); return; }
-          setPhase((p) => p + 1);
-        }, step.ms));
-      }
+      // No step auto-advances — the patient taps Next (or Done on the last
+      // step) to move on, so she can read and interact at her own pace. The
+      // click/type/markAt timings still drive the demonstration itself.
     };
 
     // The spotlight appears immediately and the RAF loop tracks the target
@@ -291,8 +285,8 @@ export default function GuidedTours() {
       <div className="gtour-note-wrap" role="status" aria-live="polite">
         <div className="nb-card gtour-note border-accent">
           <span key={phase} className="gtour-note-text">{step.note}</span>
-          <button type="button" onClick={step.waitForTap ? nextStep : finish} className="nb-btn h-9 px-3 shrink-0 text-xs" style={{ backgroundColor: "#d4ff00", color: "#1A1024" }}>
-            {isLast ? "Done" : step.waitForTap ? "Next" : "Skip"}
+          <button type="button" onClick={nextStep} className="nb-btn h-9 px-3 shrink-0 text-xs" style={{ backgroundColor: "#d4ff00", color: "#1A1024" }}>
+            {isLast ? "Done" : "Next"}
           </button>
         </div>
       </div>
