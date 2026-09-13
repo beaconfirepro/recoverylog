@@ -14,6 +14,8 @@ import QuickAdd from "./QuickAdd";
 import DayFeed from "./DayFeed";
 import PendingEntries from "./PendingEntries";
 import EntryForm from "./EntryForm";
+import AppointmentForm from "./AppointmentForm";
+import TaskForm from "./TaskForm";
 import DayHeader from "./DayHeader";
 import DayTotals from "./DayTotals";
 import RedFlagCheck from "./RedFlagCheck";
@@ -302,7 +304,11 @@ export default function DayView({ date, startCollapsed }) {
             )}
             <QuickAdd
               types={trackedTypes(focused)}
-              onAdd={(type) => setDialog({ type })}
+              onAdd={(type) => {
+                if (type === "appointment") return setDialog({ kind: "appointment" });
+                if (type === "task") return setDialog({ kind: "task" });
+                setDialog({ type });
+              }}
               onReorder={saveOrder}
               canWrite={canWrite}
               arranging={arranging}
@@ -371,14 +377,20 @@ export default function DayView({ date, startCollapsed }) {
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
           {dialog && (
-            <EntryForm
-              type={dialog.entry ? dialog.entry.type : dialog.type}
-              entry={dialog.entry}
-              saving={saving}
-              onSave={saveEntry}
-              onCancel={() => setDialog(null)}
-              onDelete={dialog.entry ? deleteEntry : undefined}
-            />
+            dialog.kind === "appointment" ? (
+              <AppointmentForm onDone={() => setDialog(null)} />
+            ) : dialog.kind === "task" ? (
+              <TaskForm onDone={() => setDialog(null)} />
+            ) : (
+              <EntryForm
+                type={dialog.entry ? dialog.entry.type : dialog.type}
+                entry={dialog.entry}
+                saving={saving}
+                onSave={saveEntry}
+                onCancel={() => setDialog(null)}
+                onDelete={dialog.entry ? deleteEntry : undefined}
+              />
+            )
           )}
         </DialogContent>
       </Dialog>

@@ -1,7 +1,7 @@
 import {
   ClipboardList, Droplets, Utensils, Apple, Pill, Thermometer, Droplet, Bath,
   Layers, Stethoscope, Shirt, Hand, Activity, Moon, Waves, Camera, Ruler, Scale,
-  Brush, HeartHandshake, Vibrate, Wind
+  Brush, HeartHandshake, Vibrate, Wind, Calendar, CheckSquare
 } from "lucide-react";
 
 // What each level actually means, in the patient's words rather than "10 = worst".
@@ -478,6 +478,18 @@ export const TYPES = {
     fields: [{ key: "weight", label: "Weight", kind: "number", decimal: true, unit: "lbs", placeholder: "142" }],
     summary: (d) => `${d.weight ?? "?"} lbs`,
     pills: (d) => [pill(`${d.weight ?? "?"} lbs`)]
+  },
+  // Appointments and tasks are not recovery entries — they are their own
+  // entities — so they have no fields and open their own form from the grid
+  // rather than the entry form. They are here so the tile renders like every
+  // other tracker and can be arranged with them.
+  appointment: {
+    label: "Appt", icon: Calendar, color: "#118AB2",
+    fields: []
+  },
+  task: {
+    label: "Task", icon: CheckSquare, color: "#06D6A0", darkText: true,
+    fields: []
   }
 };
 
@@ -505,7 +517,8 @@ export const entryNotes = (entry) => {
 export const QUICK_ORDER = [
   "water", "meals", "nutrients", "med", "supplement", "temp", "rest", "movement",
   "bm", "urine", "drainage", "incisions", "compression", "skin",
-  "mld", "tools", "bodywork", "pump", "vibration", "photo", "measure", "weight"
+  "mld", "tools", "bodywork", "pump", "vibration", "photo", "measure", "weight",
+  "appointment", "task"
 ];
 
 // The trackers that can be given a target in settings, in the order they are
