@@ -33,7 +33,7 @@ export default function ProviderSelect({ value, onChange }) {
     onChange({ provider_name: name, provider_type: m?.provider_type || "" });
   };
 
-  if (addingNew || members.length === 0) {
+  if (addingNew) {
     return (
       <Field label="Provider name" span>
         <div className="flex gap-2 min-w-0">
