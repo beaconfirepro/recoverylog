@@ -92,22 +92,24 @@ export default function Home() {
       hasChosenTrackers: surgeries.some((sx) => !isMaintenance(sx) && (sx.tracked_types || []).length > 0)
     }));
   }, [patient, surgeries]);
+  // forceOpen (from ?orientation=1, set by the "Open the guided tour" button on
+  // Setup) overrides active so the checklist reappears even after it was
+  // dismissed or completed — otherwise the button just lands on the home page
+  // with nothing to show.
   const expanded =
-    active && (!state.minimized && !hasRealSurgery ? true : openedByFab || forceOpen);
+    forceOpen || (active && (!state.minimized && !hasRealSurgery ? true : openedByFab || forceOpen));
   const showFab = isOwner && active && !expanded;
 
   const onNavigate = (item, choice) => {
-    // Item 1 hands the tracking toggles to the new-surgery modal on Care.
+    // Item 1 sends the patient to Setup with the surgery tour, which points at
+    // the Surgery Logs header and the + button. The patient taps + themselves
+    // after the tour — the same spotlight-and-explain pattern every other tour
+    // uses. The old code opened the new-surgery modal directly (no orient
+    // state), so the tour never fired and the patient landed on Setup with a
+    // modal and no explanation.
     if (item.kind === "surgery") {
       if (choice === "surgery") {
-        navigate("/profile", {
-          state: {
-            openNewSurgery: {
-              track_before: state.track_before !== false,
-              track_after: state.track_after !== false
-            }
-          }
-        });
+        navigate("/profile", { state: { orient: item.highlight } });
       }
       setState({ ...state, items: { ...state.items, [item.key]: true } });
       setOpenedByFab(false);
