@@ -42,10 +42,11 @@ export default function StartOwnLog() {
         last_name: form.last_name.trim(),
         dob: form.dob
       });
-      // A patient row points at itself, and the id does not exist until the row
-      // does. Link the account to it with write access — it is the account's own
-      // log — then re-read the account so PatientContext picks the new group up.
-      await base44.entities.AppUser.update(created.id, { patient_id: created.id });
+      // Link the account to the new row with write access — it is the account's
+      // own log — then re-read the account so PatientContext picks the new group
+      // up. The row's own patient_id field is not needed: PatientContext uses the
+      // row's id as the group id, and writing it back in a second call raced the
+      // create and failed with "not found".
       await base44.auth.updateMe({ patient_id: created.id, write_patient_id: created.id });
       await checkUserAuth();
       navigate("/");
