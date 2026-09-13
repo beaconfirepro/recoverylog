@@ -114,7 +114,7 @@ export default function Profile() {
     const previous = slots;
     const attempt = async () => {
       setSlotsLocal(next);
-      if (!(await patchPatient({ checkin_slots: next }, { retry: attempt }))) setSlotsLocal(previous);
+      if (!(await patchPatient({ checkin_slots: next }, { quiet: true, retry: attempt }))) setSlotsLocal(previous);
     };
     attempt();
   };
