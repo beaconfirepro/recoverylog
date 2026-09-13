@@ -130,9 +130,10 @@ export default function ClaimAccess() {
       last_name: form.last_name.trim(),
       dob: form.dob
     });
-    // A patient row points at itself, and the id does not exist until the row
-    // does. PatientContext links the account on the reload.
-    await base44.entities.AppUser.update(created.id, { patient_id: created.id });
+    // PatientContext links the account on the reload using the row's own id as
+    // the group id, so the row's patient_id field does not need to point at
+    // itself — and writing it back in a second call raced the create and failed
+    // with "not found".
     await refreshPatient();
     setBusy(false);
   };
