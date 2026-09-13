@@ -40,7 +40,7 @@
       "type": "string"
     },
     "dob_check": {
-      "description": "On a team_member row: a SHA-256 digest of the patient's date of birth salted with this row's join_code, used as the second factor when opening the log. Never the date itself — row security lets an invited account read its own row, so a date sitting here in the clear would hand over the thing it is meant to prove, and an invitation that reached the wrong address would leak it to a stranger. Absent on rows written before the second factor, which still open on the code alone.",
+      "description": "On a team_member row: a SHA-256 digest of the patient's date of birth salted with this row's join_code, used as the second factor when opening the log. Never the date itself \u2014 row security lets an invited account read its own row, so a date sitting here in the clear would hand over the thing it is meant to prove, and an invitation that reached the wrong address would leak it to a stranger. Absent on rows written before the second factor, which still open on the code alone.",
       "type": "string"
     },
     "email": {
@@ -89,6 +89,10 @@
     },
     "patient_id": {
       "description": "Which patient's group this row belongs to. A patient row points at itself.",
+      "type": "string"
+    },
+    "provider_type": {
+      "description": "What kind of provider this care team member is: General Practice, Surgical, Endocrinology, Rheumatology, Gastroenterology, CLT, MLD Therapy, Physical Therapy, Psychiatry, Counseling, Caregiver, or Other.",
       "type": "string"
     }
   },

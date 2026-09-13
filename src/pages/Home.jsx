@@ -11,6 +11,7 @@ import { asRows } from "@/lib/recoveryUtils";
 import { isMaintenance } from "@/lib/scope";
 import OrientationChecklist from "@/components/orientation/OrientationChecklist";
 import OrientationFab from "@/components/orientation/OrientationFab";
+import TaskReminders from "@/components/recovery/TaskReminders";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
 
 export default function Home() {
@@ -161,7 +162,10 @@ export default function Home() {
           onNavigate={onNavigate}
         />
       ) : (
-        <DayView date={todayStr()} />
+        <>
+          <TaskReminders />
+          <DayView date={todayStr()} />
+        </>
       )}
 
       {showFab && <OrientationFab label="Open the guided tour" onClick={() => setOpenedByFab(true)} />}

@@ -262,6 +262,16 @@ export const TYPES = {
       ].filter(Boolean);
     }
   },
+  supplement: {
+    label: "Supplements", icon: Pill, color: "#06D6A0", darkText: true,
+    fields: [
+      { key: "name", label: "Supplement", kind: "text", placeholder: "e.g. Vitamin D" },
+      { key: "dose", label: "Dose", kind: "text", placeholder: "e.g. 1000 IU" },
+      { key: "reason", label: "Reason", kind: "text", placeholder: "e.g. bone healing" }
+    ],
+    summary: (d) => join([d.name, d.dose, d.reason]),
+    pills: (d) => [pill(d.name || "Supplement")]
+  },
   temp: {
     label: "Temp", icon: Thermometer, color: "#FF006E",
     fields: [
@@ -493,7 +503,7 @@ export const entryNotes = (entry) => {
 };
 
 export const QUICK_ORDER = [
-  "water", "meals", "nutrients", "med", "temp", "rest", "movement",
+  "water", "meals", "nutrients", "med", "supplement", "temp", "rest", "movement",
   "bm", "urine", "drainage", "incisions", "compression", "skin",
   "mld", "tools", "bodywork", "pump", "vibration", "photo", "measure", "weight"
 ];

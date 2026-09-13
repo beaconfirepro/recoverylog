@@ -1,0 +1,65 @@
+{
+  "name": "Appointment",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "description": "Patient this appointment belongs to.",
+      "type": "string"
+    },
+    "surgery_id": {
+      "description": "Surgery this appointment relates to, if any.",
+      "type": "string"
+    },
+    "provider_name": {
+      "description": "The provider's name, typed in \u2014 no invitation needed.",
+      "type": "string"
+    },
+    "provider_type": {
+      "description": "What kind of provider: General Practice, Surgical, Endocrinology, Rheumatology, Gastroenterology, CLT, MLD Therapy, Physical Therapy, Psychiatry, Counseling, Caregiver, or Other.",
+      "type": "string"
+    },
+    "date": {
+      "description": "When the appointment is.",
+      "format": "date",
+      "type": "string"
+    },
+    "time": {
+      "description": "Time of the appointment, HH:MM.",
+      "type": "string"
+    },
+    "location": {
+      "description": "Where the appointment is, if set.",
+      "type": "string"
+    },
+    "notes": {
+      "description": "Anything else about the appointment.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "patient_id",
+    "provider_name",
+    "date"
+  ],
+  "rls": {
+    "create": {
+      "data.patient_id": "{{user.data.write_patient_id}}"
+    },
+    "delete": {
+      "data.patient_id": "{{user.data.write_patient_id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "update": {
+      "data.patient_id": "{{user.data.write_patient_id}}"
+    }
+  }
+}

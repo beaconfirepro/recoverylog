@@ -1,0 +1,66 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "patient_id": {
+      "description": "Patient this task belongs to.",
+      "type": "string"
+    },
+    "surgery_id": {
+      "description": "Surgery this task relates to, if any.",
+      "type": "string"
+    },
+    "title": {
+      "description": "What needs doing.",
+      "type": "string"
+    },
+    "description": {
+      "description": "More detail about the task.",
+      "type": "string"
+    },
+    "assigned_to": {
+      "description": "Who the task is for: the patient's own name, or a care team member's name.",
+      "type": "string"
+    },
+    "due_date": {
+      "description": "When the task is due.",
+      "format": "date",
+      "type": "string"
+    },
+    "status": {
+      "description": "Whether the task is still open or done.",
+      "enum": [
+        "open",
+        "done"
+      ],
+      "default": "open",
+      "type": "string"
+    }
+  },
+  "required": [
+    "patient_id",
+    "title",
+    "due_date"
+  ],
+  "rls": {
+    "create": {
+      "data.patient_id": "{{user.data.write_patient_id}}"
+    },
+    "delete": {
+      "data.patient_id": "{{user.data.write_patient_id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.patient_id": "{{user.data.patient_id}}"
+        }
+      ]
+    },
+    "update": {
+      "data.patient_id": "{{user.data.write_patient_id}}"
+    }
+  }
+}

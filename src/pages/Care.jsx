@@ -13,6 +13,9 @@ import { sendInviteEmail } from "@/lib/inviteEmail";
 import HelpHint from "@/components/help/HelpHint";
 import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
 import StartOwnLog from "@/components/care/StartOwnLog";
+import Appointments from "@/components/care/Appointments";
+import Tasks from "@/components/care/Tasks";
+import { PROVIDER_TYPES } from "@/lib/providers";
 
 // Set when a log is opened, so a member is asked which patient once a session
 // rather than on every navigation. sessionStorage rather than local: a new
@@ -127,7 +130,7 @@ function Claim({ row, onDone, onCancel }) {
 // Adding someone is a small form, so it opens over the list rather than sending
 // you to another page to do it.
 function AddMember({ patient, patientId, team, onDone, onCancel }) {
-  const [form, setForm] = useState({ email: "", first_name: "", last_name: "" });
+  const [form, setForm] = useState({ email: "", first_name: "", last_name: "", provider_type: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   // Shown after the row is written, because the patient has to read it out and
@@ -164,6 +167,7 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
       email,
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
+      provider_type: form.provider_type || undefined,
       join_code,
       // Salted with the code, so the row gives up neither factor on its own.
       dob_check: await dobDigest(join_code, patient.dob),
@@ -245,6 +249,14 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
         </Field>
         <Field label="Their last name">
           <input type="text" data-gtour="careteam-last" value={form.last_name} onChange={set("last_name")} className="nb-input" />
+        </Field>
+        <Field label="Type" span>
+          <select value={form.provider_type} onChange={set("provider_type")} className="nb-select">
+            <option value="">Select a type</option>
+            {PROVIDER_TYPES.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
         </Field>
       </div>
 
@@ -544,6 +556,9 @@ export default function Care() {
           })}
         </div>
       </div>
+
+      <Appointments />
+      <Tasks />
 
       {!isOwner && <StartOwnLog />}
 
