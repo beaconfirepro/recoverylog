@@ -289,9 +289,9 @@ export default function GuidedTours() {
       {box && markVisible && step.mark === "circle" && <Circle box={box} />}
       {markVisible && arrowBox && step.arrowTarget && <Arrow box={arrowBox} />}
       <div className="gtour-note-wrap" role="status" aria-live="polite">
-        <div className="nb-card gtour-note">
+        <div className="nb-card gtour-note border-accent">
           <span key={phase} className="gtour-note-text">{step.note}</span>
-          <button type="button" onClick={step.waitForTap ? nextStep : finish} className="nb-btn h-9 px-3 shrink-0 bg-primary text-primary-foreground text-xs">
+          <button type="button" onClick={step.waitForTap ? nextStep : finish} className="nb-btn h-9 px-3 shrink-0 text-xs" style={{ backgroundColor: "#d4ff00", color: "#1A1024" }}>
             {isLast ? "Done" : step.waitForTap ? "Next" : "Skip"}
           </button>
         </div>
