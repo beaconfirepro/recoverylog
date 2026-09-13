@@ -63,7 +63,7 @@ export default function Surgeries() {
         <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2">
           <Scissors className="w-5 h-5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <div className="font-display text-xl uppercase leading-tight break-words">Logs</div>
+            <div className="font-display text-xl uppercase leading-tight break-words">Surgery Logs</div>
             <div className="text-sm font-semibold break-words">Each keeps its own days.</div>
           </div>
           {canWrite && (
