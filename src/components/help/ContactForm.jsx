@@ -1,6 +1,7 @@
 /* global __BUILD_COMMIT__ */
 import React, { useState } from "react";
-import { Send } from "lucide-react";
+import { createPortal } from "react-dom";
+import { ChevronRight, Send, X } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { usePatient, displayName } from "@/lib/PatientContext";
 import { sendSupportEmail } from "@/lib/supportEmail";
@@ -15,6 +16,7 @@ import { sendSupportEmail } from "@/lib/supportEmail";
 export default function ContactForm() {
   const { user } = useAuth();
   const { me, patient, isOwner } = usePatient();
+  const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [state, setState] = useState(null); // "sending" | "sent" | "failed"
 
@@ -38,55 +40,92 @@ export default function ContactForm() {
     }
   };
 
+  const close = () => {
+    setOpen(false);
+    setMessage("");
+    setState(null);
+  };
+
   return (
     <div className="nb-card overflow-hidden">
-      <div className="px-4 py-3 border-b-2 bg-muted">
-        <div className="font-display text-xl uppercase leading-tight break-words">Contact us</div>
-        <div className="text-sm font-semibold break-words">
-          Something wrong, or something missing. A person reads these.
+      <button type="button" onClick={() => setOpen(true)} className="w-full text-left">
+        <div className="px-4 py-3 border-b-2 bg-muted flex items-center gap-2 min-w-0">
+          <div className="flex-1 min-w-0">
+            <div className="font-display text-xl uppercase leading-tight break-words">Contact us</div>
+            <div className="text-sm font-semibold break-words">
+              Something wrong, or something missing. A person reads these.
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 shrink-0" />
         </div>
-      </div>
+      </button>
 
-      <div className="p-4 space-y-3">
-        {/* Said plainly, because a message about a medical log should not be a
-            guess about what got attached to it. */}
-        <p className="text-xs font-semibold text-muted-foreground break-words">
-          Sent with your name, the address you signed in with, and which version of the app you are on. Nothing
-          from your log goes with it.
-        </p>
+      {/* Portalled out of the card for the same reason HelpSection is: main is
+          its own stacking context, so a z-50 child of it still paints under the
+          z-30 bars. */}
+      {open && createPortal(
+        <div className="fixed inset-0 z-50 bg-background overflow-y-auto" style={{ paddingTop: "var(--safe-t)" }}>
+          <div className="max-w-lg mx-auto px-4 py-6">
+            <div className="flex items-start justify-between gap-2 mb-3 min-w-0">
+              <div className="min-w-0">
+                <div className="font-display text-xl uppercase leading-tight break-words">Contact us</div>
+                <div className="text-sm font-semibold break-words">
+                  Something wrong, or something missing. A person reads these.
+                </div>
+              </div>
+              <button type="button" onClick={close} className="nb-btn h-11 w-11 shrink-0 bg-card" aria-label="Close">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-        <textarea
-          className="nb-textarea min-h-[6rem]"
-          value={message}
-          onChange={(e) => {
-            setMessage(e.target.value);
-            if (state) setState(null);
-          }}
-          placeholder="What happened, and what you expected instead."
-          aria-label="Your message"
-        />
+            <div className="space-y-3">
+              {/* Said plainly, because a message about a medical log should not be a
+                  guess about what got attached to it. */}
+              <p className="text-xs font-semibold text-muted-foreground break-words">
+                Sent with your name, the address you signed in with, and which version of the app you are on. Nothing
+                from your log goes with it.
+              </p>
 
-        <button
-          type="button"
-          className="nb-btn w-full h-12 bg-primary text-primary-foreground flex items-center justify-center gap-2 disabled:opacity-40"
-          onClick={send}
-          disabled={state === "sending" || !message.trim()}
-        >
-          <Send className="w-4 h-4 shrink-0" />
-          {state === "sending" ? "Sending…" : "Send"}
-        </button>
+              <textarea
+                className="nb-textarea min-h-[6rem]"
+                value={message}
+                onChange={(e) => {
+                  setMessage(e.target.value);
+                  if (state) setState(null);
+                }}
+                placeholder="What happened, and what you expected instead."
+                aria-label="Your message"
+              />
 
-        {state === "sent" && (
-          <p className="text-sm font-bold break-words" role="status">
-            Sent. Someone will read it and reply to {user?.email}.
-          </p>
-        )}
-        {state === "failed" && (
-          <p className="text-sm font-bold text-destructive break-words" role="status">
-            That did not send. What you wrote is still here — check your connection and tap Send again.
-          </p>
-        )}
-      </div>
+              <button
+                type="button"
+                className="nb-btn w-full h-12 bg-primary text-primary-foreground flex items-center justify-center gap-2 disabled:opacity-40"
+                onClick={send}
+                disabled={state === "sending" || !message.trim()}
+              >
+                <Send className="w-4 h-4 shrink-0" />
+                {state === "sending" ? "Sending…" : "Send"}
+              </button>
+
+              {state === "sent" && (
+                <p className="text-sm font-bold break-words" role="status">
+                  Sent. Someone will read it and reply to {user?.email}.
+                </p>
+              )}
+              {state === "failed" && (
+                <p className="text-sm font-bold text-destructive break-words" role="status">
+                  That did not send. What you wrote is still here — check your connection and tap Send again.
+                </p>
+              )}
+            </div>
+
+            <button type="button" onClick={close} className="nb-btn w-full h-12 bg-card mt-4">
+              Done
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
