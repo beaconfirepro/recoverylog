@@ -111,6 +111,20 @@ function MedRow({ med, onChange, onRemove }) {
           className="nb-input"
         />
       </div>
+      <select
+        value={draft.frequency || ""}
+        onChange={(e) => {
+          const next = { ...draft, frequency: e.target.value || undefined };
+          setDraft(next);
+          onChange(next);
+        }}
+        className="nb-select"
+      >
+        <option value="">Frequency</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="monthly">Monthly</option>
+      </select>
     </div>
   );
 }

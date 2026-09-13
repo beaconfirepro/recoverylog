@@ -114,11 +114,15 @@ export default function GuidedTours() {
     let cancelled = false;
     clearTimers();
     stopRaf();
-    // Clear the last step's spotlight so a waitFor gap does not leave a stale
-    // box floating over a thing that has gone. The note stays so the hand-off
-    // reads as a move, not a flash.
-    setBox(null);
-    setArrowBox(null);
+    // Clear the last step's spotlight only when the step needs to wait for its
+    // target — a waitFor gap can leave a stale box floating over a thing that
+    // has gone. For non-waitFor steps the target is found almost immediately,
+    // so keeping the old box until the new one is ready makes the hand-off read
+    // as a move rather than a flicker.
+    if (step.waitFor) {
+      setBox(null);
+      setArrowBox(null);
+    }
     setMarkVisible(false);
     const max = step.waitFor ? 10000 : 2000;
     const startedAt = Date.now();
@@ -220,8 +224,9 @@ export default function GuidedTours() {
           const t = step.find === "row" ? findRow() : document.querySelector(`[data-gtour="${CSS.escape(clickId)}"]`);
           if (!t) return;
           // clickIfOff stops a re-run from toggling an already-on tracker back
-          // off: the switch and the card checkbox both carry aria-checked.
-          if (step.clickIfOff && t.getAttribute("aria-checked") === "true") return;
+          // off: the switch and the card checkbox carry aria-checked, and the
+          // PDF scope toggle carries aria-pressed.
+          if (step.clickIfOff && (t.getAttribute("aria-checked") === "true" || t.getAttribute("aria-pressed") === "true")) return;
           if (step.openSelect) {
             try { t.showPicker(); } catch { t.click(); }
           } else {
@@ -230,49 +235,37 @@ export default function GuidedTours() {
         }, step.clickAt));
       }
       startRaf(el, arrowEl);
-      timers.current.push(setTimeout(() => {
-        if (cancelled) return;
-        if (phase === activeConfig.steps.length - 1) { finish(); return; }
-        setPhase((p) => p + 1);
-      }, step.ms));
+      // waitForTap steps do not auto-advance — the Next button in the note bar
+      // moves on, so the patient can read and interact at her own pace.
+      if (!step.waitForTap) {
+        timers.current.push(setTimeout(() => {
+          if (cancelled) return;
+          if (phase === activeConfig.steps.length - 1) { finish(); return; }
+          setPhase((p) => p + 1);
+        }, step.ms));
+      }
     };
 
+    // The spotlight appears immediately and the RAF loop tracks the target
+    // through any scroll, so the hand-off from the last step's box to this
+    // one has no gap. The old scroll-settle wait left a flicker between steps.
     const place = (el) => {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
-      // Wait for the smooth scroll to settle before showing the spotlight, so it
-      // appears at the row's final position instead of sliding in while the
-      // scroll is still moving. The note stays up during the wait.
-      let began = false;
-      const go = () => {
-        if (began || cancelled) return;
-        began = true;
-        begin(el);
-      };
-      let last = window.scrollY;
-      let idle = 0;
-      const settle = () => {
-        if (cancelled || began) return;
-        const y = window.scrollY;
-        if (y === last) {
-          idle += 1;
-          if (idle >= 3) { go(); return; }
-        } else {
-          idle = 0;
-          last = y;
-        }
-        timers.current.push(setTimeout(settle, 16));
-      };
-      timers.current.push(setTimeout(settle, 16));
-      // Hard ceiling so a browser that never reports a still scroll still shows
-      // the spotlight, just a little later.
-      timers.current.push(setTimeout(go, 1000));
+      begin(el);
     };
 
     const poll = () => {
       if (cancelled) return;
       const el = findTarget();
       if (el) { place(el); return; }
-      if (Date.now() - startedAt > max) { finish(); return; }
+      // A missing target advances rather than ending the tour: conditional
+      // targets (e.g. PDF "All records" only when there are multiple
+      // surgeries) should be skipped, not abort the whole walkthrough.
+      if (Date.now() - startedAt > max) {
+        if (phase === activeConfig.steps.length - 1) { finish(); return; }
+        setPhase((p) => p + 1);
+        return;
+      }
       timers.current.push(setTimeout(poll, 120));
     };
 
@@ -284,6 +277,10 @@ export default function GuidedTours() {
   if (!running || !activeConfig || phase < 0 || phase >= activeConfig.steps.length) return null;
   const step = activeConfig.steps[phase];
   const isLast = phase === activeConfig.steps.length - 1;
+  const nextStep = () => {
+    if (isLast) { finish(); return; }
+    setPhase((p) => p + 1);
+  };
 
   return createPortal(
     <>
@@ -294,8 +291,8 @@ export default function GuidedTours() {
       <div className="gtour-note-wrap" role="status" aria-live="polite">
         <div className="nb-card gtour-note">
           <span key={phase} className="gtour-note-text">{step.note}</span>
-          <button type="button" onClick={finish} className="nb-btn h-9 px-3 shrink-0 bg-card text-xs">
-            {isLast ? "Done" : "Skip"}
+          <button type="button" onClick={step.waitForTap ? nextStep : finish} className="nb-btn h-9 px-3 shrink-0 bg-primary text-primary-foreground text-xs">
+            {isLast ? "Done" : step.waitForTap ? "Next" : "Skip"}
           </button>
         </div>
       </div>

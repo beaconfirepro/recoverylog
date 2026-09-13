@@ -264,7 +264,7 @@ export default function Profile() {
             <button
               type="button"
               className="nb-btn w-full h-12 bg-primary text-primary-foreground"
-              onClick={() => navigate("/?orientation=1")}
+              onClick={() => navigate("/", { state: { forceOrientation: true } })}
             >
               Open the guided tour
             </button>
@@ -657,6 +657,7 @@ export default function Profile() {
                         type="button"
                         onClick={() => setGroupBy(k)}
                         aria-pressed={groupBy === k}
+                        data-gtour={k === "surgery" ? "pdf-by-record" : "pdf-timeline"}
                         className="nb-chip flex-1 justify-center"
                         style={groupBy === k ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
                       >

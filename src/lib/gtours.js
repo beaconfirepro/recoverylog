@@ -47,8 +47,7 @@ const SURGERY_NOTES = [
 
 const CHECKIN_NOTES = [
   "The check-in rates pain, swelling, mobility, mood, nausea and energy on one screen.",
-  "Four times are set by default. Keep the ones that suit you.",
-  "Tap the x to remove a time you don't need.",
+  "Four times are set by default. Keep the ones that suit you, or tap the x to remove one.",
   "Add a time with the green button.",
   "Choose which measures the check-in records. Turning one off keeps what's already logged."
 ];
@@ -69,21 +68,21 @@ const MEASUREMENT_NOTES = [
 
 const MEDS_NOTES = [
   "Group your medicines so the Med tracker brings them up already ticked.",
-  "Tap a group to open it — dose, reason, and a drug lookup for adding one.",
+  "Tap a group to open it, then add medicines to it — helpful for meds you take together.",
+  "Set a frequency — daily, weekly, or monthly — for each medicine.",
   "Add a group with the green button."
 ];
 
 const PDF_NOTES = [
   "Download a PDF for a single day or a range — ready for a consultation.",
-  "Pick the dates. A range stops at the limit so nothing is left out.",
+  "Switch to All records to include every surgery in the report.",
+  "By record runs each surgery end to end. One timeline puts every day in date order and names the record on each.",
   "Tap Download to build it. It carries the surgery, goals, care team, garments, meds, trends, red flags and questions."
 ];
 
 const FIRSTCHECKIN_NOTES = [
   "Log an entry here. Tap a tracker to open its form.",
-  "The check-in is the pinned button. Rate pain, swelling, mobility, mood, nausea and energy on one screen.",
-  "Log water here — each entry adds to the day's total against your goal.",
-  "Log meds here — pick a group and the medicines come up already ticked."
+  "The check-in is the pinned button. Rate pain, swelling, mobility, mood, nausea and energy on one screen."
 ];
 
 const REDFLAG_NOTES = [
@@ -107,8 +106,8 @@ export const TOURS = {
         type: ["garments-name", "garments-size"],
         values: { "garments-name": "Sample Garment", "garments-size": "Size M" }
       },
-      { target: "garments-add", mark: "arrow", note: GARMENT_NOTES[2], ms: 8400, click: true, clickAt: 3000, markAt: 1200, markGone: 7200 },
-      { target: "garments-remove", find: "row", mark: "circle", note: GARMENT_NOTES[3], ms: 5200, waitFor: true, markAt: 1200, markGone: 5000 }
+      { target: "garments-add", mark: "arrow", note: GARMENT_NOTES[2], ms: 8400, click: true, clickAt: 3000, markAt: 400, markGone: 7200 },
+      { target: "garments-remove", find: "row", mark: "circle", note: GARMENT_NOTES[3], ms: 5200, waitFor: true, markAt: 400, markGone: 5000 }
     ],
     // The tour really saves "Sample Garment / Size M" to make the demonstration
     // convincing; remove it again when the tour ends, however it ends.
@@ -174,19 +173,21 @@ export const TOURS = {
   surgery: {
     path: "/profile",
     steps: [
-      { target: "surgeries-header", mark: "spot", note: SURGERY_NOTES[0], ms: 3400 },
-      { target: "surgeries-add", mark: "arrow", note: SURGERY_NOTES[1], ms: 3400 }
+      { target: "surgeries-header", mark: "spot", note: SURGERY_NOTES[0], ms: 3400, waitFor: true },
+      { target: "surgeries-add", mark: "arrow", note: SURGERY_NOTES[1], ms: 3400, waitFor: true }
     ]
   },
 
+  // The check-in tour waits on each step — the patient clicks Next when she's
+  // read it and is ready to move on, so she has time to set her times and
+  // measures at her own pace.
   checkins: {
     path: "/profile",
     steps: [
-      { target: "checkin-card", mark: "spot", note: CHECKIN_NOTES[0], ms: 3200 },
-      { target: "checkin-times", mark: "spot", note: CHECKIN_NOTES[1], ms: 3000 },
-      { target: "checkin-remove", mark: "circle", note: CHECKIN_NOTES[2], ms: 2600 },
-      { target: "checkin-add", mark: "arrow", note: CHECKIN_NOTES[3], ms: 2600 },
-      { target: "checkin-records", mark: "spot", note: CHECKIN_NOTES[4], ms: 3600 }
+      { target: "checkin-card", mark: "spot", note: CHECKIN_NOTES[0], ms: 3200, waitFor: true, waitForTap: true },
+      { target: "checkin-times", mark: "spot", note: CHECKIN_NOTES[1], ms: 3200, waitFor: true, waitForTap: true },
+      { target: "checkin-add", mark: "arrow", note: CHECKIN_NOTES[2], ms: 3200, waitFor: true, waitForTap: true },
+      { target: "checkin-records", mark: "spot", note: CHECKIN_NOTES[3], ms: 3200, waitFor: true, waitForTap: true }
     ]
   },
 
@@ -209,40 +210,42 @@ export const TOURS = {
   measurements: {
     path: "/profile",
     steps: [
-      { target: "measurements-header", mark: "spot", note: MEASUREMENT_NOTES[0], ms: 3200 },
-      { target: "measurements-spots", mark: "spot", note: MEASUREMENT_NOTES[1], ms: 3200 },
-      { target: "measurements-add", mark: "arrow", note: MEASUREMENT_NOTES[2], ms: 3000 }
+      { target: "measurements-header", mark: "spot", note: MEASUREMENT_NOTES[0], ms: 4200, waitFor: true },
+      { target: "measurements-spots", mark: "spot", note: MEASUREMENT_NOTES[1], ms: 4200, waitFor: true },
+      { target: "measurements-add", mark: "arrow", note: MEASUREMENT_NOTES[2], ms: 4000, waitFor: true }
     ]
   },
 
   meds: {
     path: "/profile",
     steps: [
-      { target: "meds-header", mark: "spot", note: MEDS_NOTES[0], ms: 3200 },
-      { target: "meds-list", mark: "spot", note: MEDS_NOTES[1], ms: 3200 },
-      { target: "meds-add", mark: "arrow", note: MEDS_NOTES[2], ms: 3000 }
+      { target: "meds-header", mark: "spot", note: MEDS_NOTES[0], ms: 3400, waitFor: true },
+      { target: "meds-list", mark: "spot", note: MEDS_NOTES[1], ms: 3800, waitFor: true },
+      { target: "meds-list", mark: "spot", note: MEDS_NOTES[2], ms: 3400, waitFor: true },
+      { target: "meds-add", mark: "arrow", note: MEDS_NOTES[3], ms: 3400, waitFor: true }
     ]
   },
 
   pdf: {
     path: "/profile",
     steps: [
-      { target: "pdf-header", mark: "spot", note: PDF_NOTES[0], ms: 3200 },
-      { target: "pdf-range", mark: "spot", note: PDF_NOTES[1], ms: 3200 },
-      { target: "pdf-download", mark: "arrow", note: PDF_NOTES[2], ms: 3600 }
+      { target: "pdf-header", mark: "spot", note: PDF_NOTES[0], ms: 3200, waitFor: true },
+      { target: "pdf-all-records", mark: "circle", note: PDF_NOTES[1], ms: 3600, waitFor: true, click: true, clickAt: 2200, clickIfOff: true, markAt: 400 },
+      { target: "pdf-by-record", mark: "spot", note: PDF_NOTES[2], ms: 4400, waitFor: true },
+      { target: "pdf-download", mark: "arrow", note: PDF_NOTES[3], ms: 3600, waitFor: true }
     ]
   },
 
   // Today's page loads its day and entries before the check-in button and the
   // red-flag card mount, so every step here waits for its target to appear
   // rather than assuming it is already on screen.
+  // Water and meds have their own tours (trackers and meds). The first
+  // check-in tour stays focused on the check-in itself.
   firstcheckin: {
     path: "/",
     steps: [
       { target: "firstcheckin-toggle", mark: "spot", note: FIRSTCHECKIN_NOTES[0], ms: 3000, waitFor: true },
-      { target: "firstcheckin-checkin", mark: "circle", note: FIRSTCHECKIN_NOTES[1], ms: 3600, waitFor: true },
-      { target: "firstcheckin-water", mark: "circle", note: FIRSTCHECKIN_NOTES[2], ms: 3200, waitFor: true },
-      { target: "firstcheckin-med", mark: "circle", note: FIRSTCHECKIN_NOTES[3], ms: 3200, waitFor: true }
+      { target: "firstcheckin-checkin", mark: "circle", note: FIRSTCHECKIN_NOTES[1], ms: 3600, waitFor: true }
     ]
   },
 

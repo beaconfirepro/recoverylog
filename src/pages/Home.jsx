@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import DayView from "@/components/recovery/DayView";
 import PatientCard from "@/components/recovery/PatientCard";
 import InstallHint from "@/components/InstallHint";
@@ -16,8 +16,8 @@ import { useOrientationHighlight } from "@/lib/useOrientationHighlight";
 export default function Home() {
   const { isOwner, patientId, patient, surgeries } = usePatient();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const forceOpen = params.get("orientation") === "1";
+  const location = useLocation();
+  const forceOpen = location.state?.forceOrientation === true;
 
   const [state, setStateLocal] = useState(() => loadOrientation(patientId));
   useEffect(() => {
@@ -133,12 +133,12 @@ export default function Home() {
   const minimize = () => {
     setState({ ...state, minimized: true });
     setOpenedByFab(false);
-    if (forceOpen) navigate("/", { replace: true });
+    if (forceOpen) navigate("/", { replace: true, state: null });
   };
   const dismiss = () => {
     setState({ ...state, dismissed: true });
     setOpenedByFab(false);
-    if (forceOpen) navigate("/", { replace: true });
+    if (forceOpen) navigate("/", { replace: true, state: null });
   };
 
   return (
