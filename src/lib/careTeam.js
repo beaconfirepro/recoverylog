@@ -26,5 +26,14 @@ export function useCareTeam() {
     reload();
   }, [reload]);
 
+  // A care team member may never sign in, and a row can leave without this
+  // device asking — the tour deletes its sample, the patient removes someone
+  // from another phone, a member leaves. Subscribe so the list stays truthful
+  // rather than showing a row that is already gone.
+  useEffect(() => {
+    const unsub = base44.entities.AppUser.subscribe(() => { reload(); });
+    return unsub;
+  }, [reload]);
+
   return { team, reload };
 }

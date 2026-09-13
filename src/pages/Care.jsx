@@ -510,7 +510,7 @@ export default function Care() {
                               type="button"
                               className="nb-btn flex-1 min-w-0 h-11 bg-destructive text-destructive-foreground"
                               onClick={async () => {
-                                await base44.entities.AppUser.delete(m.id);
+                                try { await base44.entities.AppUser.delete(m.id); } catch { /* already gone */ }
                                 setRemoving(null);
                                 setExpanded(null);
                                 loadTeam();
