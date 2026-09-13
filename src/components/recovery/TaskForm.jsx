@@ -1,29 +1,25 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { usePatient, displayName } from "@/lib/PatientContext";
-import { useCareTeam } from "@/lib/careTeam";
 import Field from "@/components/Field";
+import AssigneeSelect from "@/components/care/AssigneeSelect";
 
 // The add-task form used inside the Day page dialog. A task is assigned to the
 // patient or a care team member by name, with a due date.
 export default function TaskForm({ onDone }) {
   const { patientId, patient } = usePatient();
-  const { team } = useCareTeam();
-  const [form, setForm] = useState({ title: "", description: "", assigned_to: "patient", due_date: "" });
+  const [form, setForm] = useState({ title: "", description: "", assigned_to: "", due_date: "" });
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
     if (!form.title.trim() || !form.due_date) return;
     setBusy(true);
-    const assignedName = form.assigned_to === "patient"
-      ? (displayName(patient) || "Patient")
-      : form.assigned_to;
     try {
       await base44.entities.Task.create({
         patient_id: patientId,
         title: form.title.trim(),
         description: form.description.trim() || undefined,
-        assigned_to: assignedName,
+        assigned_to: form.assigned_to || (displayName(patient) || "Patient"),
         due_date: form.due_date,
         status: "open"
       });
@@ -32,27 +28,16 @@ export default function TaskForm({ onDone }) {
     setBusy(false);
   };
 
-  const assignOptions = [
-    { value: "patient", label: displayName(patient) || "Patient" },
-    ...team.map((m) => {
-      const name = displayName(m) || m.email;
-      return { value: name, label: name };
-    })
-  ];
-
   return (
     <div className="space-y-3">
       <h2 className="font-display text-xl uppercase break-words">Add task</h2>
       <Field label="Task" span>
         <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Call surgeon about stitches" className="nb-input" />
       </Field>
-      <Field label="Assign to" span>
-        <select value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })} className="nb-select">
-          {assignOptions.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      </Field>
+      <AssigneeSelect
+        value={form.assigned_to}
+        onChange={(name) => setForm((f) => ({ ...f, assigned_to: name }))}
+      />
       <Field label="Due date" span>
         <input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} className="nb-input" />
       </Field>
