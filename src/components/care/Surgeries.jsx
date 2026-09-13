@@ -23,6 +23,9 @@ export default function Surgeries() {
   const [prefillTrack, setPrefillTrack] = useState(null);
   const hasMaintenance = surgeries.some(isMaintenance);
   const activeSurgeries = surgeries.filter((s) => !s.cancelled);
+  // The maintenance record stays available in the day-picker, but it is not a
+  // surgery, so it does not get a card here.
+  const surgeryCards = activeSurgeries.filter((s) => !isMaintenance(s));
   const cancelled = cancelledRecords(surgeries);
 
   const restoreSurgery = async (s) => {
@@ -82,13 +85,14 @@ export default function Surgeries() {
           {/* A maintenance patient has no surgery date for her days to count
               from, and telling her they will is how the old empty state read to
               everyone who is not having an operation. */}
-          {surgeries.length === 0 && (
+          {surgeryCards.length === 0 && (
             <p className="text-sm text-muted-foreground break-words">
-              Nothing here yet. Tap + to add a surgery and your days count from its date, or start a
-              maintenance log below and they run by calendar date.
+              {hasMaintenance
+                ? "No surgeries added yet. Tap + to add one and your days count from its date."
+                : "Nothing here yet. Tap + to add a surgery and your days count from its date, or start a maintenance log below and they run by calendar date."}
             </p>
           )}
-          {activeSurgeries.map((s) => (
+          {surgeryCards.map((s) => (
             <SurgeryCard
               key={s.id}
               surgery={s}
