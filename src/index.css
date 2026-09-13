@@ -236,7 +236,7 @@
      the arrow and circle are SVG draws, and the note is a fixed bar. */
   .gtour-spot {
     position: fixed;
-    z-index: 50;
+    z-index: 70;
     border-radius: 14px;
     border: 2px solid hsl(var(--accent));
     box-shadow: 0 0 0 100vmax hsl(260 30% 11% / 0.72);
@@ -244,7 +244,7 @@
   }
   .gtour-arrow {
     position: fixed;
-    z-index: 50;
+    z-index: 70;
     color: hsl(285 85% 58%);
     pointer-events: none;
   }
@@ -261,14 +261,14 @@
   }
   .gtour-circle {
     position: fixed;
-    z-index: 50;
+    z-index: 70;
     color: hsl(330 100% 66%);
     pointer-events: none;
   }
   .gtour-circle-path {
     stroke-dasharray: 320;
     stroke-dashoffset: 320;
-    animation: gtour-draw 0.6s ease-out forwards;
+    animation: gtour-draw 0.3s ease-out forwards;
   }
   @keyframes gtour-draw {
     to { stroke-dashoffset: 0; }
@@ -276,7 +276,7 @@
   .gtour-note-wrap {
     position: fixed;
     inset: 0 0 auto 0;
-    z-index: 60;
+    z-index: 80;
     padding: calc(var(--safe-t) + 0.5rem) 0.75rem 0;
     pointer-events: none;
   }

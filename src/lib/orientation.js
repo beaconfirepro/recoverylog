@@ -19,7 +19,8 @@ export const ORIENTATION_ITEMS = [
     n: 1,
     question: "Are you tracking for an upcoming surgery or for ongoing maintenance?",
     body: "If a surgery is coming up, add it and your days count from its date. For maintenance, log by date with no surgery day.",
-    kind: "surgery"
+    kind: "surgery",
+    highlight: "surgery"
   },
   {
     key: "checkins",

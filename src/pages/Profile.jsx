@@ -630,6 +630,7 @@ export default function Profile() {
                       type="button"
                       onClick={() => setScope(k)}
                       aria-pressed={scope === k}
+                      data-gtour={k === "all" ? "pdf-all-records" : undefined}
                       className="nb-chip flex-1 justify-center"
                       style={scope === k ? { backgroundColor: "hsl(var(--primary))", color: "#fff" } : {}}
                     >

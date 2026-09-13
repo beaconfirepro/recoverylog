@@ -9,6 +9,15 @@
             "description": "How much is taken, e.g. '1 capsule'.",
             "type": "string"
           },
+          "frequency": {
+            "description": "How often this medicine is taken: daily, weekly, or monthly. Blank means not set.",
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly"
+            ],
+            "type": "string"
+          },
           "name": {
             "description": "Medicine name and strength, e.g. 'Gabapentin 300 mg'.",
             "type": "string"
