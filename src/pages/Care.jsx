@@ -224,7 +224,7 @@ function AddMember({ patient, patientId, team, onDone, onCancel }) {
   }
 
   return (
-    <div className="min-w-0 space-y-3">
+    <div className="min-w-0 space-y-3" data-gtour="careteam-fields">
       <div>
         <h2 className="font-display text-xl uppercase leading-tight break-words">Add to care team</h2>
         <p className="text-sm font-semibold break-words">

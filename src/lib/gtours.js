@@ -136,7 +136,7 @@ export const TOURS = {
       { target: "careteam-header", mark: "spot", note: CARE_NOTES[0], waitFor: true },
       { target: "careteam-add", mark: "circle", note: CARE_NOTES[1], waitFor: true, click: true, clickAt: 600, markAt: 400 },
       {
-        target: "careteam-email",
+        target: "careteam-fields",
         mark: "spot",
         note: CARE_NOTES[2],
         waitFor: true,
