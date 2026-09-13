@@ -201,9 +201,9 @@ export const TOURS = {
     steps: [
       { target: "trackers-header", mark: "spot", note: TRACKER_NOTES[0], ms: 3200, waitFor: true },
       { target: "trackers-surgery-select", mark: "circle", note: TRACKER_NOTES[1], ms: 3400, waitFor: true, openSelect: true, clickAt: 2000, markAt: 400 },
-      { target: "trackers-water-toggle", mark: "circle", note: TRACKER_NOTES[2], ms: 4200, waitFor: true, click: true, clickAt: 2600, clickIfOff: true, markAt: 400, markGone: 3800 },
+      { target: "trackers-water-toggle", mark: "circle", note: TRACKER_NOTES[2], ms: 4200, waitFor: true, click: true, clickAt: 2000, clickIfOff: true, markAt: 400, markGone: 3800 },
       { target: "trackers-water-card", mark: "arrow", note: TRACKER_NOTES[3], ms: 3600, waitFor: true, waitForEnabled: true, click: true, clickAt: 2600, clickIfOff: true, markAt: 400 },
-      { target: "trackers-water-goal", mark: "spot", note: TRACKER_NOTES[4], ms: 4600, waitFor: true, waitForEnabled: true, type: ["trackers-water-goal"], values: { "trackers-water-goal": "64" }, typeIfEmpty: true, blur: true, markAt: 400 }
+      { target: "trackers-water-goal", mark: "spot", note: TRACKER_NOTES[4], ms: 4600, waitFor: true, waitForEnabled: true, type: ["trackers-water-goal"], values: { "trackers-water-goal": "64" }, blur: true, markAt: 400 }
     ]
   },
 
