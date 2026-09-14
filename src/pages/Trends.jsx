@@ -146,7 +146,7 @@ export default function Trends() {
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={shown} margin={{ top: 5, right: 10, bottom: 5, left: -18 }}>
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis domain={[0, 10]} tick={{ fontSize: 11 }} />
+                <YAxis domain={[0, 5]} tick={{ fontSize: 11 }} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Line type="monotone" dataKey="pain" name="Pain" stroke="#FF2E88" strokeWidth={3} dot={{ r: 4 }} connectNulls />

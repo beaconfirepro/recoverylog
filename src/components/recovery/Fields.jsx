@@ -14,9 +14,9 @@ const fillStyle = (active, color, darkText) =>
 
 export function ScaleField({ field, value, onChange, color }) {
   return (
-    <Field label={field.label} hint={field.highIs === "bad" ? "10 = worst" : "10 = best"} span>
+    <Field label={field.label} hint={field.highIs === "bad" ? "5 = worst" : "5 = best"} span>
       <div className="flex flex-wrap gap-1.5">
-        {Array.from({ length: 11 }, (_, n) => (
+        {Array.from({ length: 5 }, (_, n) => n + 1).map((n) => (
           <button
             key={n}
             type="button"

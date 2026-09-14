@@ -7,83 +7,48 @@ import {
 // What each level actually means, in the patient's words rather than "10 = worst".
 // Pain follows the standard functional anchors, where a level is defined by what
 // it stops you doing; the rest have no agreed wording and are ours.
+// Each level, in the patient's words, on a 1-to-5 scale.
 const LEVELS = {
   pain: [
     "No pain at all",
-    "Barely there, easy to ignore",
     "Noticeable, but I forget about it",
-    "Annoying, and I still do what I want",
-    "Distracting, I have to slow down",
+    "Annoying, I still do what I want",
     "Hard to ignore, I stop and reset",
-    "It interferes with most things I try",
-    "It dominates, I can't concentrate",
-    "I can't do much except lie still",
-    "I can barely think or move",
-    "Constant pain so bad I can't speak through it"
+    "Constant pain, I can't function"
   ],
   nausea: [
     "No nausea",
-    "A faint flicker of it",
     "Queasy if I move too fast",
     "Queasy, but I can still eat",
-    "Off food, sipping only",
-    "Queasy the whole time",
     "Gagging, I can't face food",
-    "Retching on and off",
-    "Being sick, can't keep water down",
-    "Dry heaving with nothing left",
-    "I can't stop being sick"
+    "Can't stop being sick"
   ],
   swelling: [
     "Nothing, back to normal",
     "Slightly puffy first thing",
-    "Visible, but still soft",
-    "Clothes feel snug",
-    "Tight, and the skin looks shiny",
-    "Hard to bend or sit comfortably",
-    "The garment leaves deep marks",
-    "Heavy, and hot to touch",
-    "Skin taut, painful to press",
-    "Too swollen to wear the garment",
-    "Worse than any day so far"
+    "Visible, clothes feel snug",
+    "Tight, hard to bend or sit",
+    "Too swollen to wear the garment"
   ],
   energy: [
     "Can't get out of bed",
-    "Bed to the bathroom and back",
     "Up for a few minutes at a time",
-    "One small thing, then I'm done",
     "Short bursts with long rests",
-    "About half a normal day",
     "Most of a day, slowly",
-    "A normal day with one nap",
-    "A normal day, no nap",
-    "Enough left over for extras",
     "Fully myself again"
   ],
   mood: [
     "Despairing, I can't see past today",
-    "Very low, crying often",
-    "Flat and tearful",
-    "Low, but steady",
-    "Wobbly, up and down all day",
-    "Neutral, just getting through it",
-    "Mostly okay",
+    "Low and tearful",
+    "Neutral, getting through it",
     "Steady and hopeful",
-    "Good, laughing again",
-    "A really good day",
     "Genuinely happy"
   ],
   mobility: [
     "Can't move without help",
-    "Rolling over and sitting up with help",
     "Standing with help",
-    "A few steps holding on to something",
-    "Around the room unaided",
     "Around the house, slowly",
-    "Stairs, with a rail",
-    "Out to the mailbox and back",
     "A short walk outside",
-    "Walking normally without thinking",
     "Moving like I did before surgery"
   ]
 };
@@ -695,7 +660,7 @@ export const RED_FLAG_ITEMS = [
     body: [
       "Pain that jumps up instead of easing off, pain in one spot much worse than everywhere else, or pain your medication stops touching when it was working before.",
       "When the direction changes. Recovery pain trends downward with bad days in it; a step up, especially in one place, is different from a bad day.",
-      "The app will raise this when a check-in puts pain at 8 or above. You can override it."
+      "The app will raise this when a check-in puts pain at 4 or above. You can override it."
     ]
   },
   {

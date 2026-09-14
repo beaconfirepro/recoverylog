@@ -10,15 +10,15 @@ export const noteKey = (fieldKey) => `${fieldKey}_note`;
 
 // Wellbeing, not the raw number: 10 is bad for pain and good for mood, so the
 // face and the colour read off this instead of the value itself.
-const well = (field, v) => (field.highIs === "bad" ? 10 - v : v);
-const gradeColor = (field, v) => grade(well(field, v), 10, "good");
+const well = (field, v) => (field.highIs === "bad" ? 6 - v : v);
+const gradeColor = (field, v) => grade(well(field, v), 5, "good");
 
 // Drawn rather than picked from a set of emoji: the mouth, the brows and the
 // eyes all interpolate off wellbeing, so all eleven levels get their own face.
 function Face({ w, color, size = 128 }) {
-  const mouthY = 58 + (w / 10 - 0.5) * 40;
-  const brow = (0.5 - w / 10) * 14;
-  const eyeR = 5 + (w / 10) * 1.5;
+  const mouthY = 58 + (w / 5 - 0.5) * 40;
+  const brow = (0.5 - w / 5) * 14;
+  const eyeR = 5 + (w / 5) * 1.5;
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
       <circle cx="50" cy="50" r="42" fill={color} stroke="currentColor" strokeWidth="4" />
@@ -41,7 +41,7 @@ function Face({ w, color, size = 128 }) {
 // accessible name: the number was announced before, and the wording that makes
 // the number answerable sat in a paragraph beside it where a screen reader
 // never connected the two.
-const STEPS = 11;
+const STEPS = 5;
 
 function ScaleCard({ field, value, onChange, note, onNoteChange }) {
   const [noteOpen, setNoteOpen] = useState(!!note);
@@ -54,7 +54,7 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
     const r = track.current?.getBoundingClientRect();
     if (!r || r.width === 0) return null;
     const pct = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
-    return Math.round(pct * (STEPS - 1));
+    return Math.round(pct * (STEPS - 1)) + 1;
   };
 
   const setFrom = (clientX) => {
@@ -62,17 +62,17 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
     if (n != null && n !== value) onChange(n);
   };
 
-  const shown = value == null ? 5 : value;
-  const pct = (shown / (STEPS - 1)) * 100;
+  const shown = value == null ? 3 : value;
+  const pct = ((shown - 1) / (STEPS - 1)) * 100;
   const colour = value == null ? "hsl(var(--muted))" : gradeColor(field, value);
-  // "Pain 7, worse than yesterday" rather than "Pain 7". The level wording is
+  // "Pain 4, worse than yesterday" rather than "Pain 4". The level wording is
   // the half that makes the number mean something.
-  const valueText = value == null ? "not set" : `${value}${field.levels?.[value] ? `, ${field.levels[value]}` : ""}`;
+  const valueText = value == null ? "not set" : `${value}${field.levels?.[value - 1] ? `, ${field.levels[value - 1]}` : ""}`;
 
   return (
     <div className="flex flex-col items-center">
       <div className="text-foreground">
-        <Face w={value == null ? 5 : well(field, value)} color={colour} />
+        <Face w={value == null ? 3 : well(field, value)} color={colour} />
       </div>
       <h3 className="font-display text-3xl uppercase mt-2">{field.label}</h3>
       <p
@@ -86,7 +86,7 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
             <span className="font-heading text-2xs uppercase tracking-widest text-muted-foreground">
               {field.label} {value}
             </span>
-            {field.levels?.[value]}
+            {field.levels?.[value - 1]}
           </>
         )}
       </p>
@@ -96,8 +96,8 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
         role="slider"
         tabIndex={0}
         aria-label={field.label}
-        aria-valuemin={0}
-        aria-valuemax={STEPS - 1}
+        aria-valuemin={1}
+        aria-valuemax={STEPS}
         aria-valuenow={value == null ? undefined : value}
         aria-valuetext={valueText}
         className="relative w-full h-12 touch-none select-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
@@ -116,11 +116,11 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
           dragging.current = false;
         }}
         onKeyDown={(e) => {
-          const from = value == null ? 0 : value;
-          if (e.key === "ArrowLeft" || e.key === "ArrowDown") onChange(Math.max(0, from - 1));
-          else if (e.key === "ArrowRight" || e.key === "ArrowUp") onChange(Math.min(STEPS - 1, from + 1));
-          else if (e.key === "Home") onChange(0);
-          else if (e.key === "End") onChange(STEPS - 1);
+          const from = value == null ? 1 : value;
+          if (e.key === "ArrowLeft" || e.key === "ArrowDown") onChange(Math.max(1, from - 1));
+          else if (e.key === "ArrowRight" || e.key === "ArrowUp") onChange(Math.min(STEPS, from + 1));
+          else if (e.key === "Home") onChange(1);
+          else if (e.key === "End") onChange(STEPS);
           else return;
           e.preventDefault();
         }}
@@ -156,8 +156,8 @@ function ScaleCard({ field, value, onChange, note, onNoteChange }) {
       </div>
 
       <div className="w-full flex justify-between mt-1 font-heading text-2xs text-muted-foreground">
-        <span>0</span>
-        <span>10</span>
+        <span>1</span>
+        <span>5</span>
       </div>
 
       {/* A slider has no natural "unset", and the old control cleared by

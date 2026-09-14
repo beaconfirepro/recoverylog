@@ -50,7 +50,7 @@ export function suggestFlags(entries, surgery, lastBmDate, date) {
   if (dark) yes("urine", `Urine logged as ${dark.color.toLowerCase()}`);
 
   const worst = Math.max(-1, ...of(entries, "checkin").map((d) => +d.pain || -1));
-  if (worst >= 8) yes("pain", `A check-in put pain at ${worst}`);
+  if (worst >= 4) yes("pain", `A check-in put pain at ${worst}`);
 
   const skin = findings(of(entries, "skin"));
   const numb = skin.find(([, sym]) => ["Numbness", "Pale or cold"].includes(sym));
