@@ -129,7 +129,7 @@ export default function Layout() {
         style={{ paddingTop: "var(--safe-t)" }}
       >
         <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center justify-between">
-          <span className="font-display uppercase tracking-widest text-sm shrink-0">LipNode</span>
+          <Link to="/" aria-label="Today" className="font-display uppercase tracking-widest text-sm shrink-0">LipNode</Link>
           <span className="flex items-center gap-2 min-w-0">
           {isOwner ? (
             <span className="text-2xs font-body opacity-60 truncate">{greeting}</span>
