@@ -9,7 +9,7 @@ import { secrets } from "base44:runtime";
 // account, and the patient may not be signed in. Stripe Checkout itself is the
 // secure step, so creating the session grants nothing on its own.
 
-const PRODUCT_ID = "prod_VFti2G4rU6id5P";
+const PRODUCT_ID = "prod_VFu7g2KiOflFGZ";
 const MIN_CENTS = 100; // $1.00 floor — anything below and Stripe rejects the session
 
 export default async function(req: Request): Promise<Response> {
