@@ -18,7 +18,7 @@ import { save } from "@/lib/saving";
 import Field from "@/components/Field";
 import TimeInput from "@/components/recovery/TimeInput";
 import Surgeries from "@/components/care/Surgeries";
-import HealthMonitoringBilling from "@/components/billing/HealthMonitoringBilling";
+
 import { useOrientationHighlight, useOrientationTour } from "@/lib/useOrientationHighlight";
 import TourOverlay from "@/components/orientation/TourOverlay";
 import { useDismissKeyboard } from "@/lib/dismissKeyboard";
@@ -696,8 +696,6 @@ export default function Profile() {
           {done && !busy && <p className="col-span-2 text-sm font-bold text-center">PDF downloaded ✔</p>}
         </div>
       </div>
-
-      <HealthMonitoringBilling />
 
       {/* Setup is the log, You is the person. The rule is sound and was
           invisible — and You is the only destination not in the tab bar, so

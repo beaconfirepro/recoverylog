@@ -12,6 +12,7 @@ import LegalSection from "@/components/legal/LegalSection";
 import HelpSection from "@/components/help/HelpSection";
 import ContactForm from "@/components/help/ContactForm";
 import DeleteAccount from "@/components/DeleteAccount";
+import HealthMonitoringBilling from "@/components/billing/HealthMonitoringBilling";
 import Field from "@/components/Field";
 import { THEMES, TEXT_SIZES, useTheme, useTextSize } from "@/lib/theme";
 import { save } from "@/lib/saving";
@@ -188,6 +189,8 @@ export default function Me() {
       <HelpSection />
 
       <ContactForm />
+
+      <HealthMonitoringBilling />
 
       <LegalSection />
 
