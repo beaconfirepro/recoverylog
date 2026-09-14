@@ -68,7 +68,7 @@ export default function HelpSection() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <DocReader body={shown.body} />
+            <DocReader body={shown.body} look="faq" />
             <button type="button" onClick={close} className="nb-btn w-full h-12 bg-card mt-4">
               Done
             </button>
